@@ -567,7 +567,7 @@ assessment#:#ending_time_reached#:#Sie haben das Ende der möglichen Bearbeitung
 assessment#:#enlarge#:#vergrößern
 assessment#:#enter_anonymous_code#:#Zugangsschlüssel für anonymen Zugang
 assessment#:#enter_enough_positive_points#:#Die maximale Punktezahl für die Frage muss größer als Null sein! Bitte geben Sie ausreichend viele nicht-negative Punkte für die Antworten ein.
-assessment#:#err_no_numeric_value#:#Bitte geben Sie einen numerischen Wert ein
+assessment#:#err_no_numeric_value#:#Bitte geben Sie einen numerischen Wert ein.
 assessment#:#error_cloze_not_numeric#:#Bitte geben Sie einen numerischen Wert ein.
 assessment#:#error_duplicate_term#:#Sie haben einen Term mehrfach einem Zuordnungspaar zugewiesen
 assessment#:#error_image_upload_copy_file#:#Beim Verschieben einer hochgeladenen Grafik in Ihren Zielordner ist ein Fehler aufgetreten!
@@ -15981,6 +15981,7 @@ trac#:#trac_defaults_info#:#Setzt den Modus zur Ermittlung des Bestanden-Status 
 trac#:#trac_defaults_inactive#:#Inaktiv
 copg#:#copg_snippet_cannot_be_edited#:#Dies ist ein vordefinierter Inhaltsbaustein, der an dieser Stelle nicht editiert werden kann.
 assessment#:#tst_revert_changes#:#Bearbeitung zurücknehmen
+assessment#:#tst_revert_changes_hint#:#Sie können Ihre Eingabe über das Aktionen-Menü der Frage rückgängig machen. ###fau: testNav
 assessment#:#save_on_navigation#:#Navigation mit Speichern
 assessment#:#save_on_navigation_confirmation#:#Ihre geänderten Antworten werden bei der Navigation automatisch gespeichert.
 assessment#:#save_on_navigation_locked_confirmation#:#Ihre geänderten Antworten werden bei der Navigation automatisch gespeichert und festgeschrieben.

@@ -422,22 +422,18 @@ class ilTestPlayerDynamicQuestionSetGUI extends ilTestPlayerAbstractGUI
 			}
 
 			$this->ctrl->setParameter($this, 'pmode', ilTestPlayerAbstractGUI::PRESENTATION_MODE_VIEW);
-		}
 
 // fau: testNav - remember to prevent the navigation confirmation
-		$this->saveNavigationPreventConfirmation();
+			$this->saveNavigationPreventConfirmation();
 // fau.
 
 // fau: testNav - handle navigation after saving
-		if ($this->getNavigationUrlParameter())
-		{
-			ilUtil::redirect($this->getNavigationUrlParameter());
-		}
-		else
-		{
-			$this->ctrl->saveParameter($this, 'sequence');
-		}
+			if ($this->getNavigationUrlParameter())
+			{
+				ilUtil::redirect($this->getNavigationUrlParameter());
+			}
 // fau.
+		}
 		$this->ctrl->redirect($this, ilTestPlayerCommands::SHOW_QUESTION);
 	}
 
@@ -656,26 +652,25 @@ class ilTestPlayerDynamicQuestionSetGUI extends ilTestPlayerAbstractGUI
 		$this->testSequence->cleanupQuestions($this->testSession);
 		$this->testSequence->saveToDb();
 
-		if( !$this->isParticipantsAnswerFixed($questionId) )
+
+// fau: testNav - try to save a changed question when feedback is requested and handle validation errors
+		if( !$this->isParticipantsAnswerFixed($questionId)  && $this->getAnswerChangedParameter() )
 		{
-// fau: testNav - handle answer fixation and intermediate submit
-			// always save the question when feedback is requested
-			// if( $this->object->isInstantFeedbackAnswerFixationEnabled() )
-			if (true)
+			if ($this->saveQuestionSolution(true))
 			{
-				$this->saveQuestionSolution(true);
-				$this->removeIntermediateSolution();
 				$this->setAnswerChangedParameter(false);
+
+				$this->testSequence->unsetQuestionPostponed($questionId);
+				$this->testSequence->setQuestionChecked($questionId);
+				$this->testSequence->saveToDb();
 			}
 			else
 			{
-				$this->handleIntermediateSubmit();
+				$this->setAnswerChangedParameter(true);
+				$this->ctrl->redirect($this, ilTestPlayerCommands::SHOW_QUESTION);
 			}
-// fau.
-			$this->testSequence->unsetQuestionPostponed($questionId);
-			$this->testSequence->setQuestionChecked($questionId);
-			$this->testSequence->saveToDb();
 		}
+// fau.
 
 		$this->ctrl->setParameter(
 			$this, 'sequence', $this->testSession->getCurrentQuestionId()

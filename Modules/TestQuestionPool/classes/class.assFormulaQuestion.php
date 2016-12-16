@@ -1004,6 +1004,9 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 			$solutionSubmit = $this->getSolutionSubmit();
 
 			$tmp            = $solutionSubmit;
+// fau: testNav -   save an invalid solution as intermediate and show the validation error
+//					return false to keep the user at the question
+			$returnvalue = true;
 			$solutionSubmit = array();
 			foreach($tmp as $key => $val)
 			{
@@ -1013,9 +1016,13 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 				}
 				else
 				{
-					$solutionSubmit[$key] = '';
+					ilUtil::sendFailure($this->lng->txt("err_no_numeric_value"), true);
+					$authorized = false;
+					$returnvalue = false;
+					$solutionSubmit[$key] = $val;;
 				}
 			}
+// fau.
 
 			foreach($solutionSubmit as $key => $value)
 			{
@@ -1080,7 +1087,9 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 			}
 		}
 
-		return true;
+// fau: testNav - return the validation success
+		return $returnvalue;
+// fau.
 	}
 
 // fau: testNav - overridden function lookupForExistingSolutions (specific for formula question: don't lookup variables)

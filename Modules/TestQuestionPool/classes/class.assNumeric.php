@@ -442,6 +442,9 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
 		{
 			ilUtil::sendInfo($this->lng->txt("err_no_numeric_value"), true);
 			$returnvalue = false;
+// fau: testNav - save an invalid solution only as intermediate - the question will be shown again with status "editing"
+			$authorized = false;
+// fau.
 		}
 
 		$this->getProcessLocker()->executeUserSolutionUpdateLockOperation(function() use (&$entered_values, $numeric_result, $ilDB, $active_id, $pass, $authorized) {
