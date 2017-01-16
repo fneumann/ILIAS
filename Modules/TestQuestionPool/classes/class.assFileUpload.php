@@ -562,20 +562,17 @@ class assFileUpload extends assQuestion implements ilObjQuestionScoringAdjustabl
 
 		// read the existing files for user and pass
 		// delete all files that are not used in the solutions
-		if (is_dir($this->getFileUploadPath($test_id, $active_id)))
+		$curdir = getcwd();
+		chdir($this->getFileUploadPath($test_id, $active_id));
+		$existing_files = glob("file_" . $active_id . "_" . $pass . "_*");
+		foreach($existing_files as $file)
 		{
-			$curdir = getcwd();
-			chdir($this->getFileUploadPath($test_id, $active_id));
-			$existing_files = glob("file_" . $active_id . "_" . $pass . "_*");
-			foreach($existing_files as $file)
+			if (!in_array($file, $used_files))
 			{
-				if (!in_array($file, $used_files))
-				{
-					@unlink($file);
-				}
+				@unlink($file);
 			}
-			chdir($curdir);
 		}
+		chdir($curdir);
 	}
 // fau.
 

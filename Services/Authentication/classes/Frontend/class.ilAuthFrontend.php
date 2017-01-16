@@ -210,6 +210,9 @@ class ilAuthFrontend
 		$factory = new ilObjectFactory();
 		$user = $factory->getInstanceByObjId($this->getStatus()->getAuthenticatedUserId(),false);
 		
+		// reset expired status
+		$this->getAuthSession()->setExpired(false);
+		
 		if(!$user instanceof ilObjUser)
 		{
 			$this->getLogger()->error('Cannot instatiate user account with id: ' . $this->getStatus()->getAuthenticatedUserId());
@@ -233,15 +236,17 @@ class ilAuthFrontend
 		{
 			$this->getLogger()->info('Authentication failed (time limit restriction) for user with id: ' . $this->getStatus()->getAuthenticatedUserId());
 
-			if($GLOBALS['ilSettings']->get('user_reactivate_code'))
+			if($GLOBALS['ilSetting']->get('user_reactivate_code'))
 			{
+				$this->getLogger()->debug('Accout reactivation codes are active');
 				$this->getStatus()->setStatus(ilAuthStatus::STATUS_CODE_ACTIVATION_REQUIRED);
 			}
 			else
 			{
+				$this->getLogger()->debug('Accout reactivation codes are inactive');
 				$this->getStatus()->setStatus(ilAuthStatus::STATUS_AUTHENTICATION_FAILED);
+				$this->getStatus()->setAuthenticatedUserId(0);
 			}
-			$this->getStatus()->setAuthenticatedUserId(0);
 			$this->getStatus()->setReason('time_limit_reached');
 			return false;
 		}
@@ -252,11 +257,18 @@ class ilAuthFrontend
 			$this->getLogger()->info('Authentication failed (wrong ip) for user with id: ' . $this->getStatus()->getAuthenticatedUserId());
 			$this->getStatus()->setStatus(ilAuthStatus::STATUS_AUTHENTICATION_FAILED);
 			$this->getStatus()->setAuthenticatedUserId(0);
-			$this->getStatus()->setReason('wrong_ip_detected');
+			
+			$this->getStatus()->setTranslatedReason(
+				sprintf(
+					$GLOBALS['DIC']->language()->txt('wrong_ip_detected'),
+					$_SERVER['REMOTE_ADDR']
+				)
+			);
 			return false;
 		}
 		
 		// check simultaneos logins
+		$this->getLogger()->debug('Check simutaneous login');
 		if(!$this->checkSimultaneousLogins($user))
 		{
 			$this->getLogger()->info('Authentication failed: simultaneous logins forbidden for user: ' . $this->getStatus()->getAuthenticatedUserId());
@@ -270,6 +282,7 @@ class ilAuthFrontend
 		include_once "Services/User/classes/class.ilUserProfile.php";
 		if(ilUserProfile::isProfileIncomplete($user) && ilAuthFactory::getContext() != ilAuthFactory::CONTEXT_ECS)
 		{
+			ilLoggerFactory::getLogger('auth')->info('User profile is incomplete.');
 			$user->setProfileIncomplete(true);
 			$user->update();
 		}
@@ -311,13 +324,16 @@ class ilAuthFrontend
 		include_once './Services/Init/classes/class.ilInitialisation.php';
 		ilInitialisation::initUserAccount();
 		
+		ilSession::set('orig_request_target', '');
+		$user->hasToAcceptTermsOfServiceInSession(true);
+		
+		
 		// --- anonymous/registered user
-		ilLoggerFactory::getLogger('auth')->info(
+		$this->getLogger()->info(
 			'logged in as '. $user->getLogin() . 
 			', remote:' . $_SERVER['REMOTE_ADDR'] . ':' . $_SERVER['REMOTE_PORT'] .
 			', server:' . $_SERVER['SERVER_ADDR'] . ':' . $_SERVER['SERVER_PORT']
 		);
-
 
 		// finally raise event 
 		global $ilAppEventHandler;
@@ -379,9 +395,10 @@ class ilAuthFrontend
 	 */
 	protected function checkSimultaneousLogins(ilObjUser $user)
 	{
+		$this->getLogger()->debug('Setting prevent simultaneous session is: ' . (string) $GLOBALS['ilSetting']->get('ps_prevent_simultaneous_logins'));
 		if(
-			$GLOBALS['ilSetting']->get('ps_prevent_simutanous_logins') &&
-			ilObjUser::hasActiveSession($user->getId())
+			$GLOBALS['ilSetting']->get('ps_prevent_simultaneous_logins') &&
+			ilObjUser::hasActiveSession($user->getId(), $this->getAuthSession()->getId())
 		)
 		{
 			return false;
@@ -395,6 +412,26 @@ class ilAuthFrontend
 	protected function handleAuthenticationFail()
 	{
 		$this->getLogger()->debug('Authentication failed for all authentication methods.');
+
+		$user_id = ilObjUser::_lookupId($this->getCredentials()->getUsername());
+		if(!in_array($user_id, array(ANONYMOUS_USER_ID,SYSTEM_USER_ID)))
+		{
+			ilObjUser::_incrementLoginAttempts($user_id);
+			$login_attempts = ilObjUser::_getLoginAttempts($user_id);
+			
+			$this->getLogger()->notice('Increased login attempts for user: ' . $this->getCredentials()->getUsername());
+			
+			include_once './Services/PrivacySecurity/classes/class.ilSecuritySettings.php';
+			$security = ilSecuritySettings::_getInstance();
+			$max_attempts = $security->getLoginMaxAttempts();
+			
+			if((int) $max_attempts && $login_attempts >= $max_attempts)
+			{
+				$this->getStatus()->setReason('auth_err_login_attempts_deactivation');
+				$this->getLogger()->warning('User account set to inactive due to exceeded login attempts.');
+				ilObjUser::_setUserInactive($user_id);
+			}
+		}
 	}
 	
 }

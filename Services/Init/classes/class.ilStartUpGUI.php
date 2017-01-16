@@ -450,6 +450,13 @@ class ilStartUpGUI
 		return $form;
 	}
 	
+	/**
+	 * @todo has to be refactored.
+	 * @global ilLanguage $lng
+	 * @global type $ilAuth
+	 * @global type $ilCtrl
+	 * @return boolean
+	 */
 	protected function processCode()
 	{
 		global $lng, $ilAuth, $ilCtrl;
@@ -516,8 +523,10 @@ class ilStartUpGUI
 					ilAccountCode::applyAccessLimits($user, $code);
 
 					$user->update();
-
+					
 					$ilCtrl->setParameter($this, "cu", 1);
+					$GLOBALS['DIC']->language()->loadLanguageModule('auth');
+					ilUtil::sendSuccess($GLOBALS['DIC']->language()->txt('auth_activation_code_success'),true);
 					$ilCtrl->redirect($this, "showLoginPage");		
 				}
 			}
@@ -650,7 +659,7 @@ class ilStartUpGUI
 				return $GLOBALS['ilCtrl']->redirect($this, 'showAccountMigration');
 
 			case ilAuthStatus::STATUS_AUTHENTICATION_FAILED:
-				ilUtil::sendFailure($GLOBALS['lng']->txt($status->getReason()),true);
+				ilUtil::sendFailure($status->getTranslatedReason(),true);
 				$GLOBALS['ilCtrl']->redirect($this, 'showLoginPage');
 				return false;
 		}
@@ -703,7 +712,7 @@ class ilStartUpGUI
 				return $GLOBALS['ilCtrl']->redirect($this, 'showAccountMigration');
 
 			case ilAuthStatus::STATUS_AUTHENTICATION_FAILED:
-				ilUtil::sendFailure($GLOBALS['lng']->txt($status->getReason()),true);
+				ilUtil::sendFailure($status->getTranslatedReason(),true);
 				$GLOBALS['ilCtrl']->redirect($this, 'showLoginPage');
 				return false;
 		}
@@ -768,11 +777,14 @@ class ilStartUpGUI
 					ilInitialisation::redirectToStartingPage();
 					return;
 					
+				case ilAuthStatus::STATUS_CODE_ACTIVATION_REQUIRED:
+					return $this->showCodeForm(ilObjUser::_lookupLogin($status->getAuthenticatedUserId()));
+
 				case ilAuthStatus::STATUS_ACCOUNT_MIGRATION_REQUIRED:
 					return $GLOBALS['ilCtrl']->redirect($this, 'showAccountMigration');
 
 				case ilAuthStatus::STATUS_AUTHENTICATION_FAILED:
-					ilUtil::sendFailure($GLOBALS['lng']->txt($status->getReason()));
+					ilUtil::sendFailure($status->getTranslatedReason());
 					return $this->showLoginPage($form);
 			}
 			
@@ -2063,7 +2075,13 @@ class ilStartUpGUI
 			{
 				$lng = new ilLanguage($usr_lang);
 			}
-			
+
+			$target = $oUser->getPref('reg_target');
+			if(strlen($target) > 0)
+			{
+				$_GET['target'] = $target;
+			}
+
 			// send email
 			// try individual account mail in user administration
 			include_once("Services/Mail/classes/class.ilAccountMail.php");

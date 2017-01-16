@@ -198,7 +198,6 @@ class ilImport
 		
 		// delete temporary directory
 		ilUtil::delDir($tmpdir);
-		
 		return $new_id;
 	}
 
@@ -322,7 +321,6 @@ class ilImport
 		// we should only get on mapping here
 		$top_mapping = $this->mapping->getMappingsOfEntity($this->comp, $a_type);
 		$new_id = (int) current($top_mapping);
-		
 		return array(
 			'new_id' => $new_id,
 			'importers' => (array) $all_importers
