@@ -14,6 +14,18 @@ require_once "./Services/Object/classes/class.ilObject.php";
 class ilObjLanguage extends ilObject
 {
 	/**
+	 * @var int $delete_chunk_size	maximum deleted done execute in one statement by listing indentifiers in an IN condition
+	 * @see self::replaceLangData()
+	 */
+	private static $delete_chunk_size = 1000;
+
+	/**
+	 * @var int $insert_chunk_size	maximum inserts done in one statement by repeating values
+	 * @see self::replaceLangData()
+	 */
+	private static $insert_chunk_size = 1000;
+
+	/**
 	 * separator of module, comment separator, identifier & values
 	 * in language files
 	 *
@@ -54,6 +66,31 @@ class ilObjLanguage extends ilObject
 		$this->separator = $lng->separator;
 		$this->comment_separator = $lng->comment_separator;
 	}
+
+
+	/**
+	 * Get the language objects of the installed languages
+	 * @return self[]
+	 */
+	public static function getInstalledLanguages()
+	{
+		$objects = array();
+		$languages = ilObject::_getObjectsByType("lng");
+		foreach ($languages as $lang)
+		{
+			$langObj = new ilObjLanguage($lang["obj_id"], false);
+			if ($langObj->isInstalled())
+			{
+				$objects[] = $langObj;
+			}
+			else
+			{
+				unset($langObj);
+			}
+		}
+		return $objects;
+	}
+
 
 	/**
 	 * get language key
@@ -120,9 +157,7 @@ class ilObjLanguage extends ilObject
 	}
 
 	/**
-	 * Check language object status, and return true if a local language file 
-	 * is installed.
-	 * 
+	 * Check language object status, and return true if a local language file is installed.
 	 * @return  boolean     true if local language is installed
 	 */
 	function isLocal()
@@ -138,32 +173,19 @@ class ilObjLanguage extends ilObject
 	}
 
 	/**
-	 * install current language
-	 *
+	 * Install language
+	 * @param   string  $scope  "global" or "local"
 	 * @return	string	installed language key
-	 * @param   string  $scope  empty (global) or "local"
 	 */
-	function install($scope = '')
+	public function install($scope = 'global')
 	{
-		if (!empty($scope))
-		{
-			if ($scope == 'global')
-			{
-				$scope = ''; 
-			}
-			else
-			{
-				$scopeExtension = '.' . $scope;
-			}
-		}
-
 		if (($this->isInstalled() == false) || 
-				($this->isInstalled() == true && $this->isLocal() == false && !empty($scope)))
+			($this->isInstalled() == true && $this->isLocal() == false && $scope == 'local'))
 		{
 			if ($this->check($scope))
 			{
 				// lang-file is ok. Flush data in db and...
-				if (empty($scope))
+				if ($scope == 'global')
 				{
 					$this->flush('keep_local');
 				}
@@ -172,17 +194,8 @@ class ilObjLanguage extends ilObject
 				$this->insert($scope);
 
 				// update information in db-table about available/installed languages
-				if (empty($scope))
-				{
-					$newDesc = 'installed';
-				}
-				else if ($scope == 'local')
-				{
-					$newDesc = 'installed_local';
-				}
-				$this->setDescription($newDesc);
+				$this->setDescription($scope == 'local' ? 'installed_local' : 'installed');
 				$this->update();
-				$this->optimizeData();
 				return $this->getKey();
 			}
 		}
@@ -191,79 +204,60 @@ class ilObjLanguage extends ilObject
 
 
 	/**
-	 * uninstall current language
-	 *
+	 * Uninstall language
 	 * @return	string	uninstalled language key
 	 */
-	function uninstall()
+	public function uninstall()
 	{
-		if ((substr($this->status, 0, 9) == "installed") && ($this->key != $this->lang_default) && ($this->key != $this->lang_user))
+		if ($this->isInstalled() && ($this->key != $this->lang_default) && ($this->key != $this->lang_user))
 		{
 			$this->flush('all');
-			$this->setTitle($this->key);
 			$this->setDescription("not_installed");
 			$this->update();
-			$this->resetUserLanguage($this->key);
-
-			return $this->key;
+			$this->resetUserLanguage($this->getKey());
+			return $this->getKey();
 		}
 		return "";
 	}
 
-
 	/**
-	 * refresh current language
-	 * @return bool
+	 * Uninstall local changes
+	 * @return	bool
 	 */
-	function refresh()
+	public function uninstallChanges()
 	{
-		if ($this->isInstalled() == true)
+		if ($this->isInstalled() && $this->check('global'))
 		{
-			if ($this->check())
-			{
-				$this->flush('keep_local');
-				$this->insert();
-				$this->setTitle($this->getKey());
-				$this->setDescription($this->getStatus());
-				$this->update();
-				$this->optimizeData();
-
-				if ($this->isLocal() == true)
-				{
-					if ($this->check('local'))
-					{
-						$this->insert('local');
-						$this->setTitle($this->getKey());
-						$this->setDescription($this->getStatus());
-						$this->update();
-						$this->optimizeData();
-					}
-				}
-				return true;
-			}
+			$this->flush('all');
+			$this->insert();
+			$this->setDescription('installed');
+			$this->update();
+			return true;
 		}
 		return false;
 	}
 
+
 	/**
-	* Refresh all installed languages
-	*/
-	static function refreshAll()
+	 * Refresh language
+	 * @return bool
+	 */
+	public function refresh()
 	{
-		$languages = ilObject::_getObjectsByType("lng");
-		$refreshed = array();
-
-		foreach ($languages as $lang)
+		if ($this->isInstalled() && $this->check('global'))
 		{
-			$langObj = new ilObjLanguage($lang["obj_id"],false);
-			if ($langObj->refresh())
-			{
-				$refreshed[] = $langObj->getKey();
-			}
-			unset($langObj);
-		}
+			$this->flush('keep_local');
+			$this->insert('global');
 
-		self::refreshPlugins($refreshed);
+			if ($this->isLocal() && $this->check('local'))
+			{
+				$this->insert('local');
+			}
+
+			$this->update();
+			return true;
+		}
+		return false;
 	}
 
 
@@ -290,7 +284,7 @@ class ilObjLanguage extends ilObject
 					$slot["component_name"], $slot["slot_id"], $plugin);
 				if (is_object($pl))
 				{
-					$pl->updateLanguages();
+					$pl->updateLanguages($a_lang_keys);
 				}
 			}
 		}
@@ -421,171 +415,205 @@ class ilObjLanguage extends ilObject
 
 
 	/**
-	 * insert language data from file into database
+	 * Insert language data from file into database
+	 * This also inserts the language data of plugins
 	 * 
-	 * @param   string  $scope  empty (global) or "local"
+	 * @param   string  $scope  'global' or "local"
 	 */
-	function insert($scope = '')
+	function insert($scope = 'global')
 	{
-		global $ilDB;
-		
-		if (!empty($scope))
+		switch ($scope)
 		{
-			if ($scope == 'global')
-			{
-				$scope = ''; 
-			}
-			else
-			{
-				$scopeExtension = '.' . $scope;
-			}
-		}
-		
-		$path = $this->lang_path;
-		if ($scope == "local")
-		{
-			$path = $this->cust_lang_path;
+			case 'local':
+				$extension = '.lang.local';
+				$path =  $this->cust_lang_path;
+				break;
+
+			case 'global':
+			default:
+				$scope = 'global';
+				$extension = '.lang';
+				$path = $this->lang_path;
+				break;
 		}
 
-		$tmpPath = getcwd();
-		chdir($path);
-
-		$lang_file = "ilias_" . $this->key . ".lang" . $scopeExtension;
-
-		if ($lang_file)
+		$lang_file = $path . '/ilias_' . $this->key . $extension;
+		if (is_file($lang_file))
 		{
-			// initialize the array for updating lng_modules below
-			$lang_array = array();
-			$lang_array["common"] = array();
+			// initialize the data for self::replaceLangData
+			$data = array($this->key => array('common' => array()));
 
 			// remove header first
 			if ($content = $this->cut_header(file($lang_file)))
 			{
-				if (empty($scope))
+				switch($scope)
 				{
-					// reset change date for a global file
-	                // get all local changes for a global file
-					$change_date = null;
-					$local_changes = $this->getLocalChanges();
+					case 'global':
+						// reset change date for entries written from a global file
+						// get all local changes for a global file
+						$change_date = null;
+						$local_changes = $this->getLocalChanges();
+						break;
+
+					case 'local':
+						// set the change date to import time for entries written from a local file
+						// get the modification date of the local file
+						// get the newer local changes for a local file
+						$change_date = date("Y-m-d H:i:s",time());
+						$min_date = date("Y-m-d H:i:s", filemtime($lang_file));
+						$local_changes = $this->getLocalChanges($min_date);
+						break;
 				}
-				else if ($scope == 'local')
-				{
-					// set the change date to import time for a local file
-					// get the modification date of the local file
-	                // get the newer local changes for a local file
-					$change_date = date("Y-m-d H:i:s",time());
-					$min_date = date("Y-m-d H:i:s", filemtime($lang_file));
-					$local_changes = $this->getLocalChanges($min_date);
-				}
-				
+
 				foreach ($content as $key => $val)
 				{
-					// split the line of the language file
-					// [0]:	module
-					// [1]:	identifier
-					// [2]:	value
-					// [3]:	comment (optional)
 					$separated = explode($this->separator,trim($val));
-					$pos = strpos($separated[2], $this->comment_separator);
+					$module = $separated[0];
+					$identifier = $separated[1];
+					$value = $separated[2];
+					$remarks = null;
+
+					$pos = strpos($value, $this->comment_separator);
 					if ($pos !== false)
-					{ 
-						$separated[3] = substr($separated[2], $pos + strlen($this->comment_separator));
-						$separated[2] = substr($separated[2] , 0 , $pos);
+					{
+						$remarks = substr($value, $pos + strlen($this->comment_separator));
+						$value = substr($value , 0 , $pos);
 					}
 
 					// check if the value has a local change
-					$local_value = $local_changes[$separated[0]][$separated[1]];
+					$changed_value = (string) $local_changes[$module][$identifier];
 
-					if (empty($scope))
+					// insert unchanged values in any case
+					// overwrite equal changed values for global file to reset the change date
+					if ( empty($changed_value) || ($scope == 'global' && $changed_value == $value))
 					{
-						// import of a global language file
-
-						if ($local_value != "" and $local_value != $separated[2])
-						{
-							// keep an existing and different local calue
-							$lang_array[$separated[0]][$separated[1]] = $local_value;
-						}
-						else
-						{
-	                        // check for double entries in global file
-							if ($double_checker[$separated[0]][$separated[1]][$this->key])
-							{
-								$this->ilias->raiseError("Duplicate Language Entry in $lang_file:\n$val",
-									$this->ilias->error_obj->MESSAGE);
-							}
-							$double_checker[$separated[0]][$separated[1]][$this->key] = true;
-							
-							// insert a new value if no local value exists
-							// reset local change date if the values are equal
-							ilObjLanguage::replaceLangEntry($separated[0], $separated[1],
-								$this->key, $separated[2], $change_date, $separated[3]);
-
-							$lang_array[$separated[0]][$separated[1]] = $separated[2];
-						}
+						$data[$this->key][$module][$identifier] = array (
+							'value' =>  $value,
+							'local_change' => $change_date,
+							'remarks' => $remarks
+						);
 					}
-					else if ($scope == 'local')
-					{
-						// import of a local language file
-
-						if ($local_value != "")
-						{
-							// keep a locally changed value that is newer than the file
-							$lang_array[$separated[0]][$separated[1]] = $local_value;
-						}
-						else
-						{
-							// insert a new value if no global value exists
-							// (local files may have additional entries for customizations)
-							// set the change date to the import date
-							ilObjLanguage::replaceLangEntry($separated[0], $separated[1],
-								$this->key, $separated[2], $change_date, $separated[3]);
-
-							$lang_array[$separated[0]][$separated[1]] = $separated[2];
-						}
-					}
-				}
-
-				$ld = "";
-				if (empty($scope))
-				{
-					$ld = "installed";
-				}
-				else if ($scope == 'local')
-				{
-					$ld = "installed_local";
-				}
-				if ($ld)
-				{
-					$query = "UPDATE object_data SET " .
-							"description = ".$ilDB->quote($ld, "text").", " .
-							"last_update = ".$ilDB->now()." " .
-							"WHERE title = ".$ilDB->quote($this->key, "text")." " .
-							"AND type = 'lng'";
-					$ilDB->manipulate($query);
 				}
 			}
-			
-			foreach($lang_array as $module => $lang_arr)
+
+			// write the updated data
+			self::replaceLangData($data);
+
+			// update plugins if global data is written
+			if ($scope == 'global')
 			{
-				if ($scope == "local")
-				{
-					$q = "SELECT * FROM lng_modules WHERE ".
-						" lang_key = ".$ilDB->quote($this->key, "text").
-						" AND module = ".$ilDB->quote($module, "text");
-					$set = $ilDB->query($q);
-					$row = $ilDB->fetchAssoc($set);
-					$arr2 = unserialize($row["lang_array"]);
-					if (is_array($arr2))
-					{
-						$lang_arr = array_merge($arr2, $lang_arr);
-					}
-				}
-				ilObjLanguage::replaceLangModule($this->key, $module, $lang_arr);
+				self::refreshPlugins(array($this->key));
 			}
 		}
 
-		chdir($tmpPath);
 	}
+
+	/**
+	 * Performance improved replacement of language data
+	 * The cached data in lng_modules is updated, too
+	 *
+	 * @param array $a_data	lang_key => [module => [identifier => ['value' => string, 'local_change' => string, 'remarks' => string]]]
+	 */
+	static final function replaceLangData($a_data)
+	{
+		global $DIC;
+		/** @var ilDBInterface $db */
+		$db = $DIC->database();
+
+		static $delete_count;
+		static $insert_count;
+
+		foreach ($a_data as $key => $modules)
+		{
+			foreach ($modules as $module => $entries)
+			{
+				// get the existing data of the module
+				$old_entries = array();
+				$result = $db->queryF("SELECT * FROM lng_data WHERE lang_key = %s AND module = %s",
+					array('text', 'text'), array($key, $module));
+				while ($row = $db->fetchAssoc($result))
+				{
+					// fault tolerance: mysql would throw duplicyte violation for same keys with different case
+					$old_entries[strtolower($row['identifier'])] = $row;
+				}
+
+				// collect the data to be inserted or deleted
+				$delete_ids = array();
+				$insert_data = array();
+				$module_data = array();
+				foreach ($entries as $identifier => $data)
+				{
+					// fault tolerance: mysql would throw duplicyte violation for same keys with different case
+					$identifier = strtolower($identifier);
+
+					// check whether data has to be replaced, ignored or inserted
+					if (isset($old_entries[$identifier]))
+					{
+						if ((string) $old_entries[$identifier]['value'] != (string) $data['value'] ||
+							(string) $old_entries[$identifier]['local_change'] != (string) $data['local_change'] ||
+							(string) $old_entries[$identifier]['remarks'] != (string) $data['remarks'])
+						{
+							// replace old data
+							$delete_ids[] = $identifier;
+							$delete_count++;
+							$to_insert = true;
+						}
+						else
+						{
+							// keep old data
+							$to_insert = false;
+						}
+					}
+					else
+					{
+						// insert new data
+						$to_insert = true;
+					}
+
+					// create query part for multiple insert
+					if ($to_insert)
+					{
+						// index by identifier to prevent integrity violation
+						$insert_data[$identifier] = '('
+							. $db->quote($key, 'text'). ','
+							. $db->quote($module, 'text'). ','
+							. $db->quote($identifier, 'text'). ','
+							. $db->quote(empty($data['value']) ? null : substr($data['value'],0, 4000), 'text'). ','
+							. $db->quote(empty($data['remarks']) ? null : substr($data['remarks'],0, 250), 'text'). ','
+							. $db->quote(empty($data['local_change']) ? null : $data['local_change'], 'timestamp'). ')';
+
+						$insert_count++;
+					}
+
+
+					// add the value for lng_modules in any case
+					$module_data[$identifier] = $data['value'];
+				}
+
+				// delete old data that will be replaced
+				foreach (array_chunk($delete_ids, self::$delete_chunk_size) as $delete_chunk)
+				{
+					$db->manipulate("DELETE FROM lng_data WHERE lang_key = ".$db->quote($key, 'text')
+						. " AND module = ".$db->quote($module, 'text')
+						. " AND " . $db->in('identifier', $delete_chunk, false, 'text'));
+				}
+
+				// insert the data entries
+				foreach (array_chunk($insert_data, self::$insert_chunk_size) as $insert_chunk)
+				{
+					$db->manipulate("INSERT INTO lng_data(lang_key, module, identifier, value, remarks, local_change) VALUES "
+						. implode(',', $insert_chunk));
+				}
+
+				// replace the data in lng_modules
+				self::replaceLangModule($key, $module, $module_data);
+			}
+		}
+
+		// debug counts
+		ilUtil::sendFailure('deleted: '. $delete_count. ' inserted:'. $insert_count, true);
+	}
+
 
 	/**
 	* Replace language module array
@@ -599,10 +627,6 @@ class ilObjLanguage extends ilObject
 		$ilDB->manipulate(sprintf("DELETE FROM lng_modules WHERE lang_key = %s AND module = %s",
 			$ilDB->quote($a_key, "text"), $ilDB->quote($a_module, "text")));
 
-		/*$ilDB->manipulate(sprintf("INSERT INTO lng_modules (lang_key, module, lang_array) VALUES ".
-			"(%s,%s,%s)", $ilDB->quote($a_key, "text"),
-			$ilDB->quote($a_module, "text"),
-			$ilDB->quote(serialize($a_array), "clob")));*/
 		$ilDB->insert("lng_modules", array(
 			"lang_key" => array("text", $a_key),
 			"module" => array("text", $a_module),
@@ -617,8 +641,6 @@ class ilObjLanguage extends ilObject
 		$a_lang_key, $a_value, $a_local_change = null, $a_remarks = null)
 	{
 		global $ilDB;
-
-		ilGlobalCache::flushAll();
 
 		if (isset($a_remarks))
 		{
@@ -652,21 +674,6 @@ class ilObjLanguage extends ilObject
 			)
 		);
 		return true;
-		
-		/*
-		$ilDB->manipulate(sprintf("DELETE FROM lng_data WHERE module = %s AND ".
-			"identifier = %s AND lang_key = %s",
-			$ilDB->quote($a_module, "text"), $ilDB->quote($a_identifier, "text"),
-			$ilDB->quote($a_lang_key, "text")));
-
-
-		$ilDB->manipulate(sprintf("INSERT INTO lng_data " .
-			"(module, identifier, lang_key, value, local_change) " .
-			"VALUES (%s,%s,%s,%s,%s)",
-			$ilDB->quote($a_module, "text"), $ilDB->quote($a_identifier, "text"),
-			$ilDB->quote($a_lang_key, "text"), $ilDB->quote($a_value, "text"),
-			$ilDB->quote($a_local_change, "timestamp")));
-		*/
 	}
 	
 	/**
@@ -744,8 +751,8 @@ class ilObjLanguage extends ilObject
 	 * This function seeks for a special keyword where the language information starts.
 	 * if found it returns the plain language information, otherwise returns false
 	 *
-	 * @param	string	$content	expecting an ILIAS lang-file
-	 * @return	string	$content	content without header info OR false if no valid header was found
+	 * @param	array	$content	expecting an ILIAS lang-file
+	 * @return	array	$content	content without header info OR false if no valid header was found
 	 */
 	static function cut_header($content)
 	{
@@ -761,18 +768,6 @@ class ilObjLanguage extends ilObject
 	 	return false;
 	}
 
-	/**
-	 * optimizes the db-table langdata
-	 *
-	 * @return	boolean	true on success
-	 */
-	function optimizeData()
-	{
-		global $ilDB;
-		
-		$ilDB->optimizeTable("lng_data");
-		return true;
-	}
 
 	/**
 	 * Validate the logical structure of a lang file.
@@ -781,75 +776,81 @@ class ilObjLanguage extends ilObject
 	 * (module, identifier, value).
 	 *
 	 * @return	string	system message
-	 * @param   string  $scope  empty (global) or "local"
+	 * @param   string  $scope  "global" or "local"
 	 */
-	function check($scope = '')
+	function check($scope = 'global')
 	{
 		include_once("./Services/Utilities/classes/class.ilStr.php");
-		
-		if (!empty($scope))
+
+		switch ($scope)
 		{
-			if ($scope == 'global')
-			{
-				$scope = ''; 
-			}
-			else
-			{
-				$scopeExtension = '.' . $scope;
-			}
+			case 'local':
+				$extension = '.lang.local';
+				$path =  $this->cust_lang_path;
+				break;
+
+			case 'global':
+			default:
+				$scope = 'global';
+				$extension = '.lang';
+				$path = $this->lang_path;
+				break;
 		}
 
-		$path = $this->lang_path;
-		if ($scope == "local")
-		{
-			$path = $this->cust_lang_path;
-		}
-		
-		$tmpPath = getcwd();
-		
+		$filename = "ilias_" . $this->key . $extension;
+		$lang_file = $path . '/' . $filename;
+
 		// dir check
 		if (!is_dir($path))
 		{
-			$this->ilias->raiseError("Directory not found: ".$path, $this->ilias->error_obj->MESSAGE);
+			$this->ilias->raiseError("Directory not found: $path", $this->ilias->error_obj->MESSAGE);
 		}
-
-		chdir($path);
-
-		// compute lang-file name format
-		$lang_file = "ilias_" . $this->key . ".lang" . $scopeExtension;
 
 		// file check
 		if (!is_file($lang_file))
 		{
-			$this->ilias->raiseError("File not found: ".$lang_file,$this->ilias->error_obj->MESSAGE);
+			$this->ilias->raiseError("File not found: $filename", $this->ilias->error_obj->MESSAGE);
 		}
 
 		// header check
 		$content = $this->cut_header(file($lang_file));
 		if ($content === false)
 		{
-			$this->ilias->raiseError("Wrong Header in ".$lang_file,$this->ilias->error_obj->MESSAGE);
+			$this->ilias->raiseError("Wrong Header in $filename" ,$this->ilias->error_obj->MESSAGE);
 		}
 		
 		// check (counting) elements of each lang-entry
 		$line = 0;
+		$double_checker = array();
 		foreach ($content as $key => $val)
 		{
 			$separated = explode($this->separator, trim($val));
+			$module = $separated[0];
+			$identifier = $separated[1];
+			$value = $separated[2];
 			$num = count($separated);
 			++$n;
 			if ($num != 3)
 			{
 				$line = $n + 36;
-				$this->ilias->raiseError("Wrong parameter count in ".$lang_file." in line $line (Value: $val)! Please check your language file!",$this->ilias->error_obj->MESSAGE);
+				$this->ilias->raiseError("Wrong parameter count in $filename in line $line (Value: $val)! Please check your language file!",$this->ilias->error_obj->MESSAGE);
 			}
-			if (!ilStr::isUtf8($separated[2]))
+			if (!ilStr::isUtf8($value))
 			{
-				$this->ilias->raiseError("Non UTF8 character found in ".$lang_file." in line $line (Value: $val)! Please check your language file!",$this->ilias->error_obj->MESSAGE);
+				$this->ilias->raiseError("Non UTF8 character found in $filename in line $line (Value: $val)! Please check your language file!",$this->ilias->error_obj->MESSAGE);
 			}
-		}
 
-		chdir($tmpPath);
+			if ($scope == 'global')
+			{
+				// check for double entries in global file, be tolerant for local files
+				if ($double_checker[$module][$identifier])
+				{
+					$this->ilias->raiseError("Duplicate Language Entry in $filename in line $line (Value: $val)! Please check your language file!",$this->ilias->error_obj->MESSAGE);
+				}
+				$double_checker[$module][$identifier] = true;
+			}
+
+		}
 
 		// no error occured
 		return true;

@@ -274,35 +274,13 @@ class ilObjLanguageFolderGUI extends ilObjectGUI
 		foreach ($_POST["id"] as $id)
 		{
 			$langObj = new ilObjLanguage($id, false);
-
-			if ($langObj->isInstalled() == true)
+			if($langObj->uninstallChanges())
 			{
-				if ($langObj->check())
-				{
-					$langObj->flush('all');
-					$langObj->insert();
-					$langObj->setTitle($langObj->getKey());
-					$langObj->setDescription('installed');
-					$langObj->update();
-					$langObj->optimizeData();
-				}
 				$this->data .= "<br />". $lng->txt("meta_l_".$langObj->getKey());
 			}
-
 			unset($langObj);
 		}
 
-		$this->out();
-	}
-
-
-	/**
-	 * update all installed languages
-	 */
-	function refreshObject()
-	{
-		ilObjLanguage::refreshAll();
-		$this->data = $this->lng->txt("languages_updated");
 		$this->out();
 	}
 
@@ -317,19 +295,16 @@ class ilObjLanguageFolderGUI extends ilObjectGUI
 		$this->data = $this->lng->txt("selected_languages_updated");
 		$lng->loadLanguageModule("meta");
 
-		$refreshed = array();
 		foreach ($_POST["id"] as $id)
 		{
 			$langObj = new ilObjLanguage($id, false);
 			if ($langObj->refresh())
 			{
-				$refreshed[] = $langObj->getKey();
 				$this->data .= "<br />". $lng->txt("meta_l_".$langObj->getKey());
 			}
 			unset($langObj);
 		}
 
-		ilObjLanguage::refreshPlugins($refreshed);
 		$this->out();
 	}
 
