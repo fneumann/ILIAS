@@ -2864,6 +2864,9 @@ abstract class ilPageObject
 
 		$this->__beforeDelete();
 
+		// treat plugged content
+		$this->handleDeleteContent();
+
 		// delete style usages
 		$this->deleteStyleUsages(false);
 
