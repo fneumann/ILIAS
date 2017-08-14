@@ -15,11 +15,34 @@ class ilCOPageExporter extends ilXmlExporter
 	private $ds;
 	protected $config;
 
+	/** @var array  	names of page component plugins with their own exporter */
+	protected $plugins = array();
+
+	/**
+	 * List of dependencies for page component plugins with an own exporter
+	 * The list of ids in a dependency definition has the following format:
+	 * 		<parent_type>:<page_id>:<lang>:<pc_id>
+	 *
+	 * The implementation assumes the following call sequence of methods
+	 * to avoid a multiple instatiation of page objects
+	 * 1. init()
+	 * 2. getXmlRepresentation()
+	 * 3. getXmlExportTailDependencies()
+	 *
+	 *
+ 	 * @var array  	plugin_name => depencency definition
+	 */
+	protected $plugin_dependencies = array();
+
 	/**
 	 * Initialisation
 	 */
 	function init()
 	{
+		global $DIC;
+		/** @var ilPluginAdmin $ilPluginAdmin */
+		$ilPluginAdmin = $DIC['ilPluginAdmin'];
+
 		include_once("./Services/COPage/classes/class.ilCOPageDataSet.php");
 		$this->ds = new ilCOPageDataSet();
 		$this->ds->setExportDirectories($this->dir_relative, $this->dir_absolute);
@@ -28,6 +51,23 @@ class ilCOPageExporter extends ilXmlExporter
 		if ($this->config->getMasterLanguageOnly())
 		{
 			$this->ds->setMasterLanguageOnly(true);
+		}
+
+		// collect all page component plugins that have their own exporter
+		$this->plugins = array();
+		foreach(ilPluginAdmin::getActivePluginsForSlot(IL_COMP_SERVICE, "COPage", "pgcp") as $plugin_name)
+		{
+			if ($ilPluginAdmin->supportsExport(IL_COMP_SERVICE, "COPage", "pgcp", $plugin_name))
+			{
+				require_once('Customizing/global/plugins/Services/COPage/PageComponent/'
+					.$plugin_name.'/classes/class.il'.$plugin_name.'Exporter.php');
+				$this->plugins[] = $plugin_name;
+				$this->plugin_dependencies[] = array(
+					"component" => "Plugins/" . $plugin_name,
+					"entity" => "pgcp",
+					"ids" => array()
+				);
+			}
 		}
 	}
 
@@ -118,7 +158,13 @@ class ilCOPageExporter extends ilXmlExporter
 					"ids" => $pg_ids)
 				);
 		}
-		
+
+		if (!empty($this->plugin_dependencies))
+		{
+			// use numeric keys instead plugin names
+			return array_values($this->plugin_dependencies);
+		}
+
 		return array();
 	}
 
@@ -159,6 +205,7 @@ class ilCOPageExporter extends ilXmlExporter
 				$page_object = ilPageObjectFactory::getInstance($id[0], $id[1], 0, $l);
 				$page_object->buildDom();
 				$page_object->insertInstIntoIDs(IL_INST_ID);
+				$this->extractPluginDependencies($page_object);
 				$pxml = $page_object->getXMLFromDom(false, false, false, "", true);
 				$pxml = str_replace("&","&amp;", $pxml);
 				$xml.= '<PageObject Language="'.$l.'" Active="'.$page_object->getActive().'" ActivationStart="'.$page_object->getActivationStart().'" ActivationEnd="'.
@@ -213,6 +260,57 @@ class ilCOPageExporter extends ilXmlExporter
 		}
 	}
 
+	/**
+	 * Extract the plugin dependencies of the page components
+	 * The page XML is scanned for content of plugins with own exporters
+	 *
+	 * Called from getXmlRepresentation() for each handled page object
+	 * Extracted data is used by getXmlExportTailDependencies() afterwards
+	 *
+	 * @param ilPageObject $a_page
+	 */
+	protected function extractPluginDependencies($a_page)
+	{
+		require_once('Services/COPage/classes/class.ilPageComponentPluginExporter.php');
+
+		$domdoc = $a_page->getDomDoc();
+		$xpath = new DOMXPath($domdoc);
+		$nodes = $xpath->query("//PageContent[child::Plugged]");
+
+		/** @var DOMElement $pcnode */
+		foreach($nodes as $pcnode)
+		{
+			$pc_id = $pcnode->getAttribute('PCID');
+
+			$plnode = $pcnode->childNodes->item(0);
+			$plugin_name = $plnode->getAttribute('PluginName');
+			$plugin_version = $plnode->getAttribute('PluginVersion');
+
+			// dependency should be exported
+			if (in_array($plugin_name, $this->plugins))
+			{
+				// dependency id of the plugged page content
+				$id = $a_page->getParentType()
+					. ':' . $a_page->getId()
+					. ':' . $a_page->getLanguage()
+					. ':' . $pc_id;
+
+				$properties = array();
+				/** @var DOMElement $child */
+				foreach($plnode->childNodes as $child)
+				{
+					$properties[$child->getAttribute('Name')] = $child->nodeValue;
+				}
+
+				// statical provision of content to the exporter classes
+				ilPageComponentPluginExporter::setPCVersion($id, $plugin_version);
+				ilPageComponentPluginExporter::setPCProperties($id, $properties);
+
+				// each plugin exporter gets only the ids of its own content
+				$this->plugin_dependencies[$plugin_name]['ids'][] = $id;
+			}
+		}
+	}
 }
 
 ?>
