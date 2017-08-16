@@ -52,7 +52,7 @@ class ilCOPageExporter extends ilXmlExporter
 		}
 
 		// collect all page component plugins that have their own exporter
-		$this->plugins = array();
+		require_once('Services/COPage/classes/class.ilPageComponentPluginExporter.php');
 		foreach(ilPluginAdmin::getActivePluginsForSlot(IL_COMP_SERVICE, "COPage", "pgcp") as $plugin_name)
 		{
 			if ($ilPluginAdmin->supportsExport(IL_COMP_SERVICE, "COPage", "pgcp", $plugin_name))
@@ -203,7 +203,7 @@ class ilCOPageExporter extends ilXmlExporter
 				$page_object = ilPageObjectFactory::getInstance($id[0], $id[1], 0, $l);
 				$page_object->buildDom();
 				$page_object->insertInstIntoIDs(IL_INST_ID);
-				$this->extractPluginDependencies($page_object);
+				$this->extractPluginProperties($page_object);
 				$pxml = $page_object->getXMLFromDom(false, false, false, "", true);
 				$pxml = str_replace("&","&amp;", $pxml);
 				$xml.= '<PageObject Language="'.$l.'" Active="'.$page_object->getActive().'" ActivationStart="'.$page_object->getActivationStart().'" ActivationEnd="'.
@@ -259,19 +259,23 @@ class ilCOPageExporter extends ilXmlExporter
 	}
 
 	/**
-	 * Extract the dependencies of the plugged page contents
+	 * Extract the properties of the plugged page contents
 	 * The page XML is scanned for plugged contents with own exporters
 	 * Their ids are added as dependencies
 	 *
 	 * Called from getXmlRepresentation() for each handled page object
-	 * Extracted data is used by getXmlExportTailDependencies() afterwards
+	 * Extracted data is used by dependent exporters afterwards
 	 *
 	 * @param ilPageObject $a_page
 	 */
-	protected function extractPluginDependencies($a_page)
+	protected function extractPluginProperties($a_page)
 	{
-		require_once('Services/COPage/classes/class.ilPageComponentPluginExporter.php');
+		if (empty($this->plugin_dependencies))
+		{
+			return;
+		}
 
+		$a_page->buildDom();
 		$domdoc = $a_page->getDomDoc();
 		$xpath = new DOMXPath($domdoc);
 		$nodes = $xpath->query("//PageContent[child::Plugged]");
@@ -281,7 +285,6 @@ class ilCOPageExporter extends ilXmlExporter
 		{
 			// page content id (unique in the page)
 			$pc_id = $pcnode->getAttribute('PCID');
-
 			$plnode = $pcnode->childNodes->item(0);
 			$plugin_name = $plnode->getAttribute('PluginName');
 			$plugin_version = $plnode->getAttribute('PluginVersion');
