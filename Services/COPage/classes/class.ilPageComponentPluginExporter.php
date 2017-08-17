@@ -36,25 +36,25 @@ abstract class ilPageComponentPluginExporter extends ilXmlExporter
 	 * Set the properties of a plugged page content
 	 * This method is used by ilCOPageExporter to provide the properties
 	 *
-	 * @param string $id
-	 * @param array $properties
+	 * @param string $a_id
+	 * @param array $a_properties
 	 */
-	public static function setPCProperties($id, $properties)
+	public static function setPCProperties($a_id, $a_properties)
 	{
-		self::$pc_properties[$id] = $properties;
+		self::$pc_properties[$a_id] = $a_properties;
 	}
 
 	/**
 	 * Get the properties of a plugged page content
 	 *
-	 * @param string $id
+	 * @param string $a_id
 	 * @return mixed|null
 	 */
-	public static function getPCProperties($id)
+	public static function getPCProperties($a_id)
 	{
-		if (isset(self::$pc_properties[$id]))
+		if (isset(self::$pc_properties[$a_id]))
 		{
-			return self::$pc_properties[$id];
+			return self::$pc_properties[$a_id];
 		}
 		else
 		{
@@ -66,25 +66,25 @@ abstract class ilPageComponentPluginExporter extends ilXmlExporter
 	 * Set the version of a plugged page content
 	 * This method is used by ilCOPageExporter to provide the version
 	 *
-	 * @param string $id
-	 * @param string $version
+	 * @param string $a_id
+	 * @param string $a_version
 	 */
-	public static function setPCVersion($id, $version)
+	public static function setPCVersion($a_id, $a_version)
 	{
-		self::$pc_version[$id] = $version;
+		self::$pc_version[$a_id] = $a_version;
 	}
 
 	/**
 	 * Get the version of a plugged page content
 	 *
-	 * @param string $id
+	 * @param string $a_id
 	 * @return string|null
 	 */
-	public static function getPCVersion($id)
+	public static function getPCVersion($a_id)
 	{
-		if (isset(self::$pc_version[$id]))
+		if (isset(self::$pc_version[$a_id]))
 		{
-			return self::$pc_version[$id];
+			return self::$pc_version[$a_id];
 		}
 		else
 		{

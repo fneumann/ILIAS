@@ -185,7 +185,8 @@ class ilCOPageImporter extends ilXmlImporter
 							$il = $new_page->resolveIntLinks();
 							$this->log->debug("resolve internal link for page ".$id[0]."-".$id[1]."-".$id[2]);
 						}
-						if ($med || $fil || $il)
+						$plug = $this->replacePluginProperties($new_page);
+						if ($med || $fil || $il || $plug)
 						{
 							$new_page->update(false, true);
 						}
@@ -229,7 +230,7 @@ class ilCOPageImporter extends ilXmlImporter
 			// additional data will be imported
 			if (in_array($plugin_name, $this->importer_plugins))
 			{
-				// get the id of the imported plugged page content
+				// get the id of the mapped plugged page content
 				$id = $a_page->getParentType()
 					. ':' . $a_page->getId()
 					. ':' . $a_page->getLanguage()
@@ -258,18 +259,21 @@ class ilCOPageImporter extends ilXmlImporter
 	 * Extracted data is used by dependent plugin importers afterwards
 	 *
 	 * @param ilPageObject $a_page
+	 * @return bool	page is modified
 	 */
 	public function replacePluginProperties($a_page)
 	{
 		if (empty($this->importer_plugins))
 		{
-			return;
+			return false;
 		}
 
 		$a_page->buildDom();
 		$domdoc = $a_page->getDomDoc();
 		$xpath = new DOMXPath($domdoc);
 		$nodes = $xpath->query("//PageContent[child::Plugged]");
+
+		$modified = false;
 
 		/** @var DOMElement $pcnode */
 		foreach($nodes as $pcnode)
@@ -292,6 +296,7 @@ class ilCOPageImporter extends ilXmlImporter
 			if (isset($plugin_version))
 			{
 				$plnode->setAttribute('PluginVersion', $plugin_version);
+				$modified = true;
 			}
 
 			// update the properties if modified by the plugin importer
@@ -308,8 +313,11 @@ class ilCOPageImporter extends ilXmlImporter
 					$plnode->appendChild($child);
 					$child->setAttribute('Name',$name);
 				}
+				$modified = true;
 			}
 		}
+
+		return $modified;
 	}
 }
 

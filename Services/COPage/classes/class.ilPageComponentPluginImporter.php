@@ -36,25 +36,25 @@ abstract class ilPageComponentPluginImporter extends ilXmlImporter
 	 * Set the properties of a plugged page content
 	 * This method is used by ilCOPageExporter to provide the properties
 	 *
-	 * @param string $id
-	 * @param array $properties
+	 * @param string $a_id
+	 * @param array $a_properties
 	 */
-	public static function setPCProperties($id, $properties)
+	public static function setPCProperties($a_id, $a_properties)
 	{
-		self::$pc_properties[$id] = $properties;
+		self::$pc_properties[$a_id] = $a_properties;
 	}
 
 	/**
 	 * Get the properties of a plugged page content
 	 *
-	 * @param string $id
+	 * @param string $a_id
 	 * @return mixed|null
 	 */
-	public static function getPCProperties($id)
+	public static function getPCProperties($a_id)
 	{
-		if (isset(self::$pc_properties[$id]))
+		if (isset(self::$pc_properties[$a_id]))
 		{
-			return self::$pc_properties[$id];
+			return self::$pc_properties[$a_id];
 		}
 		else
 		{
@@ -66,25 +66,25 @@ abstract class ilPageComponentPluginImporter extends ilXmlImporter
 	 * Set the version of a plugged page content
 	 * This method is used by ilCOPageExporter to provide the version
 	 *
-	 * @param string $id
-	 * @param string $version
+	 * @param string $a_id
+	 * @param string $a_version
 	 */
-	public static function setPCVersion($id, $version)
+	public static function setPCVersion($a_id, $a_version)
 	{
-		self::$pc_version[$id] = $version;
+		self::$pc_version[$a_id] = $a_version;
 	}
 
 	/**
 	 * Get the version of a plugged page content
 	 *
-	 * @param string $id
+	 * @param string $a_id
 	 * @return string|null
 	 */
-	public static function getPCVersion($id)
+	public static function getPCVersion($a_id)
 	{
-		if (isset(self::$pc_version[$id]))
+		if (isset(self::$pc_version[$a_id]))
 		{
-			return self::$pc_version[$id];
+			return self::$pc_version[$a_id];
 		}
 		else
 		{
@@ -95,17 +95,16 @@ abstract class ilPageComponentPluginImporter extends ilXmlImporter
 
 	/**
 	 * Get the id of the mapped page content
+	 *
 	 * @param 	string				$a_id
 	 * @param	ilImportMapping		$a_mapping
 	 */
 	public static function getPCMapping($a_id, $a_mapping)
 	{
-		$parts = explode(':', $id);
-		$old_page_id = $parts[1];
+		$parts = explode(':', $a_id);
+		$old_page_id = $parts[0].':' .$parts[1];
 		$new_page_id = $a_mapping->getMapping("Services/COPage", 'pg', $old_page_id);
 
-		$parts[1] = $new_page_id;
-
-		return implode(':', $parts);
+		return $new_page_id . ':' . $parts[2] . ':' . $parts[3];
 	}
 }
