@@ -82,6 +82,8 @@ class ilAuthProviderSaml extends ilAuthProvider implements ilAuthProviderInterfa
      */
     public function doAuthentication(\ilAuthStatus $status)
     {
+        echo "<pre>"; var_dump($this->attributes); exit;
+
         if (!is_array($this->attributes) || 0 === count($this->attributes)) {
             $this->getLogger()->warning('Could not parse any attributes from SAML response.');
             $this->handleAuthenticationFail($status, 'err_wrong_login');
