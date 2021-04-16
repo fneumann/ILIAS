@@ -152,6 +152,16 @@ class ilExAssignmentEditorGUI
                 break;
             
             default:
+
+                // fau: exAssHook - forward to type gui (analogous to ilExSubmissionGUI)
+                if ($this->type_guis->isExAssTypeGUIClass($class)) {
+                    $this->setAssignmentHeader();
+                    $type_gui = $this->type_guis->getByClassName($class);
+                    $type_gui->setAssignment($this->assignment);
+                    return $ilCtrl->forwardCommand($type_gui);
+                }
+                // fau.
+
                 $this->{$cmd . "Object"}();
                 break;
         }
@@ -251,15 +261,35 @@ class ilExAssignmentEditorGUI
         $form->addItem($ti);
 
         // type
-        $ty = $this->getTypeDropdown();
-        $ty->setValue($a_type);
-        $ty->setDisabled(true);
-        $form->addItem($ty);
+        // fau: exAssHook - use hidden field for inactive type
+        if ($ass_type->isActive()) {
+            $ty = $this->getTypeDropdown();
+            $ty->setValue($a_type);
+            $ty->setDisabled(true);
+            $form->addItem($ty);
+        }
+        else {
+            $ty = new ilHiddenInputGUI('type');
+            $ty->setValue($a_type);
+            $form->addItem($ty);
+
+            $tyi = new ilNonEditableValueGUI($lng->txt("exc_assignment_type"));
+            $tyi->setValue($lng->txt("exc_type_inactive"));
+            $tyi->setInfo($lng->txt("exc_type_inactive_info"));
+            $form->addItem($tyi);
+        }
+        // fau.
 
         //
         // type specific start
         //
 
+        // fau: exAssHook - set assignment and exercise_id for type gui to allow form customization
+        if (isset($this->assignment)) {
+            $ass_type_gui->setAssignment($this->assignment);
+        }
+        $ass_type_gui->addEditFormCustomProperties($form, $this->exercise_id);
+        // fau.
         $ass_type_gui->addEditFormCustomProperties($form);
 
         //
@@ -1350,6 +1380,12 @@ class ilExAssignmentEditorGUI
             $lng->txt("exc_instruction_files"),
             $ilCtrl->getLinkTargetByClass(array("ilexassignmenteditorgui", "ilexassignmentfilesystemgui"), "listFiles")
         );
+
+        // fau: exAssHook - handle the editor tabs
+        $typeGUI = $this->type_guis->getById($this->assignment->getType());
+        $typeGUI->setAssignment($this->assignment);
+        $typeGUI->handleEditorTabs($this->tabs);
+        // fau.
     }
     
     public function downloadGlobalFeedbackFileObject()

@@ -18,6 +18,25 @@ class ilExAssignmentTypes
      */
     protected $service;
 
+    // fau: exAssHook - load the plugins
+
+    /** @var ilAssignmentHookPlugin[] */
+    protected $plugins;
+
+    /**
+     * Get the active plugins
+     */
+    protected function getActivePlugins() {
+        if (!isset($this->plugins)) {
+            $this->plugins = [];
+            $names = ilPluginAdmin::getActivePluginsForSlot(IL_COMP_MODULE, 'Exercise', 'exashk');
+            foreach ($names as $name) {
+                $this->plugins[] = ilPlugin::getPluginObject(IL_COMP_MODULE, 'Exercise','exashk', $name);
+            }
+        }
+        return $this->plugins;
+    }
+    // fau.
 
     /**
      * Constructor
@@ -49,14 +68,22 @@ class ilExAssignmentTypes
      */
     public function getAllIds()
     {
-        return [
+        // fau: exAssHook - add dummy plugin ids to the type ids
+        $ids = [
             ilExAssignment::TYPE_UPLOAD,
             ilExAssignment::TYPE_UPLOAD_TEAM,
             ilExAssignment::TYPE_TEXT,
             ilExAssignment::TYPE_BLOG,
             ilExAssignment::TYPE_PORTFOLIO,
-            ilExAssignment::TYPE_WIKI_TEAM
+            ilExAssignment::TYPE_WIKI_TEAM,
         ];
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            $ids = array_merge($ids, $plugin->getAssignmentTypeIds());
+        }
+
+        return $ids;
+        // fau.
     }
 
     /**
@@ -67,7 +94,10 @@ class ilExAssignmentTypes
      */
     public function isValidId($a_id)
     {
-        return in_array($a_id, $this->getAllIds());
+        // fau: exAssHook - allow type ids of inactive plugins
+        return true;
+        // return in_array($a_id, $this->getAllIds());
+        // fau.
     }
 
 
@@ -160,6 +190,16 @@ class ilExAssignmentTypes
             case ilExAssignment::TYPE_WIKI_TEAM:
                 return new ilExAssTypeWikiTeam();
                 break;
+
+            // fau: exAssHook - return the type of a plugin for the id
+            default:
+                foreach ($this->getActivePlugins() as $plugin) {
+                    if (in_array($a_id, $plugin->getAssignmentTypeIds())) {
+                        return $plugin->getAssignmentTypeById($a_id);
+                    }
+                }
+                return new ilExAssTypeInactive();
+            // fau.
         }
 
         // we should throw some exception here
