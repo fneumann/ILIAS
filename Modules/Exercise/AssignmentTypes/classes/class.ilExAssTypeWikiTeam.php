@@ -169,6 +169,17 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
         $target_ar->save();
     }
 
+    // fau: exAssHook - delete specific properties
+    /**
+     * @inheritdoc
+     */
+    public function deleteSpecificProperties(ilExAssignment $assignment)
+    {
+        $ar = new ilExAssWikiTeamAR($assignment->getId());
+        $ar->delete();
+    }
+    // fau.
+
     /**
      * @inheritdoc
      */

@@ -10,8 +10,16 @@
  */
 trait ilExAssignmentTypeGUIBase
 {
-    // fau: exAssHook - add assignment to trait (to allow form customization)
-    /** @var ilExAssignment */
+    /**
+     * fau: exAssHook - add the assignment as a property to trait
+     *
+     * This will be set for:
+     * - calling addEditFormCustomProperties() to allow better form customizations
+     * - calling handleEditorTabs() to customize tab visibility on assignment specific settings
+     * - forwarding commands to the type gui to do assignment related stuff
+     *
+     * @var ilExAssignment
+     */
     protected $assignment;
     // fau.
 
@@ -65,9 +73,10 @@ trait ilExAssignmentTypeGUIBase
         return $this->exercise;
     }
 
-    // fau: exAssHook - setter and getter for assignment
+    // fau: exAssHook - setter and getter for the assignment
     /**
      * @return ilExAssignment
+     * @see $assignment
      */
     public function getAssignment() : ilExAssignment
     {
@@ -76,6 +85,7 @@ trait ilExAssignmentTypeGUIBase
 
     /**
      * @param ilExAssignment $assignment
+     * @see $assignment
      */
     public function setAssignment(ilExAssignment $assignment)
     {

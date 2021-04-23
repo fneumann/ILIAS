@@ -85,6 +85,16 @@ class ilExAssTypeUploadTeam implements ilExAssignmentTypeInterface
     {
     }
 
+    // fau: exAssHook - delete specific properties
+    /**
+     * @inheritdoc
+     */
+    public function deleteSpecificProperties(ilExAssignment $assignment)
+    {
+    }
+    // fau.
+
+
     /**
      * @inheritdoc
      */
