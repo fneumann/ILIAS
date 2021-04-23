@@ -1146,6 +1146,11 @@ class ilExAssignment
         $ilDB = $this->db;
         
         $this->deleteGlobalFeedbackFile();
+
+        // fau: exAssHook - delete type specific properties
+        $ass_type = $this->getAssignmentType();
+        $ass_type->deleteSpecificProperties($this);
+        // fau.
         
         $ilDB->manipulate(
             "DELETE FROM exc_assignment WHERE " .

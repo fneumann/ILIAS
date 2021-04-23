@@ -288,7 +288,6 @@ class ilExAssignmentEditorGUI
         if (isset($this->assignment)) {
             $ass_type_gui->setAssignment($this->assignment);
         }
-        $ass_type_gui->addEditFormCustomProperties($form, $this->exercise_id);
         // fau.
         $ass_type_gui->addEditFormCustomProperties($form);
 
