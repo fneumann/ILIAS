@@ -36,6 +36,7 @@ interface ilExAssignmentTypeGUIInterface
      * Add overview content of submission to info screen object
      * @param ilInfoScreenGUI $a_info
      * @param ilExSubmission $a_submission
+     * @return string
      */
     public function getOverviewContent(ilInfoScreenGUI $a_info, ilExSubmission $a_submission);
 

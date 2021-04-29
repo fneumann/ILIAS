@@ -193,6 +193,6 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
      */
     public function getStringIdentifier() : string
     {
-        // TODO: Implement getSubmissionStringIdentifier() method.
+        return ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM;
     }
 }

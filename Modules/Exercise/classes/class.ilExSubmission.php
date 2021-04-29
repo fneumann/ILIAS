@@ -418,7 +418,7 @@ class ilExSubmission
         $storage = new ilFSStorageExercise($a_exc_id, $a_ass_id);
         $path = $storage->getAbsoluteSubmissionPath();
 
-        $ass_type = ilExAssignmentTypes::getInstance()->getById(ilExAssignment::lookupType($a_ass_id));
+        $ass_type = ilExAssignmentTypes::getInstance()->getByStringIdentifier(ilExAssignment::lookupTypeString($a_ass_id));
 
         $query = "SELECT * FROM exc_returned WHERE ass_id = " .
             $ilDB->quote($a_ass_id, "integer");
@@ -448,7 +448,7 @@ class ilExSubmission
         $storage = new ilFSStorageExercise($a_exc_id, $a_ass_id);
         $path = $storage->getAbsoluteSubmissionPath();
 
-        $ass_type = ilExAssignmentTypes::getInstance()->getById(ilExAssignment::lookupType($a_ass_id));
+        $ass_type = ilExAssignmentTypes::getInstance()->getByStringIdentifier(ilExAssignment::lookupTypeString($a_ass_id));
 
         $query = "SELECT * FROM exc_returned WHERE ass_id = " .
             $ilDB->quote($a_ass_id, "integer") .
@@ -766,9 +766,9 @@ class ilExSubmission
             if (sizeof($files) == 1) {
                 $file = array_pop($files);
 
-                switch ($this->assignment->getType()) {
-                    case ilExAssignment::TYPE_BLOG:
-                    case ilExAssignment::TYPE_PORTFOLIO:
+                switch ($this->assignment->getAssignmentType()->getStringIdentifier()) {
+                    case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
+                    case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
                         $file["filetitle"] = ilObjUser::_lookupName($file["user_id"]);
                         $file["filetitle"] = ilObject::_lookupTitle($this->assignment->getExerciseId()) . " - " .
                             $this->assignment->getTitle() . " - " .
@@ -778,7 +778,7 @@ class ilExSubmission
                         break;
 
                     // @todo: generalize
-                    case ilExAssignment::TYPE_WIKI_TEAM:
+                    case ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM:
                         $file["filetitle"] = ilObject::_lookupTitle($this->assignment->getExerciseId()) . " - " .
                             $this->assignment->getTitle() . " (Team " . $this->getTeam()->getId() . ").zip";
                         break;
@@ -1012,7 +1012,7 @@ class ilExSubmission
             return -1;
         }
         
-        $ass_type = $a_ass->getType();
+        $ass_type = $a_ass->getAssignmentType();
 
         // copy all member directories to the temporary folder
         // switch from id to member name and append the login if the member name is double
@@ -1112,8 +1112,8 @@ class ilExSubmission
                     touch($targetfile, filectime($sourcefile));
                     
                     // blogs and portfolios are stored as zip and have to be unzipped
-                    if ($ass_type == ilExAssignment::TYPE_PORTFOLIO ||
-                        $ass_type == ilExAssignment::TYPE_BLOG) {
+                    if ($ass_type instanceof ilExAssTypePortfolio ||
+                        $ass_type instanceof  ilExAssTypeBlog) {
                         ilUtil::unzip($targetfile);
                         unlink($targetfile);
                     }
@@ -1242,7 +1242,7 @@ class ilExSubmission
         // why? -> the access handling would fail, since the access depends e.g. on teams or even phase of the
         // assignment
         if ($this->getAssignment()->getAssignmentType()->getSubmissionType() == ilExSubmission::TYPE_REPO_OBJECT) {
-            $repos_ass_type_ids = $this->ass_types->getIdsForSubmissionType(ilExSubmission::TYPE_REPO_OBJECT);
+            $repos_ass_type_ids = $this->ass_types->getStringIdentifiersForSubmissionType(ilExSubmission::TYPE_REPO_OBJECT);
             $subs = $this->getSubmissionsForFilename($a_wsp_id, $repos_ass_type_ids);
             if (count($subs) > 0) {
                 throw new ilExerciseException("Repository object $a_wsp_id is already assigned to another assignment.");
@@ -1354,12 +1354,12 @@ class ilExSubmission
         $ilCtrl->setParameterByClass("ilexsubmissionfilegui", "member_id", $this->getUserId());
         
         // assignment type specific
-        switch ($this->assignment->getType()) {
-            case ilExAssignment::TYPE_UPLOAD_TEAM:
+        switch ($this->assignment->getAssignmentType()->getStringIdentifier()) {
+            case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD_TEAM:
                 // data is merged by team - see above
                 // fallthrough
                 
-            case ilExAssignment::TYPE_UPLOAD:
+            case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD:
                 $all_files = $this->getFiles();
                 $late_files = 0;
                 foreach ($all_files as $file) {
@@ -1402,7 +1402,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignment::TYPE_BLOG:
+            case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
                 $result["files"]["txt"] = $lng->txt("exc_blog_returned");
                 $blogs = $this->getFiles();
                 if ($blogs) {
@@ -1422,7 +1422,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignment::TYPE_PORTFOLIO:
+            case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
                 $result["files"]["txt"] = $lng->txt("exc_portfolio_returned");
                 $portfolios = $this->getFiles();
                 if ($portfolios) {
@@ -1442,7 +1442,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignment::TYPE_TEXT:
+            case ilExAssignmentTypes::STR_IDENTIFIER_TEXT:
                 $result["files"]["txt"] = $lng->txt("exc_files_returned_text");
                 $files = $this->getFiles();
                 if ($files) {
@@ -1462,7 +1462,7 @@ class ilExSubmission
                 }
                 break;
 
-            case ilExAssignment::TYPE_WIKI_TEAM:
+            case ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM:
                 $result["files"]["txt"] = $lng->txt("exc_wiki_returned");
                 $objs = $this->getFiles();
                 if ($objs) {
@@ -1492,10 +1492,10 @@ class ilExSubmission
      * Get assignment return entries for a filename
      *
      * @param string $a_filename
-     * @param int[] $a_assignment_types
+     * @param string[] $a_assignment_type_identifiers
      * @return array
      */
-    public static function getSubmissionsForFilename($a_filename, $a_assignment_types = array())
+    public static function getSubmissionsForFilename($a_filename, $a_assignment_type_identifiers = array())
     {
         global $DIC;
 
@@ -1505,8 +1505,8 @@ class ilExSubmission
             " ON (r.ass_id = a.id) " .
             " WHERE r.filetitle = " . $db->quote($a_filename, "string");
 
-        if (is_array($a_assignment_types) && count($a_assignment_types) > 0) {
-            $query .= " AND " . $db->in("a.type", $a_assignment_types, false, "integer");
+        if (is_array($a_assignment_type_identifiers) && count($a_assignment_type_identifiers) > 0) {
+            $query .= " AND " . $db->in("a.type_str", $a_assignment_type_identifiers, false, "text");
         }
 
         $set = $db->query($query);

@@ -224,8 +224,10 @@ class ilExSubmissionGUI
         switch ($par["mode"]) {
             // get overview content from ass type gui
             case self::MODE_OVERVIEW_CONTENT:
-                $type_gui = $this->type_guis->getById($par["submission"]->getAssignment()->getType());
-                return $type_gui->getOverviewContent($par["info"], $par["submission"]);
+                /** @var ilExSubmission $submission */
+                $submission = $par["submission"];
+                $type_gui = $this->type_guis->getByStringIdentifier($submission->getAssignment()->getAssignmentType()->getStringIdentifier());
+                return $type_gui->getOverviewContent($par["info"], $submission);
                 break;
         }
     }
@@ -250,7 +252,7 @@ class ilExSubmissionGUI
             $ilCtrl->getLinkTarget($this, "returnToParent")
         );
         
-        if ($this->assignment->getType() != ilExAssignment::TYPE_TEXT) {
+        if ($this->assignment->getAssignmentType() instanceof ilExAssTypeText) {
             $tab = new ilPublicSubmissionsTableGUI($this, "listPublicSubmissions", $this->assignment);
             $this->tpl->setContent($tab->getHTML());
         } else {

@@ -11,32 +11,48 @@
  */
 class ilExAssignmentTypes
 {
+    const STR_IDENTIFIER_UPLOAD = 'upld';
+    const STR_IDENTIFIER_UPLOAD_TEAM = 'uptm';
+    const STR_IDENTIFIER_BLOG = 'blog';
     const STR_IDENTIFIER_PORTFOLIO = "prtf";
+    const STR_IDENTIFIER_TEXT = 'text';
+    const STR_IDENTIFIER_WIKI_TEAM = 'wiki';
+
+    /**
+     * Relationship between string identifier and class name
+     * Used for instantiation
+     * @var string[]
+     */
+    protected $class_names = array(
+        self::STR_IDENTIFIER_UPLOAD => "ilExAssTypeUpload",
+        self::STR_IDENTIFIER_UPLOAD_TEAM => "ilExAssTypeUploadTeam",
+        self::STR_IDENTIFIER_BLOG => "ilExAssTypeBlog",
+        self::STR_IDENTIFIER_PORTFOLIO => "ilExAssTypePortfolio",
+        self::STR_IDENTIFIER_TEXT => "ilExAssTypeText",
+        self::STR_IDENTIFIER_WIKI_TEAM => "ilExAssTypeWikiTeam"
+    );
+
+    /**
+     * Relationship between old integer ids and class names
+     * Used in ilExerciseDataSet for import from former versions
+     * @var string[]
+     */
+    protected $legacy_id_types = array(
+        1 => "ilExAssTypeUpload",
+        2 => "ilExAssTypeBlog",
+        3 => "ilExAssTypePortfolio",
+        4 => "ilExAssTypeUploadTeam",
+        5 => "ilExAssTypeText",
+        6 => "ilExAssTypeWikiTeam"
+    );
 
     /**
      * @var ilExerciseInternalService
      */
     protected $service;
 
-    // fau: exAssHook - load the plugins
-
     /** @var ilAssignmentHookPlugin[] */
     protected $plugins;
-
-    /**
-     * Get the active plugins
-     */
-    protected function getActivePlugins() {
-        if (!isset($this->plugins)) {
-            $this->plugins = [];
-            $names = ilPluginAdmin::getActivePluginsForSlot(IL_COMP_MODULE, 'Exercise', 'exashk');
-            foreach ($names as $name) {
-                $this->plugins[] = ilPlugin::getPluginObject(IL_COMP_MODULE, 'Exercise','exashk', $name);
-            }
-        }
-        return $this->plugins;
-    }
-    // fau.
 
     /**
      * Constructor
@@ -61,72 +77,43 @@ class ilExAssignmentTypes
     }
 
     /**
-     * Get all ids
-     *
-     * @param
-     * @return
+     * Get the active plugins
+     * @return ilAssignmentHookPlugin[]
      */
-    public function getAllIds()
+    protected function getActivePlugins()
     {
-        // fau: exAssHook - add dummy plugin ids to the type ids
-        $ids = [
-            ilExAssignment::TYPE_UPLOAD,
-            ilExAssignment::TYPE_UPLOAD_TEAM,
-            ilExAssignment::TYPE_TEXT,
-            ilExAssignment::TYPE_BLOG,
-            ilExAssignment::TYPE_PORTFOLIO,
-            ilExAssignment::TYPE_WIKI_TEAM,
-        ];
-
-        foreach ($this->getActivePlugins() as $plugin) {
-            $ids = array_merge($ids, $plugin->getAssignmentTypeIds());
+        if (!isset($this->plugins)) {
+            $this->plugins = [];
+            $names = ilPluginAdmin::getActivePluginsForSlot(IL_COMP_MODULE, 'Exercise', 'exashk');
+            foreach ($names as $name) {
+                $this->plugins[] = ilPlugin::getPluginObject(IL_COMP_MODULE, 'Exercise','exashk', $name);
+            }
         }
-
-        return $ids;
-        // fau.
+        return $this->plugins;
     }
 
     /**
-     * Is valid id
-     *
-     * @param int $a_id
-     * @return bool
-     */
-    public function isValidId($a_id)
-    {
-        // fau: exAssHook - allow type ids of inactive plugins
-        return true;
-        // return in_array($a_id, $this->getAllIds());
-        // fau.
-    }
-
-
-
-    /**
-     * Get all
-     *
-     * @param
-     * @return
+     * Get all assignment types
+     * @return ilExAssignmentTypeInterface[] (indexed by identifier)
      */
     public function getAll()
     {
-        return array_column(
-            array_map(
-                function ($id) {
-                    return [$id, $this->getById($id)];
-                },
-                $this->getAllIds()
-            ),
-            1,
-            0
-        );
+        $types = [];
+        foreach ($this->class_names as $identifier => $name) {
+            $types[$identifier] = $this->getByStringIdentifier($identifier);
+        }
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            foreach ($plugin->getAssignmentTypeStringIdentifiers() as $identifier) {
+                $types[$identifier] = $plugin->getAssignmentTypeGuiByStringIdentifier($identifier);
+            }
+        }
+        return $types;
     }
     
     /**
-     * Get all activated
-     *
-     * @param
-     * @return
+     * Get all activated assignment types
+     * @return ilExAssignmentTypeInterface[]
      */
     public function getAllActivated()
     {
@@ -139,7 +126,7 @@ class ilExAssignmentTypes
      * Get all allowed types for an exercise for an exercise
      *
      * @param ilObjExercise $exc
-     * @return array
+     * @return ilExAssignmentTypeInterface[]
      */
     public function getAllAllowed(ilObjExercise $exc)
     {
@@ -155,70 +142,74 @@ class ilExAssignmentTypes
         return $active;
     }
 
+
     /**
-     * Get type object by id
+     * Get type object by string identifier
      *
-     * Centralized ID management is still an issue to be tackled in the future and caused
-     * by initial consts definition.
-     *
-     * @param int $a_id type id
+     * @param string $a_identifier
      * @return ilExAssignmentTypeInterface
      */
-    public function getById($a_id)
+    public function getByStringIdentifier(string $a_identifier)
     {
-        switch ($a_id) {
-            case ilExAssignment::TYPE_UPLOAD:
-                return new ilExAssTypeUpload();
-                break;
-
-            case ilExAssignment::TYPE_BLOG:
-                return new ilExAssTypeBlog();
-                break;
-
-            case ilExAssignment::TYPE_PORTFOLIO:
-                return new ilExAssTypePortfolio();
-                break;
-
-            case ilExAssignment::TYPE_UPLOAD_TEAM:
-                return new ilExAssTypeUploadTeam();
-                break;
-
-            case ilExAssignment::TYPE_TEXT:
-                return new ilExAssTypeText();
-                break;
-
-            case ilExAssignment::TYPE_WIKI_TEAM:
-                return new ilExAssTypeWikiTeam();
-                break;
-
-            // fau: exAssHook - return the type of a plugin for the id
-            default:
-                foreach ($this->getActivePlugins() as $plugin) {
-                    if (in_array($a_id, $plugin->getAssignmentTypeIds())) {
-                        return $plugin->getAssignmentTypeById($a_id);
-                    }
-                }
-                return new ilExAssTypeInactive();
-            // fau.
+        if (isset($this->class_names[$a_identifier])) {
+            $class = $this->class_names[$a_identifier];
+            return new $class();
         }
 
-        // we should throw some exception here
+        foreach ($this->getActivePlugins() as $plugin) {
+            foreach ($plugin->getAssignmentTypeStringIdentifiers() as $identifier) {
+                if ($identifier == $a_identifier) {
+                    return $plugin->getAssignmentTypeByStringIdentifier($identifier);
+                }
+            }
+        }
+
+        return new ilExAssTypeInactive();
     }
 
     /**
-     * Get assignment type IDs for given submission type
+     * Get the type string identifier for a given submission type
      *
      * @param int $a_submission_type
-     * @return array
+     * @return string[]
      */
-    public function getIdsForSubmissionType($a_submission_type)
+    public function getStringIdentifiersForSubmissionType($a_submission_type)
     {
-        $ids = [];
-        foreach ($this->getAllIds() as $id) {
-            if ($this->getById($id)->getSubmissionType() == $a_submission_type) {
-                $ids[] = $id;
+        $string_ids = [];
+        foreach ($this->getAll() as $identifier => $type) {
+            if ($type->getSubmissionType() == $a_submission_type) {
+                $string_ids[] = $identifier;
             }
         }
-        return $ids;
+        return $string_ids;
     }
+
+
+    /**
+     * Get type object by string identifier
+     *
+     * @param int $a_id
+     * @return ilExAssignmentTypeInterface
+     */
+    public function getByLegacyId(int $a_id)
+    {
+        if (isset($this->legacy_id_types[$a_id])) {
+            $class = $this->legacy_id_types[$a_id];
+            return new $class();
+        }
+
+        return new ilExAssTypeInactive();
+    }
+
+
+    /**
+     * @deprecated
+     */
+    private function getById($a_id) {}
+
+
+    /**
+     * @deprecated
+     */
+    private function getIdsForSubmissionType() {}
 }

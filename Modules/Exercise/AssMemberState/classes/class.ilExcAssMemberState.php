@@ -79,7 +79,7 @@ class ilExcAssMemberState
 
         // check team status
         $this->is_team = false;
-        if ($this->assignment->getType() == ilExAssignment::TYPE_UPLOAD_TEAM) {
+        if ($this->assignment->getAssignmentType() instanceof ilExAssTypeUploadTeam) {
             if ($a_team->getId()) {
                 $this->member_id = $a_team->getId();
                 $this->team_id = $a_team->getId();
@@ -111,7 +111,7 @@ class ilExcAssMemberState
         $member_id = $user->getId();
         $is_team = false;
         $team = null;
-        if ($ass->getType() == ilExAssignment::TYPE_UPLOAD_TEAM) {		// better move this to ilExcIndividualDeadline
+        if ($ass->getAssignmentType() instanceof ilExAssTypeUploadTeam) {		// better move this to ilExcIndividualDeadline
             $team = ilExAssignmentTeam::getInstanceByUserId($a_ass_id, $user->getId());
             if ($team->getId()) {
                 $member_id = $team->getId();

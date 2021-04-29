@@ -54,10 +54,6 @@ class ilExAssignment
      */
     const TYPE_WIKI_TEAM = 6;
 
-    // fau: exAssHook - dummy type id for inactive type
-    const TYPE_INACTIVE = -1;
-    // fau.
-
     const FEEDBACK_DATE_DEADLINE = 1;
     const FEEDBACK_DATE_SUBMISSION = 2;
     const FEEDBACK_DATE_CUSTOM = 3;
@@ -77,7 +73,6 @@ class ilExAssignment
     
     protected $id;
     protected $exc_id;
-    protected $type;
     protected $start_time;
     protected $deadline;
     protected $deadline2;
@@ -140,7 +135,7 @@ class ilExAssignment
         $this->app_event_handler = $DIC["ilAppEventHandler"];
         $this->types = ilExAssignmentTypes::getInstance();
 
-        $this->setType(self::TYPE_UPLOAD);
+        $this->setAssignmentType(new ilExAssTypeUpload());
         $this->setFeedbackDate(self::FEEDBACK_DATE_DEADLINE);
 
         $this->log = ilLoggerFactory::getLogger("exc");
@@ -517,29 +512,10 @@ class ilExAssignment
         return $this->order_nr;
     }
     
-    /**
-     * Set type
-     *
-     * @param int $a_value
-     * @deprecated this will most probably become an non public function in the future (or become obsolete)
-     */
-    public function setType($a_value)
-    {
-        if ($this->isValidType($a_value)) {
-            $this->type = (int) $a_value;
-
-            $this->ass_type = $this->types->getById($a_value);
-
-            if ($this->ass_type->usesTeams()) {
-                $this->setPeerReview(false);
-            }
-        }
-    }
 
     /**
      * Get assignment type
      *
-     * @param
      * @return null|ilExAssignmentTypeInterface
      */
     public function getAssignmentType()
@@ -547,29 +523,20 @@ class ilExAssignment
         return $this->ass_type;
     }
 
-    
+
     /**
-     * Get type
-     *
-     * @return int
-     * @deprecated this will most probably become an non public function in the future (or become obsolete)
+     * Set the assignment type
+     * @param ilExAssignmentTypeInterface $a_type
      */
-    public function getType()
+    public function setAssignmentType(ilExAssignmentTypeInterface $a_type)
     {
-        return $this->type;
+        $this->ass_type = $a_type;
+
+        if ($this->ass_type->usesTeams()) {
+            $this->setPeerReview(false);
+        }
     }
-    
-    /**
-     * Is given type valid?
-     *
-     * @param int $a_value
-     * @return bool
-     */
-    public function isValidType($a_value)
-    {
-        return $this->types->isValidId($a_value);
-    }
-    
+
     /**
      * Toggle peer review
      *
@@ -1001,7 +968,7 @@ class ilExAssignment
         $this->setStartTime($a_set["start_time"]);
         $this->setOrderNr($a_set["order_nr"]);
         $this->setMandatory($a_set["mandatory"]);
-        $this->setType($a_set["type"]);
+        $this->setAssignmentType($this->types->getByStringIdentifier($a_set["type_str"]));
         $this->setPeerReview($a_set["peer"]);
         $this->setPeerReviewMin($a_set["peer_min"]);
         $this->setPeerReviewSimpleUnlock($a_set["peer_unlock"]);
@@ -1052,7 +1019,7 @@ class ilExAssignment
             "start_time" => array("integer", $this->getStartTime()),
             "order_nr" => array("integer", $this->getOrderNr()),
             "mandatory" => array("integer", $this->getMandatory()),
-            "type" => array("integer", $this->getType()),
+            "type_str" => array("integer", $this->getAssignmentType()->getStringIdentifier()),
             "peer" => array("integer", $this->getPeerReview()),
             "peer_min" => array("integer", $this->getPeerReviewMin()),
             "peer_unlock" => array("integer", $this->getPeerReviewSimpleUnlock()),
@@ -1103,7 +1070,7 @@ class ilExAssignment
             "start_time" => array("integer", $this->getStartTime()),
             "order_nr" => array("integer", $this->getOrderNr()),
             "mandatory" => array("integer", $this->getMandatory()),
-            "type" => array("integer", $this->getType()),
+            "type_str" => array("integer", $this->getAssignmentType()->getStringIdentifier()),
             "peer" => array("integer", $this->getPeerReview()),
             "peer_min" => array("integer", $this->getPeerReviewMin()),
             "peer_unlock" => array("integer", $this->getPeerReviewSimpleUnlock()),
@@ -1194,7 +1161,7 @@ class ilExAssignment
                 "start_time" => $rec["start_time"],
                 "order_val" => $order_val,
                 "mandatory" => $rec["mandatory"],
-                "type" => $rec["type"],
+                "type_str" => $rec["type_str"],
                 "peer" => $rec["peer"],
                 "peer_min" => $rec["peer_min"],
                 "peer_dl" => $rec["peer_dl"],
@@ -1231,7 +1198,7 @@ class ilExAssignment
             $new_ass->setMandatory($d->getMandatory());
             $new_ass->setOrderNr($d->getOrderNr());
             $new_ass->setStartTime($d->getStartTime());
-            $new_ass->setType($d->getType());
+            $new_ass->setAssignmentType($d->getAssignmentType());
             $new_ass->setPeerReview($d->getPeerReview());
             $new_ass->setPeerReviewMin($d->getPeerReviewMin());
             $new_ass->setPeerReviewDeadline($d->getPeerReviewDeadline());
@@ -1421,11 +1388,12 @@ class ilExAssignment
     }
     
     /**
-     * Lookup type
+     * Lookup type string
+     * @return string
      */
-    public static function lookupType($a_id)
+    public static function lookupTypeString($a_id)
     {
-        return self::lookup($a_id, "type");
+        return self::lookup($a_id, "type_str");
     }
     
     /**
@@ -2584,4 +2552,27 @@ class ilExAssignment
         }
         return $calculated_deadlines;
     }
+
+
+
+    /**
+     * @deprecated
+     */
+    private function getType() {}
+
+    /**
+     * @deprecated
+     */
+    private function isValidType(){}
+
+    /**
+     * @deprecated
+     */
+    private function setType() {}
+
+    /**
+     * @deprecated
+     */
+    private static function lookupType() {}
+
 }

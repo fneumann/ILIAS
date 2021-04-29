@@ -39,7 +39,7 @@ class ilExSubmissionTextGUI extends ilExSubmissionBaseGUI
         $ilCtrl = $this->ctrl;
         
         if (!$this->assignment ||
-            $this->assignment->getType() != ilExAssignment::TYPE_TEXT ||
+            !$this->assignment->getAssignmentType() instanceof ilExAssTypeText ||
             !$this->submission->canView()) {
             return;
         }

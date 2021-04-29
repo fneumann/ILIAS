@@ -1368,7 +1368,7 @@ class ilWikiPageGUI extends ilPageObjectGUI
 
         include_once("./Modules/Exercise/AssignmentTypes/classes/class.ilExAssignmentTypes.php");
         include_once("./Modules/Exercise/classes/class.ilExAssignment.php");
-        $wiki_ass = ilExAssignmentTypes::getInstance()->getById(ilExAssignment::TYPE_WIKI_TEAM);
+        $wiki_ass = ilExAssignmentTypes::getInstance()->getByStringIdentifier(ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM);
 
         $ass_id = (int) $_GET["ass"];
         $wiki_ass->submitWiki($ass_id, $this->user->getId(), $this->getWikiRefId());

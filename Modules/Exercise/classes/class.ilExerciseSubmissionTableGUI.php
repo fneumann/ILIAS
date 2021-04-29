@@ -77,7 +77,7 @@ abstract class ilExerciseSubmissionTableGUI extends ilTable2GUI
 
         $this->ass_types = ilExAssignmentTypes::getInstance();
 
-        $this->ass_type = $this->ass_types->getById(ilExAssignment::lookupType($a_item_id));
+        $this->ass_type = $this->ass_types->getByStringIdentifier(ilExAssignment::lookupTypeString($a_item_id));
 
         $this->initMode($a_item_id);
         
@@ -119,7 +119,7 @@ abstract class ilExerciseSubmissionTableGUI extends ilTable2GUI
         $this->addMultiCommand("saveStatusSelected", $this->lng->txt("exc_save_selected"));
 
         // TODO get rid of the constant from ilExAssignment. Get this value from ilExAssignmentTypes
-        if ($this->mode == self::MODE_BY_ASSIGNMENT && $this->ass->getType() == ilExAssignment::TYPE_TEXT) {
+        if ($this->mode == self::MODE_BY_ASSIGNMENT &&  $this->ass_type instanceof ilExAssTypeText) {
             $this->addMultiCommand("compareTextAssignments", $this->lng->txt("exc_compare_submissions"));
         }
             

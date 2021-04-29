@@ -54,8 +54,14 @@ class ilExerciseManagementGUI
      */
     protected $toolbar;
 
-    protected $exercise; // [ilObjExercise]
-    protected $assignment; // [ilExAssignment]
+    /**
+     * @var ilObjExercise|null
+     */
+    protected $exercise;
+    /**
+     * @var ilExAssignment
+     */
+    protected $assignment;
 
     /**
      * @var \ILIAS\BackgroundTasks\Task\TaskFactory
@@ -395,7 +401,7 @@ class ilExerciseManagementGUI
 
             $ilCtrl->setParameter($this, "ass_id", $this->assignment->getId());
 
-            if ($this->assignment->getType() == ilExAssignment::TYPE_UPLOAD_TEAM) {
+            if ($this->assignment->getAssignmentType() instanceof ilExAssTypeUploadTeam) {
                 if (ilExAssignmentTeam::getAdoptableGroups($this->exercise->getRefId())) {
                     $ilToolbar->addButton(
                         $this->lng->txt("exc_adopt_group_teams"),
@@ -419,9 +425,9 @@ class ilExerciseManagementGUI
             $submission_repository = new ilExcSubmissionRepository($this->db);
 
             if ($submission_repository->hasSubmissions($this->assignment->getId())) {
-                $ass_type = $this->assignment->getType();
+                $ass_type = $this->assignment->getAssignmentType();
                 //todo change addFormButton for addButtonInstance
-                if ($ass_type == ilExAssignment::TYPE_TEXT) {
+                if ($ass_type instanceof ilExAssTypeText) {
                     $ilToolbar->addFormButton($lng->txt("exc_list_text_assignment"), "listTextAssignment");
                 }
                 $ilToolbar->addFormButton($lng->txt("download_all_returned_files"), "downloadSubmissions");

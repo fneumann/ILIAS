@@ -7,11 +7,6 @@
 abstract class ilAssignmentHookPlugin extends ilPlugin
 {
     /**
-     * @var ilExAssignmentTypeInterface[]   indexed by type id (integer)
-     */
-    private $assignment_types;
-
-    /**
      * @inheritDoc
      */
     final public function getComponentType() {
@@ -47,29 +42,29 @@ abstract class ilAssignmentHookPlugin extends ilPlugin
     }
 
     /**
-     * Get the ids of the available assignment types
-     * Currently plugin authors have to take care of unique type ids
-     * @return integer[]
+     * Get the string identifiers of the available assignment types
+     * plugin authors have to take care of unique string identifiers
+     * @return string[]
      */
-    abstract function getAssignmentTypeIds();
+    abstract function getAssignmentTypeStringIdentifiers();
 
     /**
-     * Get an assignment type by its id
-     * @param integer $a_id
+     * Get an assignment type by its string identifier
+     * @param string $a_identifier
      * @return ilExAssignmentTypeInterface
      */
-    abstract function getAssignmentTypeById($a_id);
+    abstract function getAssignmentTypeByStringIdentifier(string $a_identifier);
 
     /**
-     * Get an assignment type GUI by its id
-     * @param integer $a_id
+     * Get an assignment type GUI by its string identifier
+     * @param string $a_identifier
      * @return ilExAssignmentTypeGUIInterface
      */
-    abstract function getAssignmentTypeGuiById($a_id);
+    abstract function getAssignmentTypeGuiByStringIdentifier(string $a_identifier);
 
     /**
      * Get the class names of the assignment type GUIs
-     * @return string[] (indexed by type id)
+     * @return string[] (indexed by string identifier)
      */
     abstract function getAssignmentTypeGuiClassNames();
 }

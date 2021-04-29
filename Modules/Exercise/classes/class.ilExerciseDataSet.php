@@ -26,7 +26,7 @@ class ilExerciseDataSet extends ilDataSet
      */
     public function getSupportedVersions()
     {
-        return array("4.1.0", "4.4.0", "5.0.0", "5.1.0", "5.2.0", "5.3.0");
+        return array("4.1.0", "4.4.0", "5.0.0", "5.1.0", "5.2.0", "5.3.0", "8.0");
     }
     
     /**
@@ -219,6 +219,46 @@ class ilExerciseDataSet extends ilDataSet
                         ,"RelativeDeadline" => "integer"
                         ,"RelDeadlineLastSubm" => "integer"
                     );
+
+                case "8.0":
+                    return array(
+                        "Id" => "integer",
+                        "ExerciseId" => "integer",
+                        "TypeStr" => "string",
+                        "Deadline" => "integer",
+                        "Deadline2" => "integer",
+                        "Instruction" => "text",
+                        "Title" => "text",
+                        "Mandatory" => "integer",
+                        "OrderNr" => "integer",
+                        "TeamTutor" => "integer",
+                        "MaxFile" => "integer",
+                        "Dir" => "directory",
+                        //web data directory
+                        "WebDataDir" => "directory"
+                        // peer
+                        ,"Peer" => "integer"
+                        ,"PeerMin" => "integer"
+                        ,"PeerDeadline" => "integer"
+                        ,"PeerFile" => "integer"
+                        ,"PeerPersonal" => "integer"
+                        ,"PeerChar" => "integer"
+                        ,"PeerUnlock" => "integer"
+                        ,"PeerValid" => "integer"
+                        ,"PeerText" => "integer"
+                        ,"PeerRating" => "integer"
+                        ,"PeerCritCat" => "integer"
+                            // global feedback
+                        ,"FeedbackFile" => "integer"
+                        ,"FeedbackCron" => "integer"
+                        ,"FeedbackDate" => "integer"
+                        ,"FeedbackDir" => "directory"
+                        ,"FbDateCustom" => "integer"
+                        ,"DeadlineMode" => "integer"
+                        ,"RelativeDeadline" => "integer"
+                        ,"RelDeadlineLastSubm" => "integer"
+                    );
+
             }
         }
         
@@ -364,6 +404,15 @@ class ilExerciseDataSet extends ilDataSet
                         " FROM exc_assignment" .
                         " WHERE " . $ilDB->in("exc_id", $a_ids, false, "integer"));
                     break;
+                case "8.0":
+                    $this->getDirectDataFromQuery("SELECT id, exc_id exercise_id, type_str, time_stamp deadline, deadline2," .
+                        " instruction, title, start_time, mandatory, order_nr, team_tutor, max_file, peer, peer_min," .
+                        " peer_dl peer_deadline, peer_file, peer_prsl peer_personal, peer_char, peer_unlock, peer_valid," .
+                        " peer_text, peer_rating, peer_crit_cat, fb_file feedback_file, fb_cron feedback_cron, fb_date feedback_date," .
+                        " fb_date_custom, rel_deadline_last_subm, deadline_mode, relative_deadline" .
+                        " FROM exc_assignment" .
+                        " WHERE " . $ilDB->in("exc_id", $a_ids, false, "integer"));
+                    break;
             }
         }
         
@@ -502,6 +551,7 @@ class ilExerciseDataSet extends ilDataSet
             case "exc_assignment":
                 switch ($a_version) {
                     case "5.3.0":
+                    case "8.0":
                         return array(
                             "exc_ass_file_order" => array("ids" => $a_rec["Id"]),
                             "exc_ass_reminders" => array("ids" => $a_rec["Id"])
@@ -586,7 +636,9 @@ class ilExerciseDataSet extends ilDataSet
                     $ass->setOrderNr($a_rec["OrderNr"]);
                     
                     // 4.2
-                    $ass->setType($a_rec["Type"]);
+                    if ($a_rec["Type"]) {
+                        $ass->setAssignmentType(ilExAssignmentTypes::getInstance()->getByLegacyId($a_rec["Type"]));
+                    }
                     
                     // 4.4
                     $ass->setPeerReview($a_rec["Peer"]);
@@ -618,6 +670,11 @@ class ilExerciseDataSet extends ilDataSet
                     $ass->setRelDeadlineLastSubmission($a_rec["RelDeadlineLastSubm"]);
                     $ass->setDeadlineMode($a_rec["DeadlineMode"]);
                     $ass->setRelativeDeadline($a_rec["RelativeDeadline"]);
+
+                    // 8.0
+                    if ($a_rec['TypeStr']) {
+                        $ass->setAssignmentType(ilExAssignmentTypes::getInstance()->getByStringIdentifier($a_rec['TypeStr']));
+                    }
 
                     // criteria catalogue
                     if ($a_rec["PeerCritCat"]) {
@@ -656,7 +713,7 @@ class ilExerciseDataSet extends ilDataSet
                     }
 
                     // 5.4 Team wiki assignment AR
-                    if ($a_rec["Type"] == ilExAssignment::TYPE_WIKI_TEAM) {
+                    if ($ass->getAssignmentType() instanceof ilExAssTypeWikiTeam) {
                         $ar = new ilExAssWikiTeamAR();
                         $ar->setId($ass->getId());
                         $ar->setTemplateRefId(0);

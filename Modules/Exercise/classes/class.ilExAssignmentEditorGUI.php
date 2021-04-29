@@ -233,7 +233,7 @@ class ilExAssignmentEditorGUI
     /**
     * Init assignment form.
     *
-    * @param int $a_type
+    * @param string $a_type
     * @param int $a_mode "create"/"edit"
     */
     protected function initAssignmentForm($a_type, $a_mode = "create")
@@ -241,8 +241,8 @@ class ilExAssignmentEditorGUI
         $lng = $this->lng;
         $ilCtrl = $this->ctrl;
 
-        $ass_type = $this->types->getById($a_type);
-        $ass_type_gui = $this->type_guis->getById($a_type);
+        $ass_type = $this->types->getByStringIdentifier($a_type);
+        $ass_type_gui = $this->type_guis->getByStringIdentifier($a_type);
         $ilCtrl->setParameter($this, "ass_type", $a_type);
         
         $lng->loadLanguageModule("form");
@@ -261,7 +261,6 @@ class ilExAssignmentEditorGUI
         $form->addItem($ti);
 
         // type
-        // fau: exAssHook - use hidden field for inactive type
         if ($ass_type->isActive()) {
             $ty = $this->getTypeDropdown();
             $ty->setValue($a_type);
@@ -278,7 +277,6 @@ class ilExAssignmentEditorGUI
             $tyi->setInfo($lng->txt("exc_type_inactive_info"));
             $form->addItem($tyi);
         }
-        // fau.
 
         //
         // type specific start
@@ -663,7 +661,7 @@ class ilExAssignmentEditorGUI
         
         if ($valid) {
             $type = $a_form->getInput("type");
-            $ass_type = $this->types->getById($type);
+            $ass_type = $this->types->getByStringIdentifier($type);
 
             // dates
             
@@ -1025,9 +1023,9 @@ class ilExAssignmentEditorGUI
         if (is_array($input)) {
             $ass = new ilExAssignment();
             $ass->setExerciseId($this->exercise_id);
-            $ass->setType($input["type"]);
-            $ass_type = $ass->getAssignmentType();
-            $ass_type_gui = $this->type_guis->getById($ass->getType());
+            $ass_type = ilExAssignmentTypes::getInstance()->getByStringIdentifier($input["type_str"]);
+            $ass->setAssignmentType($ass_type);
+            $ass_type_gui = $this->type_guis->getByStringIdentifier($ass_type->getStringIdentifier());
 
             $this->importFormToAssignment($ass, $input);
 
@@ -1059,7 +1057,7 @@ class ilExAssignmentEditorGUI
         $this->setAssignmentHeader();
         $ilTabs->activateTab("ass_settings");
         
-        $form = $this->initAssignmentForm($this->assignment->getType(), "edit");
+        $form = $this->initAssignmentForm($this->assignment->getAssignmentType()->getStringIdentifier(), "edit");
         $this->getAssignmentValues($form);
         $tpl->setContent($form->getHTML());
     }
@@ -1072,10 +1070,10 @@ class ilExAssignmentEditorGUI
         $lng = $this->lng;
         $ilCtrl = $this->ctrl;
 
-        $ass_type_gui = $this->type_guis->getById($this->assignment->getType());
+        $ass_type_gui = $this->type_guis->getByStringIdentifier($this->assignment->getAssignmentType()->getStringIdentifier());
 
         $values = array();
-        $values["type"] = $this->assignment->getType();
+        $values["type_str"] = $this->assignment->getAssignmentType()->getStringIdentifier();
         $values["title"] = $this->assignment->getTitle();
         $values["mandatory"] = $this->assignment->getMandatory();
         $values["instruction"] = $this->assignment->getInstruction();
@@ -1220,12 +1218,13 @@ class ilExAssignmentEditorGUI
         $lng = $this->lng;
         $ilCtrl = $this->ctrl;
         $ilTabs = $this->tabs;
-        
-        $form = $this->initAssignmentForm($this->assignment->getType(), "edit");
+
+        $ass_type = $this->assignment->getAssignmentType();
+
+        $form = $this->initAssignmentForm($ass_type->getStringIdentifier(), "edit");
         $input = $this->processForm($form);
 
-        $ass_type = $this->assignment->getType();
-        $ass_type_gui = $this->type_guis->getById($ass_type);
+        $ass_type_gui = $this->type_guis->getByStringIdentifier($ass_type->getStringIdentifier());
 
         if (is_array($input)) {
             $old_deadline = $this->assignment->getDeadline();
@@ -1381,7 +1380,7 @@ class ilExAssignmentEditorGUI
         );
 
         // fau: exAssHook - handle the editor tabs
-        $typeGUI = $this->type_guis->getById($this->assignment->getType());
+        $typeGUI = $this->type_guis->getByStringIdentifier($this->assignment->getAssignmentType()->getStringIdentifier());
         $typeGUI->setAssignment($this->assignment);
         $typeGUI->handleEditorTabs($this->tabs);
         // fau.

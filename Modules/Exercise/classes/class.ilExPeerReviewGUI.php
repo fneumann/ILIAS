@@ -516,7 +516,7 @@ class ilExPeerReviewGUI
     
     protected function getSubmissionContent(ilExSubmission $a_submission)
     {
-        if ($this->ass->getType() != ilExAssignment::TYPE_TEXT) {
+        if (!($this->ass->getAssignmentType() instanceof ilExAssTypeText)) {
             return;
         }
         

@@ -89,7 +89,7 @@ class ilAssignmentsTableGUI extends ilTable2GUI
                 $peer_reviews = $peer_review->validatePeerReviewGroups();
                 $data[$idx]["peer_invalid"] = $peer_reviews["invalid"];
             }
-            $data[$idx]["ass_type"] = $this->types->getById($row["type"]);
+            $data[$idx]["ass_type"] = $this->types->getByStringIdentifier($row["type_str"]);
             $data[$idx]["type"] = $data[$idx]["ass_type"]->getTitle();
         }
         

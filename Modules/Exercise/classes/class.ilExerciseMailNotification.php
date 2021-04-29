@@ -126,7 +126,7 @@ class ilExerciseMailNotification extends ilMailNotification
                         $this->createPermanentLink()
                     ));
 
-                    if (ilExAssignment::lookupType($this->getAssignmentId()) == ilExAssignment::TYPE_UPLOAD) {
+                    if (ilExAssignment::lookupTypeString($this->getAssignmentId()) == ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD) {
                         $this->appendBody("\n\n");
 
                         //new files uploaded

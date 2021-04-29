@@ -10,35 +10,18 @@
  */
 class ilExAssignmentTypesGUI
 {
-    // fau: exAssHook - load the plugins
+    protected $class_names = array(
+        ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD => "ilExAssTypeUploadGUI",
+        ilExAssignmentTypes::STR_IDENTIFIER_BLOG => "ilExAssTypeBlogGUI",
+        ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO => "ilExAssTypePortfolioGUI",
+        ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD_TEAM => "ilExAssTypeUploadTeamGUI",
+        ilExAssignmentTypes::STR_IDENTIFIER_TEXT => "ilExAssTypeTextGUI",
+        ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM => "ilExAssTypeWikiTeamGUI"
+    );
 
     /** @var ilAssignmentHookPlugin[] */
     protected $plugins;
 
-    /**
-     * Get the active plugins
-     */
-    protected function getActivePlugins() {
-        if (!isset($this->plugins)) {
-            $this->plugins = [];
-            $names = ilPluginAdmin::getActivePluginsForSlot(IL_COMP_MODULE, 'Exercise', 'exashk');
-            foreach ($names as $name) {
-                $this->plugins[] = ilPlugin::getPluginObject(IL_COMP_MODULE, 'Exercise','exashk', $name);
-            }
-        }
-
-        return $this->plugins;
-    }
-    // fau.
-
-    protected $class_names = array(
-        ilExAssignment::TYPE_UPLOAD => "ilExAssTypeUploadGUI",
-        ilExAssignment::TYPE_BLOG => "ilExAssTypeBlogGUI",
-        ilExAssignment::TYPE_PORTFOLIO => "ilExAssTypePortfolioGUI",
-        ilExAssignment::TYPE_UPLOAD_TEAM => "ilExAssTypeUploadTeamGUI",
-        ilExAssignment::TYPE_TEXT => "ilExAssTypeTextGUI",
-        ilExAssignment::TYPE_WIKI_TEAM => "ilExAssTypeWikiTeamGUI"
-    );
 
     /**
      * Constructor
@@ -58,69 +41,67 @@ class ilExAssignmentTypesGUI
     }
 
     /**
-     * Get type gui object by id
-     *
-     * Centralized ID management is still an issue to be tackled in the future and caused
-     * by initial consts definition.
-     *
-     * @param int $a_id type id
-     * @return ilExAssignmentTypeGUIInterface
+     * Get the active plugins
      */
-    public function getById($a_id)
-    {
-        // @todo: check id
-
-        switch ($a_id) {
-            case ilExAssignment::TYPE_UPLOAD:
-                return new ilExAssTypeUploadGUI();
-                break;
-
-            case ilExAssignment::TYPE_BLOG:
-                return new ilExAssTypeBlogGUI();
-                break;
-
-            case ilExAssignment::TYPE_PORTFOLIO:
-                return new ilExAssTypePortfolioGUI();
-                break;
-
-            case ilExAssignment::TYPE_UPLOAD_TEAM:
-                return new ilExAssTypeUploadTeamGUI();
-                break;
-
-            case ilExAssignment::TYPE_TEXT:
-                return new ilExAssTypeTextGUI();
-                break;
-
-            case ilExAssignment::TYPE_WIKI_TEAM:
-                return new ilExAssTypeWikiTeamGUI();
-                break;
-
-            // fau: exAssHook - return the type of a plugin for the id
-            default:
-                foreach ($this->getActivePlugins() as $plugin) {
-                    if (in_array($a_id, $plugin->getAssignmentTypeIds())) {
-                        return $plugin->getAssignmentTypeGuiById($a_id);
-                    }
-                }
-                return new ilExAssTypeInactiveGUI();
-
-            // fau.
-
+    protected function getActivePlugins() {
+        if (!isset($this->plugins)) {
+            $this->plugins = [];
+            $names = ilPluginAdmin::getActivePluginsForSlot(IL_COMP_MODULE, 'Exercise', 'exashk');
+            foreach ($names as $name) {
+                $this->plugins[] = ilPlugin::getPluginObject(IL_COMP_MODULE, 'Exercise','exashk', $name);
+            }
         }
 
-        // we should throw some exception here
+        return $this->plugins;
+    }
+
+    /**
+     * Get type object by string identifier
+     *
+     * @param string $a_identifier
+     * @return ilExAssignmentTypeGUIInterface
+     */
+    public function getByStringIdentifier(string $a_identifier)
+    {
+        if (isset($this->class_names[$a_identifier])) {
+            $class = $this->class_names[$a_identifier];
+            return new $class();
+        }
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            foreach ($plugin->getAssignmentTypeStringIdentifiers() as $identifier) {
+                if ($identifier == $a_identifier) {
+                    return $plugin->getAssignmentTypeGuiByStringIdentifier($identifier);
+                }
+            }
+        }
+
+        return new ilExAssTypeInactiveGUI();
     }
 
     /**
      * Get type gui object by classname
      *
-     * @param
-     * @return
+     * @param string $a_class_name
+     * @return ilExAssignmentTypeGUIInterface
      */
     public function getByClassName($a_class_name)
     {
-        $id = $this->getIdForClassName($a_class_name);
-        return $this->getById($id);
+        foreach ($this->class_names as $identifier => $cn) {
+            if (strtolower($cn) == strtolower($a_class_name)) {
+                return $this->getByStringIdentifier($identifier);
+            }
+        }
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            foreach ($plugin->getAssignmentTypeGuiClassNames() as $identifier => $cn) {
+                if (strtolower($cn) == strtolower($a_class_name)) {
+                    return $this->getByStringIdentifier($identifier);
+                }
+            }
+        }
+
+        return new ilExAssTypeInactiveGUI();
     }
 
 
@@ -128,7 +109,7 @@ class ilExAssignmentTypesGUI
      * Checks if a class name is a valid exercise assignment type GUI class
      * (case insensitive, since ilCtrl uses lower keys due to historic reasons)
      *
-     * @param string
+     * @param string $a_string
      * @return bool
      */
     public function isExAssTypeGUIClass($a_string)
@@ -138,22 +119,26 @@ class ilExAssignmentTypesGUI
                 return true;
             }
         }
+
+        foreach ($this->getActivePlugins() as $plugin) {
+            foreach ($plugin->getAssignmentTypeGuiClassNames() as $identifier => $cn) {
+                if (strtolower($cn) == strtolower($a_string)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
+
     /**
-     * Get type id for class name
-     *
-     * @param $a_string
-     * @return null|int
+     * @deprecated
      */
-    public function getIdForClassName($a_string)
-    {
-        foreach ($this->class_names as $k => $cn) {
-            if (strtolower($cn) == strtolower($a_string)) {
-                return $k;
-            }
-        }
-        return null;
-    }
+    private function getById() {}
+
+    /**
+     * @deprecated
+     */
+    private function getIdForClassName() {}
 }

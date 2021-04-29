@@ -145,12 +145,12 @@ class ilExcRepoObjAssignmentInfo implements ilExcRepoObjAssignmentInfoInterface
 
         $ass_types = ilExAssignmentTypes::getInstance();
 
-        $repos_ass_type_ids = $ass_types->getIdsForSubmissionType(ilExSubmission::TYPE_REPO_OBJECT);
+        $repos_ass_type_ids = $ass_types->getStringIdentifiersForSubmissionType(ilExSubmission::TYPE_REPO_OBJECT);
         $submissions = ilExSubmission::getSubmissionsForFilename($a_ref_id, $repos_ass_type_ids);
 
         $ass_info = array();
         foreach ($submissions as $s) {
-            $ass_type = $ass_types->getById($s["type"]);
+            $ass_type = $ass_types->getByStringIdentifier($s["type_str"]);
 
             // @todo note: this currently only works, if submissions are assigned to the team (like team wikis)
             // get team of user
