@@ -169,7 +169,6 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
         $target_ar->save();
     }
 
-    // fau: exAssHook - delete specific properties
     /**
      * @inheritdoc
      */
@@ -178,7 +177,6 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
         $ar = new ilExAssWikiTeamAR($assignment->getId());
         $ar->delete();
     }
-    // fau.
 
     /**
      * @inheritdoc

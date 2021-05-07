@@ -59,14 +59,12 @@ interface ilExAssignmentTypeInterface
      */
     public function cloneSpecificProperties(ilExAssignment $source, ilExAssignment $target);
 
-    // fau: exAssHook - delete specific properties
     /**
      * Delete type specific properties of an assignment
      *
      * @param ilExAssignment $assignment
      */
     public function deleteSpecificProperties(ilExAssignment $assignment);
-    // fau.
 
     /**
      * Returns if the submission has support to web access directory.

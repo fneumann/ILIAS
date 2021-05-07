@@ -1,6 +1,6 @@
 <?php
 /**
- * fau: exAssHook - new class ilAssignmentHookPlugin.
+ * Base class for exercise assignment hook plugins
  *
  * @ingroup ModulesExercise
  */

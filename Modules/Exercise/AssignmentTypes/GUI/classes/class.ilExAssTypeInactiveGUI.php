@@ -3,7 +3,7 @@
 /* Copyright (c) 1998-2018 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 /**
- * fau: exAssHook - Inactive type gui implementations
+ * nactive type gui implementations
  */
 class ilExAssTypeInactiveGUI implements ilExAssignmentTypeGUIInterface
 {

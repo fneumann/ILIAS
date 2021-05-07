@@ -153,14 +153,12 @@ class ilExAssignmentEditorGUI
             
             default:
 
-                // fau: exAssHook - forward to type gui (analogous to ilExSubmissionGUI)
                 if ($this->type_guis->isExAssTypeGUIClass($class)) {
                     $this->setAssignmentHeader();
                     $type_gui = $this->type_guis->getByClassName($class);
                     $type_gui->setAssignment($this->assignment);
                     return $ilCtrl->forwardCommand($type_gui);
                 }
-                // fau.
 
                 $this->{$cmd . "Object"}();
                 break;
@@ -282,11 +280,9 @@ class ilExAssignmentEditorGUI
         // type specific start
         //
 
-        // fau: exAssHook - set assignment and exercise_id for type gui to allow form customization
         if (isset($this->assignment)) {
             $ass_type_gui->setAssignment($this->assignment);
         }
-        // fau.
         $ass_type_gui->addEditFormCustomProperties($form);
 
         //
@@ -1379,11 +1375,9 @@ class ilExAssignmentEditorGUI
             $ilCtrl->getLinkTargetByClass(array("ilexassignmenteditorgui", "ilexassignmentfilesystemgui"), "listFiles")
         );
 
-        // fau: exAssHook - handle the editor tabs
         $typeGUI = $this->type_guis->getByStringIdentifier($this->assignment->getAssignmentType()->getStringIdentifier());
         $typeGUI->setAssignment($this->assignment);
         $typeGUI->handleEditorTabs($this->tabs);
-        // fau.
     }
     
     public function downloadGlobalFeedbackFileObject()

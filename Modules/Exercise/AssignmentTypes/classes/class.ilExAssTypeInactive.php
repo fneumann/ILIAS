@@ -5,7 +5,7 @@
 include_once("./Modules/Exercise/AssignmentTypes/classes/interface.ilExAssignmentTypeInterface.php");
 
 /**
- * fau: exAssHook - dummy type for inactive plugins.
+ * Dummy assignment type for inactive plugins.
  */
 class ilExAssTypeInactive implements ilExAssignmentTypeInterface
 {
@@ -85,14 +85,12 @@ class ilExAssTypeInactive implements ilExAssignmentTypeInterface
     {
     }
 
-    // fau: exAssHook - delete specific properties
     /**
      * @inheritdoc
      */
     public function deleteSpecificProperties(ilExAssignment $assignment)
     {
     }
-    // fau.
 
     /**
      * Returns if the submission has support to web access directory.

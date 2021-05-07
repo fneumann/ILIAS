@@ -99,14 +99,12 @@ class ilExAssTypeBlog implements ilExAssignmentTypeInterface
     {
     }
 
-    // fau: exAssHook - delete specific properties
     /**
      * @inheritdoc
      */
     public function deleteSpecificProperties(ilExAssignment $assignment)
     {
     }
-    // fau.
 
     /**
      *  @inheritdoc
