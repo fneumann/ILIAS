@@ -3,7 +3,7 @@
 /* Copyright (c) 1998-2018 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 /**
- * nactive type gui implementations
+ * Inactive type gui implementations
  */
 class ilExAssTypeInactiveGUI implements ilExAssignmentTypeGUIInterface
 {

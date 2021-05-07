@@ -25,10 +25,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
      */
     protected $target_directory;
     protected $submissions_directory;
-
-    /**
-     * @var ilExAssignment
-     */
+    /** @var ilExAssignment */
     protected $assignment;
     protected $user_id;
     protected $exercise_id;

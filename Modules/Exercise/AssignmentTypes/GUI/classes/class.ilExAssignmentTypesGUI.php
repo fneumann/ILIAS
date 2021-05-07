@@ -130,15 +130,4 @@ class ilExAssignmentTypesGUI
 
         return false;
     }
-
-
-    /**
-     * @deprecated
-     */
-    private function getById() {}
-
-    /**
-     * @deprecated
-     */
-    private function getIdForClassName() {}
 }

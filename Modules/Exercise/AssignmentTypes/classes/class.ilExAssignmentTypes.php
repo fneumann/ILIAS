@@ -200,16 +200,4 @@ class ilExAssignmentTypes
 
         return new ilExAssTypeInactive();
     }
-
-
-    /**
-     * @deprecated
-     */
-    private function getById($a_id) {}
-
-
-    /**
-     * @deprecated
-     */
-    private function getIdsForSubmissionType() {}
 }
