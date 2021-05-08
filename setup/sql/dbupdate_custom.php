@@ -13,7 +13,7 @@
      */
     if (!$ilDB->tableColumnExists('exc_assignment', 'type_str')) {
         $ilDB->addTableColumn('exc_assignment', 'type_str', array(
-            "type" => "string",
+            "type" => "text",
             "notnull" => false,
             "length" => 50,
             "default" => null
