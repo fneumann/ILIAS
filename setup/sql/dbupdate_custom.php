@@ -19,10 +19,10 @@
             "default" => null
         ));
     }
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypeUpload' WHERE type = 1");
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypeBlog' WHERE type = 2");
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypePortfolio' WHERE type = 3");
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypeUploadTeam' WHERE type = 4");
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypeText' WHERE type = 5");
-    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'ilExAssTypeWikiTeam' WHERE type = 6");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'upld' WHERE type = 1");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'blog' WHERE type = 2");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'prtf' WHERE type = 3");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'uptm' WHERE type = 4");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'text' WHERE type = 5");
+    $ilDB->manipulate("UPDATE exc_assignment SET type_str = 'wiki' WHERE type = 6");
 ?>
