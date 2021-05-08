@@ -23,7 +23,7 @@ class ilExAssignmentTypes
      * Used for instantiation
      * @var string[]
      */
-    protected $class_names = array(
+    private $class_names = array(
         self::STR_IDENTIFIER_UPLOAD => "ilExAssTypeUpload",
         self::STR_IDENTIFIER_UPLOAD_TEAM => "ilExAssTypeUploadTeam",
         self::STR_IDENTIFIER_BLOG => "ilExAssTypeBlog",
@@ -105,7 +105,7 @@ class ilExAssignmentTypes
 
         foreach ($this->getActivePlugins() as $plugin) {
             foreach ($plugin->getAssignmentTypeStringIdentifiers() as $identifier) {
-                $types[$identifier] = $plugin->getAssignmentTypeGuiByStringIdentifier($identifier);
+                $types[$identifier] = $plugin->getAssignmentTypeByStringIdentifier($identifier);
             }
         }
         return $types;
