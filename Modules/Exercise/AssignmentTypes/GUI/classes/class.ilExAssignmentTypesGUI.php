@@ -56,6 +56,61 @@ class ilExAssignmentTypesGUI
     }
 
     /**
+     * Get type gui object by id
+     *
+     * Centralized ID management is still an issue to be tackled in the future and caused
+     * by initial consts definition.
+     *
+     * @param int $a_id type id
+     * @return ilExAssignmentTypeGUIInterface
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function getById($a_id)
+    {
+        // @todo: check id
+
+        switch ($a_id) {
+            case ilExAssignment::TYPE_UPLOAD:
+                return new ilExAssTypeUploadGUI();
+                break;
+
+            case ilExAssignment::TYPE_BLOG:
+                return new ilExAssTypeBlogGUI();
+                break;
+
+            case ilExAssignment::TYPE_PORTFOLIO:
+                return new ilExAssTypePortfolioGUI();
+                break;
+
+            case ilExAssignment::TYPE_UPLOAD_TEAM:
+                return new ilExAssTypeUploadTeamGUI();
+                break;
+
+            case ilExAssignment::TYPE_TEXT:
+                return new ilExAssTypeTextGUI();
+                break;
+
+            case ilExAssignment::TYPE_WIKI_TEAM:
+                return new ilExAssTypeWikiTeamGUI();
+                break;
+        }
+
+        // we should throw some exception here
+    }
+
+    /**
+     * Get the GUI for an assignment type
+     * @param ilExAssignmentTypeInterface $a_type
+     * @return ilExAssignmentTypeGUIInterface
+     */
+    public function getForType(ilExAssignmentTypeInterface $a_type)
+    {
+        return $this->getByStringIdentifier($a_type->getStringIdentifier());
+    }
+
+
+    /**
      * Get type object by string identifier
      *
      * @param string $a_identifier
@@ -71,7 +126,7 @@ class ilExAssignmentTypesGUI
         foreach ($this->getActivePlugins() as $plugin) {
             foreach ($plugin->getAssignmentTypeStringIdentifiers() as $identifier) {
                 if ($identifier == $a_identifier) {
-                    return $plugin->getAssignmentTypeGuiByStringIdentifier($identifier);
+                    return $plugin->getAssignmentTypeGUIByStringIdentifier($identifier);
                 }
             }
         }
@@ -94,7 +149,7 @@ class ilExAssignmentTypesGUI
         }
 
         foreach ($this->getActivePlugins() as $plugin) {
-            foreach ($plugin->getAssignmentTypeGuiClassNames() as $identifier => $cn) {
+            foreach ($plugin->getAssignmentTypeGUIClassNames() as $identifier => $cn) {
                 if (strtolower($cn) == strtolower($a_class_name)) {
                     return $this->getByStringIdentifier($identifier);
                 }
@@ -109,7 +164,7 @@ class ilExAssignmentTypesGUI
      * Checks if a class name is a valid exercise assignment type GUI class
      * (case insensitive, since ilCtrl uses lower keys due to historic reasons)
      *
-     * @param string $a_string
+     * @param string
      * @return bool
      */
     public function isExAssTypeGUIClass($a_string)
@@ -121,7 +176,7 @@ class ilExAssignmentTypesGUI
         }
 
         foreach ($this->getActivePlugins() as $plugin) {
-            foreach ($plugin->getAssignmentTypeGuiClassNames() as $identifier => $cn) {
+            foreach ($plugin->getAssignmentTypeGUIClassNames() as $identifier => $cn) {
                 if (strtolower($cn) == strtolower($a_string)) {
                     return true;
                 }
@@ -129,5 +184,23 @@ class ilExAssignmentTypesGUI
         }
 
         return false;
+    }
+
+    /**
+     * Get type id for class name
+     *
+     * @param $a_string
+     * @return null|int
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function getIdForClassName($a_string)
+    {
+        foreach ($this->class_names as $k => $cn) {
+            if (strtolower($cn) == strtolower($a_string)) {
+                return $k;
+            }
+        }
+        return null;
     }
 }

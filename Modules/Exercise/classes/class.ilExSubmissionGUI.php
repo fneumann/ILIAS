@@ -224,7 +224,7 @@ class ilExSubmissionGUI
             case self::MODE_OVERVIEW_CONTENT:
                 /** @var ilExSubmission $submission */
                 $submission = $par["submission"];
-                $type_gui = $this->type_guis->getByStringIdentifier($submission->getAssignment()->getAssignmentType()->getStringIdentifier());
+                $type_gui = $this->type_guis->getForType($submission->getAssignment()->getAssignmentType());
                 return $type_gui->getOverviewContent($par["info"], $submission);
                 break;
         }

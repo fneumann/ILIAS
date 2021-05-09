@@ -764,9 +764,9 @@ class ilExSubmission
             if (sizeof($files) == 1) {
                 $file = array_pop($files);
 
-                switch ($this->assignment->getAssignmentType()->getStringIdentifier()) {
-                    case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
-                    case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
+                switch (true) {
+                    case $this->assignment->getAssignmentType() instanceof ilExAssTypeBlog:
+                    case $this->assignment->getAssignmentType() instanceof ilExAssTypeText:
                         $file["filetitle"] = ilObjUser::_lookupName($file["user_id"]);
                         $file["filetitle"] = ilObject::_lookupTitle($this->assignment->getExerciseId()) . " - " .
                             $this->assignment->getTitle() . " - " .
@@ -776,7 +776,7 @@ class ilExSubmission
                         break;
 
                     // @todo: generalize
-                    case ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM:
+                    case $this->assignment->getAssignmentType() instanceof ilExAssTypeWikiTeam:
                         $file["filetitle"] = ilObject::_lookupTitle($this->assignment->getExerciseId()) . " - " .
                             $this->assignment->getTitle() . " (Team " . $this->getTeam()->getId() . ").zip";
                         break;
@@ -1352,12 +1352,12 @@ class ilExSubmission
         $ilCtrl->setParameterByClass("ilexsubmissionfilegui", "member_id", $this->getUserId());
         
         // assignment type specific
-        switch ($this->assignment->getAssignmentType()->getStringIdentifier()) {
-            case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD_TEAM:
+        switch (true) {
+            case $this->assignment->getAssignmentType() instanceof  ilExAssTypeUploadTeam:
                 // data is merged by team - see above
                 // fallthrough
                 
-            case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD:
+            case $this->assignment->getAssignmentType() instanceof  ilExAssTypeUpload:
                 $all_files = $this->getFiles();
                 $late_files = 0;
                 foreach ($all_files as $file) {
@@ -1400,7 +1400,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
+            case $this->assignment->getAssignmentType() instanceof  ilExAssTypeBlog:
                 $result["files"]["txt"] = $lng->txt("exc_blog_returned");
                 $blogs = $this->getFiles();
                 if ($blogs) {
@@ -1420,7 +1420,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
+            case $this->assignment->getAssignmentType() instanceof  ilExAssTypePortfolio:
                 $result["files"]["txt"] = $lng->txt("exc_portfolio_returned");
                 $portfolios = $this->getFiles();
                 if ($portfolios) {
@@ -1440,7 +1440,7 @@ class ilExSubmission
                 }
                 break;
                 
-            case ilExAssignmentTypes::STR_IDENTIFIER_TEXT:
+            case $this->assignment->getAssignmentType() instanceof ilExAssTypeText:
                 $result["files"]["txt"] = $lng->txt("exc_files_returned_text");
                 $files = $this->getFiles();
                 if ($files) {
@@ -1460,7 +1460,7 @@ class ilExSubmission
                 }
                 break;
 
-            case ilExAssignmentTypes::STR_IDENTIFIER_WIKI_TEAM:
+            case $this->assignment->getAssignmentType() instanceof ilExAssTypeWikiTeam:
                 $result["files"]["txt"] = $lng->txt("exc_wiki_returned");
                 $objs = $this->getFiles();
                 if ($objs) {

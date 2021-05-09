@@ -62,6 +62,14 @@ class ilExAssTypePortfolio implements ilExAssignmentTypeInterface
     /**
      * @inheritdoc
      */
+    public function hasFiles()
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function usesFileUpload()
     {
         return false;

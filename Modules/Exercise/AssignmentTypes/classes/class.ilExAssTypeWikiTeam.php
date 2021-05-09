@@ -47,6 +47,14 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
     /**
      * @inheritdoc
      */
+    public function hasFiles()
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function usesFileUpload()
     {
         return false;

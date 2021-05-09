@@ -37,11 +37,11 @@ class ilExSubmissionObjectGUI extends ilExSubmissionBaseGUI
     
     public static function getOverviewContent(ilInfoScreenGUI $a_info, ilExSubmission $a_submission)
     {
-        switch ($a_submission->getAssignment()->getAssignmentType()->getStringIdentifier()) {
-            case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
+        switch (true) {
+            case $a_submission->getAssignment()->getAssignmentType() instanceof ilExAssTypeBlog:
                 return self::getOverviewContentBlog($a_info, $a_submission);
             
-            case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
+            case $a_submission->getAssignment()->getAssignmentType() instanceof ilExAssTypePortfolio:
                 return self::getOverviewContentPortfolio($a_info, $a_submission);
         }
     }

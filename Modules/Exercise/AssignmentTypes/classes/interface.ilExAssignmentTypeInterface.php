@@ -24,6 +24,13 @@ interface ilExAssignmentTypeInterface
     public function usesTeams();
 
     /**
+     * Has files for a submission (oploaded or generated)
+     *
+     * @return bool
+     */
+    public function hasFiles();
+
+    /**
      * Uses file upload
      *
      * @return bool

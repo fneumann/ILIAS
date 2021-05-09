@@ -93,8 +93,41 @@ class ilExAssignmentTypes
     }
 
     /**
+     * Get all ids
+     *
+     * @param
+     * @return
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function getAllIds()
+    {
+        return [
+            ilExAssignment::TYPE_UPLOAD,
+            ilExAssignment::TYPE_UPLOAD_TEAM,
+            ilExAssignment::TYPE_TEXT,
+            ilExAssignment::TYPE_BLOG,
+            ilExAssignment::TYPE_PORTFOLIO,
+            ilExAssignment::TYPE_WIKI_TEAM
+        ];
+    }
+
+    /**
+     * Is valid id
+     *
+     * @param int $a_id
+     * @return bool
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function isValidId($a_id)
+    {
+        return in_array($a_id, $this->getAllIds());
+    }
+
+    /**
      * Get all assignment types
-     * @return ilExAssignmentTypeInterface[] (indexed by identifier)
+     * @return ilExAssignmentTypeInterface[] (indexed by string identifier)
      */
     public function getAll()
     {
@@ -113,7 +146,7 @@ class ilExAssignmentTypes
     
     /**
      * Get all activated assignment types
-     * @return ilExAssignmentTypeInterface[]
+     * @return ilExAssignmentTypeInterface[] (indexed by string identifier)
      */
     public function getAllActivated()
     {
@@ -126,7 +159,7 @@ class ilExAssignmentTypes
      * Get all allowed types for an exercise for an exercise
      *
      * @param ilObjExercise $exc
-     * @return ilExAssignmentTypeInterface[]
+     * @return ilExAssignmentTypeInterface[] (indexed by string identifier)
      */
     public function getAllAllowed(ilObjExercise $exc)
     {
@@ -140,6 +173,67 @@ class ilExAssignmentTypes
             });
         }
         return $active;
+    }
+
+    /**
+     * Get type object by id
+     *
+     * Centralized ID management is still an issue to be tackled in the future and caused
+     * by initial consts definition.
+     *
+     * @param int $a_id type id
+     * @return ilExAssignmentTypeInterface
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function getById($a_id)
+    {
+        switch ($a_id) {
+            case ilExAssignment::TYPE_UPLOAD:
+                return new ilExAssTypeUpload();
+                break;
+
+            case ilExAssignment::TYPE_BLOG:
+                return new ilExAssTypeBlog();
+                break;
+
+            case ilExAssignment::TYPE_PORTFOLIO:
+                return new ilExAssTypePortfolio();
+                break;
+
+            case ilExAssignment::TYPE_UPLOAD_TEAM:
+                return new ilExAssTypeUploadTeam();
+                break;
+
+            case ilExAssignment::TYPE_TEXT:
+                return new ilExAssTypeText();
+                break;
+
+            case ilExAssignment::TYPE_WIKI_TEAM:
+                return new ilExAssTypeWikiTeam();
+                break;
+        }
+
+        // we should throw some exception here
+    }
+
+    /**
+     * Get assignment type IDs for given submission type
+     *
+     * @param int $a_submission_type
+     * @return array
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function getIdsForSubmissionType($a_submission_type)
+    {
+        $ids = [];
+        foreach ($this->getAllIds() as $id) {
+            if ($this->getById($id)->getSubmissionType() == $a_submission_type) {
+                $ids[] = $id;
+            }
+        }
+        return $ids;
     }
 
 

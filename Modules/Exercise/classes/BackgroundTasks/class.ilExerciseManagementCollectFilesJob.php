@@ -36,7 +36,6 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
     protected $excel; //ilExcel
     protected $criteria_items; //array
     protected $title_columns;
-    protected $ass_types_with_files; //TODO will be deprecated when use the new assignment type interface
     protected $participant_id;
 
     const FBK_DIRECTORY = "Feedback_files";
@@ -58,13 +57,6 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
         global $DIC;
         $this->lng = $DIC->language();
         $this->lng->loadLanguageModule('exc');
-        //TODO will be deprecated when use the new assignment type interface
-        $this->ass_types_with_files = array(
-            ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD,
-            ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD_TEAM,
-            ilExAssignmentTypes::STR_IDENTIFIER_BLOG,
-            ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO
-        );
         $this->logger = $DIC->logger()->exc();
     }
 
@@ -247,15 +239,15 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
     }
 
     /**
-     * @param $a_ass_type string
+     * @param ilExAssignmentTypeInterface $a_ass_type
      * @param $a_has_fbk bool
      * @return bool
      */
     protected function isExcelNeeded($a_ass_type, $a_has_fbk)
     {
-        if ($a_ass_type == ilExAssignmentTypes::STR_IDENTIFIER_TEXT) {
+        if ($a_ass_type instanceof ilExAssTypeText) {
             return true;
-        } elseif ($a_has_fbk && $a_ass_type != ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD_TEAM) {
+        } elseif ($a_has_fbk && !($a_ass_type instanceof ilExAssTypeUploadTeam)) {
             return true;
         }
         return false;
@@ -398,12 +390,12 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
         $targetdir = ilExSubmission::getDirectoryNameFromUserData($user_id);
 
         $filepath = './' . $this->lng->txt("exc_ass_submission_zip") . DIRECTORY_SEPARATOR . $targetdir . DIRECTORY_SEPARATOR;
-        switch ($this->assignment->getAssignmentType()->getStringIdentifier()) {
-            case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD:
+        switch (true) {
+            case $this->assignment->getAssignmentType() instanceof ilExAssTypeUpload:
                 $filepath .= $a_submission_file['filetitle'];
                 break;
 
-            case ilExAssignmentTypes::STR_IDENTIFIER_BLOG:
+            case $this->assignment->getAssignmentType() instanceof ilExAssTypeBlog:
                 $wsp_tree = new ilWorkspaceTree($user_id);
                 // #12939
                 if (!$wsp_tree->getRootId()) {
@@ -413,7 +405,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
                 $filepath .= "blog_" . $node['obj_id'] . DIRECTORY_SEPARATOR . "index.html";
                 break;
 
-            case ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO:
+            case $this->assignment->getAssignmentType() instanceof ilExAssTypePortfolio:
                 $filepath .= "prt_" . $a_submission_file['filetitle'] . DIRECTORY_SEPARATOR . "index.html";
                 break;
 
@@ -431,7 +423,6 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
 
         //assignment object
         $this->assignment = new ilExAssignment($assignment_id);
-        $assignment_type_str = $this->assignment->getAssignmentType()->getStringIdentifier();
 
         //Sanitized title for excel file and target directory.
         $this->sanitized_title = ilUtil::getASCIIFilename($this->assignment->getTitle());
@@ -443,7 +434,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
         $this->createTargetDirectory();
 
         //Collect submission files if needed by assignment type.
-        if (in_array($assignment_type_str, $this->ass_types_with_files)) {
+        if ($this->assignment->getAssignmentType()->hasFiles()) {
             $this->createSubmissionsDirectory();
             $this->collectSubmissionFiles();
         }
@@ -456,7 +447,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
             $first_excel_column_for_review = self::FIRST_DEFAULT_REVIEW_COLUMN;
         }
 
-        if ($this->isExcelNeeded($assignment_type_str, $ass_has_feedback)) {
+        if ($this->isExcelNeeded($this->assignment->getAssignmentType(), $ass_has_feedback)) {
             // PhpSpreadsheet object
             $this->excel = new ilExcel();
 
@@ -471,11 +462,11 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
                 $this->lng->txt('login'),
                 $this->lng->txt('exc_last_submission')
             );
-            switch ($assignment_type_str) {
-                case ilExAssignmentTypes::STR_IDENTIFIER_TEXT:
+            switch (true) {
+                case $this->assignment->getAssignmentType() instanceof ilExAssTypeText:
                     $this->title_columns[] = $this->lng->txt("exc_submission_text");
                     break;
-                case ilExAssignmentTypes::STR_IDENTIFIER_UPLOAD:
+                case $this->assignment->getAssignmentType() instanceof ilExAssTypeUpload:
                     $num_columns_submission = $this->getExtraColumnsForSubmissionFiles($this->exercise_id, $assignment_id);
                     if ($num_columns_submission > 1) {
                         for ($i = 1; $i <= $num_columns_submission; $i++) {
@@ -524,7 +515,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
                     $this->excel->setCell($row, self::PARTICIPANT_LOGIN_COLUMN, $participant_name['login']);
 
                     //Get the submission Text
-                    if (!in_array($assignment_type_str, $this->ass_types_with_files)) {
+                    if (!$this->assignment->getAssignmentType()->hasFiles()) {
                         foreach ($submission_files as $submission_file) {
                             $this->excel->setCell($row, self::SUBMISSION_DATE_COLUMN, $submission_file['timestamp']);
                             $this->excel->setCell($row, self::FIRST_DEFAULT_SUBMIT_COLUMN, $submission_file['atext']);
@@ -534,7 +525,7 @@ class ilExerciseManagementCollectFilesJob extends AbstractJob
                         foreach ($submission_files as $submission_file) {
                             $this->excel->setCell($row, self::SUBMISSION_DATE_COLUMN, $submission_file['timestamp']);
 
-                            if ($assignment_type_str == ilExAssignmentTypes::STR_IDENTIFIER_PORTFOLIO || $assignment_type_str == ilExAssignmentTypes::STR_IDENTIFIER_BLOG) {
+                            if ($this->assignment->getAssignmentType() instanceof ilExAssTypePortfolio || $this->assignment->getAssignmentType() instanceof ilExAssTypeBlog) {
                                 $this->excel->setCell($row, $col, $this->lng->txt("open"));
                             } else {
                                 $this->excel->setCell($row, $col, $submission_file['filetitle']);

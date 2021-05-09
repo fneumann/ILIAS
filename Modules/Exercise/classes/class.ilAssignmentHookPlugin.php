@@ -60,11 +60,11 @@ abstract class ilAssignmentHookPlugin extends ilPlugin
      * @param string $a_identifier
      * @return ilExAssignmentTypeGUIInterface
      */
-    abstract function getAssignmentTypeGuiByStringIdentifier(string $a_identifier);
+    abstract function getAssignmentTypeGUIByStringIdentifier(string $a_identifier);
 
     /**
      * Get the class names of the assignment type GUIs
      * @return string[] (indexed by string identifier)
      */
-    abstract function getAssignmentTypeGuiClassNames();
+    abstract function getAssignmentTypeGUIClassNames();
 }

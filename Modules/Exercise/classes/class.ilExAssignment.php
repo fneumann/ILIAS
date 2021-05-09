@@ -516,6 +516,7 @@ class ilExAssignment
     /**
      * Get assignment type
      *
+     * @param
      * @return null|ilExAssignmentTypeInterface
      */
     public function getAssignmentType()
@@ -535,6 +536,32 @@ class ilExAssignment
         if ($this->ass_type->usesTeams()) {
             $this->setPeerReview(false);
         }
+    }
+
+    /**
+     * Get type
+     *
+     * @return int
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+
+     */
+    private function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Is given type valid?
+     *
+     * @param int $a_value
+     * @return bool
+     * @deprecated
+     * @todo remove this, when refactoring is finished
+     */
+    private function isValidType($a_value)
+    {
+        return $this->types->isValidId($a_value);
     }
 
     /**
@@ -2550,27 +2577,4 @@ class ilExAssignment
         }
         return $calculated_deadlines;
     }
-
-
-
-    /**
-     * @deprecated
-     */
-    private function getType() {}
-
-    /**
-     * @deprecated
-     */
-    private function isValidType(){}
-
-    /**
-     * @deprecated
-     */
-    private function setType() {}
-
-    /**
-     * @deprecated
-     */
-    private static function lookupType() {}
-
 }

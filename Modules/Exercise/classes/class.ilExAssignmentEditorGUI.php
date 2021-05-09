@@ -153,6 +153,7 @@ class ilExAssignmentEditorGUI
             
             default:
 
+                // allow the type GUI to handle commands if it is the next class
                 if ($this->type_guis->isExAssTypeGUIClass($class)) {
                     $this->setAssignmentHeader();
                     $type_gui = $this->type_guis->getByClassName($class);
@@ -1066,7 +1067,7 @@ class ilExAssignmentEditorGUI
         $lng = $this->lng;
         $ilCtrl = $this->ctrl;
 
-        $ass_type_gui = $this->type_guis->getByStringIdentifier($this->assignment->getAssignmentType()->getStringIdentifier());
+        $ass_type_gui = $this->type_guis->getForType($this->assignment->getAssignmentType());
 
         $values = array();
         $values["type_str"] = $this->assignment->getAssignmentType()->getStringIdentifier();
@@ -1220,7 +1221,7 @@ class ilExAssignmentEditorGUI
         $form = $this->initAssignmentForm($ass_type->getStringIdentifier(), "edit");
         $input = $this->processForm($form);
 
-        $ass_type_gui = $this->type_guis->getByStringIdentifier($ass_type->getStringIdentifier());
+        $ass_type_gui = $this->type_guis->getForType($ass_type);
 
         if (is_array($input)) {
             $old_deadline = $this->assignment->getDeadline();
@@ -1375,7 +1376,7 @@ class ilExAssignmentEditorGUI
             $ilCtrl->getLinkTargetByClass(array("ilexassignmenteditorgui", "ilexassignmentfilesystemgui"), "listFiles")
         );
 
-        $typeGUI = $this->type_guis->getByStringIdentifier($this->assignment->getAssignmentType()->getStringIdentifier());
+        $typeGUI = $this->type_guis->getForType($this->assignment->getAssignmentType());
         $typeGUI->setAssignment($this->assignment);
         $typeGUI->handleEditorTabs($this->tabs);
     }

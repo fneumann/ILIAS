@@ -11,8 +11,6 @@
 trait ilExAssignmentTypeGUIBase
 {
     /**
-     * Add the assignment as a property to trait
-     *
      * This will be set for:
      * - calling addEditFormCustomProperties() to allow better form customizations
      * - calling handleEditorTabs() to customize tab visibility on assignment specific settings
