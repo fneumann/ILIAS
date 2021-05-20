@@ -87,6 +87,14 @@ class ilExAssTypeWikiTeam implements ilExAssignmentTypeInterface
     }
 
     /**
+     * @inheritdoc
+     */
+    public function isManualGradingSupported($a_ass): bool
+    {
+        return true;
+    }
+
+    /**
      * Submit wiki
      *
      * @param int $a_ass_id

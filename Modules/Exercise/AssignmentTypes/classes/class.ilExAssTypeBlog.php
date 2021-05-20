@@ -104,6 +104,14 @@ class ilExAssTypeBlog implements ilExAssignmentTypeInterface
     /**
      * @inheritdoc
      */
+    public function isManualGradingSupported($a_ass): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function cloneSpecificProperties(ilExAssignment $source, ilExAssignment $target)
     {
     }

@@ -24,7 +24,7 @@ interface ilExAssignmentTypeInterface
     public function usesTeams();
 
     /**
-     * Has files for a submission (oploaded or generated)
+     * Has files for a submission (uploaded or generated)
      *
      * @return bool
      */
@@ -57,6 +57,13 @@ interface ilExAssignmentTypeInterface
      * @return string
      */
     public function isSubmissionAssignedToTeam();
+
+    /**
+     * Check if manual grading should be supported
+     * @param ilExAssignment $a_ass
+     * @return bool
+     */
+    public function isManualGradingSupported($a_ass): bool;
 
     /**
      * Clone type specific properties of an assignment
