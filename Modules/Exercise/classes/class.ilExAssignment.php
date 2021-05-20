@@ -561,7 +561,7 @@ class ilExAssignment
      */
     private function isValidType($a_value)
     {
-        return $this->types->isValidId($a_value);
+        //return $this->types->isValidId($a_value);
     }
 
     /**
