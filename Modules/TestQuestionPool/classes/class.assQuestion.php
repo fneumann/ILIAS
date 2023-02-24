@@ -2617,9 +2617,17 @@ abstract class assQuestion
             throw new InvalidArgumentException('No question with ID ' . $question_id . ' exists');
         }
 
-        assQuestion::_includeClass($question_type);
-        $question = new $question_type();
-        $question->loadFromDb($question_id);
+        if (ilQuestionTypes::instance()->hasFactory($question_type)) {
+            $question = new assWrappedQuestion();
+            $question->init(ilQuestionTypes::instance()->getFactory($question_type));
+            $question->loadFromDb($question_id);
+        }
+        else {
+            assQuestion::_includeClass($question_type);
+            $question = new $question_type();
+            $question->loadFromDb($question_id);
+        }
+
 
         $feedbackObjectClassname = self::getFeedbackClassNameByQuestionType($question_type);
         $question->feedbackOBJ = new $feedbackObjectClassname($question, $ilCtrl, $ilDB, $lng);
@@ -3171,6 +3179,9 @@ abstract class assQuestion
 
     public static function getFeedbackClassNameByQuestionType(string $questionType): string
     {
+        if (ilQuestionTypes::instance()->hasFactory($questionType)) {
+            return 'ilAssWrappedQuestionFeedback';
+        }
         return str_replace('ass', 'ilAss', $questionType) . 'Feedback';
     }
 
@@ -3203,7 +3214,8 @@ abstract class assQuestion
                 return $pl->getQuestionTypeTranslation();
             }
         }
-        return "";
+
+        return (string) ilQuestionTypes::instance()->getTypeTranslation((string) $type_tag);
     }
 
     /**
@@ -3230,9 +3242,16 @@ abstract class assQuestion
 
             assQuestion::_includeClass($question_type, 1);
 
-            $question_type_gui = $question_type . 'GUI';
-            $question_gui = new $question_type_gui();
-            $question_gui->object->loadFromDb($a_question_id);
+            if (ilQuestionTypes::instance()->hasFactory($question_type)) {
+                $question_gui = new assWrappedQuestionGUI();
+                $question_gui->init(ilQuestionTypes::instance()->getFactory($question_type));
+                $question_gui->object->loadFromDb($a_question_id);
+            }
+            else {
+                $question_type_gui = $question_type . 'GUI';
+                $question_gui = new $question_type_gui();
+                $question_gui->object->loadFromDb($a_question_id);
+            }
 
             $feedbackObjectClassname = self::getFeedbackClassNameByQuestionType($question_type);
             $question_gui->object->feedbackOBJ = new $feedbackObjectClassname($question_gui->object, $ilCtrl, $ilDB, $lng);

@@ -434,8 +434,14 @@ abstract class assQuestionGUI
 
         assQuestion::_includeClass($question_type, 1);
 
-        $question_type_gui = $question_type . 'GUI';
-        $question = new $question_type_gui();
+        if (ilQuestionTypes::instance()->hasFactory($question_type)) {
+            $question = new assWrappedQuestionGUI();
+            $question->init(ilQuestionTypes::instance()->getFactory($question_type));
+        }
+        else {
+            $question_type_gui = $question_type . 'GUI';
+            $question = new $question_type_gui();
+        }
 
         $feedbackObjectClassname = assQuestion::getFeedbackClassNameByQuestionType($question_type);
         $question->object->feedbackOBJ = new $feedbackObjectClassname($question->object, $ilCtrl, $ilDB, $lng);
@@ -462,6 +468,9 @@ abstract class assQuestionGUI
      */
     public static function _getClassNameForQType($q_type): string
     {
+        if (ilQuestionTypes::instance()->hasFactory($q_type)) {
+            return 'assWrappedQuestionGUI';
+        }
         return $q_type . "GUI";
     }
 

@@ -4669,8 +4669,14 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
         assQuestion::_includeClass($question_type, 1);
 
-        $question_type_gui = $question_type . 'GUI';
-        $question = new $question_type_gui();
+        if (ilQuestionTypes::instance()->hasFactory($question_type)) {
+            $question = new assWrappedQuestionGUI();
+            $question->init(ilQuestionTypes::instance()->getFactory($question_type));
+        }
+        else {
+            $question_type_gui = $question_type . 'GUI';
+            $question = new $question_type_gui();
+        }
 
         if ($question_id > 0) {
             $question->object->loadFromDb($question_id);
