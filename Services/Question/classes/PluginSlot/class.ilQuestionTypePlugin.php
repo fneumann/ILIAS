@@ -28,7 +28,7 @@ abstract class ilQuestionTypePlugin extends ilPlugin
     /**
      * Everything specific for a new question type is created through this factory
      */
-    abstract public function factory(): ilQuestionTypeFactory;
+    abstract public function factory(): ilQuestionFactory;
 
 
     public function install(): void
@@ -60,5 +60,15 @@ abstract class ilQuestionTypePlugin extends ilPlugin
                 'plugin' => ['integer', 1]
             ]);
         }
+    }
+
+    /**
+     * @todo: migrate to a general question type repository
+     * @todo: should types be removedon uninstall - their id relation gets lost!
+     */
+    private function removeQuestionType()
+    {
+        $query = "DELETE FROM qpl_qst_type WHERE type_tag =" . $this->db->quote($this->factory()->getTypeTag(), 'text');
+        $this->db->manipulate($query);
     }
 }

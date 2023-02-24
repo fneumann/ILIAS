@@ -2617,17 +2617,8 @@ abstract class assQuestion
             throw new InvalidArgumentException('No question with ID ' . $question_id . ' exists');
         }
 
-        if (ilQuestionTypes::instance()->hasFactory($question_type)) {
-            $question = new assWrappedQuestion();
-            $question->init(ilQuestionTypes::instance()->getFactory($question_type));
-            $question->loadFromDb($question_id);
-        }
-        else {
-            assQuestion::_includeClass($question_type);
-            $question = new $question_type();
-            $question->loadFromDb($question_id);
-        }
-
+        $question = ilTestQuestions::instance()->getQuestion($question_type);
+        $question->loadFromDb($question_id);
 
         $feedbackObjectClassname = self::getFeedbackClassNameByQuestionType($question_type);
         $question->feedbackOBJ = new $feedbackObjectClassname($question, $ilCtrl, $ilDB, $lng);
@@ -3170,6 +3161,9 @@ abstract class assQuestion
         return array();
     }
 
+    /**
+     * @deprecated this class does nothing
+     */
     public static function _includeClass(string $question_type, int $gui = 0): void
     {
         if (self::isCoreQuestionType($question_type)) {
@@ -3179,10 +3173,7 @@ abstract class assQuestion
 
     public static function getFeedbackClassNameByQuestionType(string $questionType): string
     {
-        if (ilQuestionTypes::instance()->hasFactory($questionType)) {
-            return 'ilAssWrappedQuestionFeedback';
-        }
-        return str_replace('ass', 'ilAss', $questionType) . 'Feedback';
+        return ilTestQuestions::instance()->getFeedbackClass($questionType);
     }
 
     public static function isCoreQuestionType(string $questionType): bool
@@ -3190,6 +3181,9 @@ abstract class assQuestion
         return file_exists("Modules/TestQuestionPool/classes/class.{$questionType}GUI.php");
     }
 
+    /**
+     * @deprecated this class does nothing
+     */
     public static function includeCoreClass($questionType, $withGuiClass): void
     {
         if ($withGuiClass) {
@@ -3202,20 +3196,7 @@ abstract class assQuestion
 
     public static function _getQuestionTypeName($type_tag): string
     {
-        global $DIC;
-        if (file_exists("./Modules/TestQuestionPool/classes/class." . $type_tag . ".php")) {
-            $lng = $DIC['lng'];
-            return $lng->txt($type_tag);
-        }
-        $component_factory = $DIC['component.factory'];
-
-        foreach ($component_factory->getActivePluginsInSlot("qst") as $pl) {
-            if ($pl->getQuestionType() === $type_tag) {
-                return $pl->getQuestionTypeTranslation();
-            }
-        }
-
-        return (string) ilQuestionTypes::instance()->getTypeTranslation((string) $type_tag);
+       return ilTestQuestions::instance()->getTypeTranslation($type_tag);
     }
 
     /**
@@ -3240,19 +3221,8 @@ abstract class assQuestion
         if (strcmp($a_question_id, "") != 0) {
             $question_type = assQuestion::_getQuestionType($a_question_id);
 
-            assQuestion::_includeClass($question_type, 1);
-
-            if (ilQuestionTypes::instance()->hasFactory($question_type)) {
-                $question_gui = new assWrappedQuestionGUI();
-                $question_gui->init(ilQuestionTypes::instance()->getFactory($question_type));
-                $question_gui->object->loadFromDb($a_question_id);
-            }
-            else {
-                $question_type_gui = $question_type . 'GUI';
-                $question_gui = new $question_type_gui();
-                $question_gui->object->loadFromDb($a_question_id);
-            }
-
+            $question_gui = ilTestQuestions::instance()->getQuestionGUI($question_type);
+            $question_gui->object->loadFromDb($a_question_id);
             $feedbackObjectClassname = self::getFeedbackClassNameByQuestionType($question_type);
             $question_gui->object->feedbackOBJ = new $feedbackObjectClassname($question_gui->object, $ilCtrl, $ilDB, $lng);
 

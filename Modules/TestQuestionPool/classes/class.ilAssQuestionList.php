@@ -678,32 +678,7 @@ class ilAssQuestionList implements ilTaxAssignedItemInfo
 
     private function isActiveQuestionType(array $questionData): bool
     {
-        if (!isset($questionData['plugin'])) {
-            return false;
-        }
-
-        if (!$questionData['plugin']) {
-            return true;
-        }
-
-        if (!$this->component_repository->getComponentByTypeAndName(
-            ilComponentInfo::TYPE_MODULES,
-            'TestQuestionPool'
-        )->getPluginSlotById('qst')->hasPluginName($questionData['plugin_name'])) {
-            return false;
-        }
-
-        return $this->component_repository
-            ->getComponentByTypeAndName(
-                ilComponentInfo::TYPE_MODULES,
-                'TestQuestionPool'
-            )
-            ->getPluginSlotById(
-                'qst'
-            )
-            ->getPluginByName(
-                $questionData['plugin_name']
-            )->isActive();
+        return ilTestQuestions::instance()->isActive($questionData['type_tag']);
     }
 
     public function getDataArrayForQuestionId($questionId)

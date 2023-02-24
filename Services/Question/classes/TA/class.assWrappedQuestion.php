@@ -6,7 +6,7 @@
 class assWrappedQuestion extends assQuestion
 {
 
-	protected ilQuestionTypeFactory $factory;
+	protected ilQuestionFactory $factory;
 
 
 	/**
@@ -37,16 +37,16 @@ class assWrappedQuestion extends assQuestion
 	/**
 	 * This function should be called directly after the constructor
 	 */
-	public function init(ilQuestionTypeFactory $factory): self
+	public function init(ilQuestionFactory $factory): self
 	{
 		$this->factory = $factory;
 		return $this;
 	}
 
 	/**
-	 * Make the question types factory available for the feedback object (question is injected there)
+	 * Make the questionfactory available for the feedback object (question is injected there)
 	 */
-	public function getTypeFactory() : ilQuestionTypeFactory
+	public function getFactory() : ilQuestionFactory
 	{
 		return $this->factory;
 	}

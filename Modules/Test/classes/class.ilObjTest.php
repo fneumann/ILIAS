@@ -4667,16 +4667,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
             return null;
         }
 
-        assQuestion::_includeClass($question_type, 1);
-
-        if (ilQuestionTypes::instance()->hasFactory($question_type)) {
-            $question = new assWrappedQuestionGUI();
-            $question->init(ilQuestionTypes::instance()->getFactory($question_type));
-        }
-        else {
-            $question_type_gui = $question_type . 'GUI';
-            $question = new $question_type_gui();
-        }
+        $question = ilTestQuestions::instance()->getQuestionGUI($question_type);
 
         if ($question_id > 0) {
             $question->object->loadFromDb($question_id);
@@ -10081,9 +10072,8 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
      */
     public static function isQuestionObligationPossible($questionId): bool
     {
-        $classConcreteQuestion = assQuestion::_getQuestionType($questionId);
-
-        assQuestion::_includeClass($classConcreteQuestion, 0);
+        $question_type = assQuestion::_getQuestionType($questionId);
+        $classConcreteQuestion = ilTestQuestions::instance()->getQuestionClass($question_type);
 
         // static binder is not at work yet (in PHP < 5.3)
         //$obligationPossible = $classConcreteQuestion::isObligationPossible();

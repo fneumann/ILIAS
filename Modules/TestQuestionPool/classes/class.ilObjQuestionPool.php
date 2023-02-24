@@ -1380,18 +1380,8 @@ class ilObjQuestionPool extends ilObject
         $types = array();
         while ($row = $ilDB->fetchAssoc($result)) {
             if ($all_tags || (!in_array($row["question_type_id"], $forbidden_types))) {
-                $ilLog = $DIC['ilLog'];
-
-                if ($row["plugin"] == 0) {
-                    $types[$lng->txt($row["type_tag"])] = $row;
-                } else {
-                    $component_factory = $DIC['component.factory'];
-                    //$plugins = $component_repository->getPluginSlotById("qst")->getActivePlugins();
-                    foreach ($component_factory->getActivePluginsInSlot("qst") as $pl) {
-                        if (strcmp($pl->getQuestionType(), $row["type_tag"]) == 0) {
-                            $types[$pl->getQuestionTypeTranslation()] = $row;
-                        }
-                    }
+                if (ilTestQuestions::instance()->isActive($row["type_tag"])) {
+                    $types[ilTestQuestions::instance()->getTypeTranslation($row["type_tag"])] = $row;
                 }
             }
         }
@@ -1432,15 +1422,7 @@ class ilObjQuestionPool extends ilObject
         $result = $ilDB->query("SELECT * FROM qpl_qst_type");
         $types = array();
         while ($row = $ilDB->fetchAssoc($result)) {
-            if ($row["plugin"] == 0) {
-                $types[$row['type_tag']] = $lng->txt($row["type_tag"]);
-            } else {
-                foreach ($component_factory->getActivePluginsInSlot("qst") as $pl) {
-                    if (strcmp($pl->getQuestionType(), $row["type_tag"]) == 0) {
-                        $types[$row['type_tag']] = $pl->getQuestionTypeTranslation();
-                    }
-                }
-            }
+            $types[$row['type_tag']] = ilTestQuestions::instance()->getTypeTranslation($row['type_tag']);
         }
         ksort($types);
         return $types;
@@ -1478,12 +1460,17 @@ class ilObjQuestionPool extends ilObject
             "assErrorText" => 10,
             "assLongMenu" => 11
             );
+        $next = 12;
         $satypes = array();
         $qtypes = ilObjQuestionPool::_getQuestionTypes($all_tags);
         foreach ($qtypes as $k => $t) {
             //if (in_array($t["type_tag"], $allowed_types))
             if (isset($allowed_types[$t["type_tag"]])) {
                 $t["order"] = $allowed_types[$t["type_tag"]];
+                $satypes[$k] = $t;
+            }
+            elseif (ilTestQuestions::instance()->supportsOffline($t["type_tag"])) {
+                $t["order"] = $next++;
                 $satypes[$k] = $t;
             }
         }

@@ -12,7 +12,7 @@
  */
 class assWrappedQuestionGUI extends assQuestionGUI
 {
-	protected ilQuestionTypeFactory $factory;
+	protected ilQuestionFactory $factory;
 
 
 	/**
@@ -42,9 +42,10 @@ class assWrappedQuestionGUI extends assQuestionGUI
 	/**
 	 * This function should be called directly after the constructor
 	 */
-	public function init(ilQuestionTypeFactory $factory): self
+	public function init(ilQuestionFactory $factory): self
 	{
 		$this->factory = $factory;
+		$this->object->init($factory);
 		return $this;
 	}
 
