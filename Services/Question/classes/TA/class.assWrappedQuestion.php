@@ -51,6 +51,15 @@ class assWrappedQuestion extends assQuestion
 		return $this->factory;
 	}
 
+	/**
+	 * @return ilQuestionBaseSettings|null
+	 */
+	public function getStoredBasicSettings()
+	{
+		global $DIC;
+		$repo = new ilQuestionBaseRepo($DIC->database());
+		return $repo->getBaseSettingsForId($this->getId());
+	}
 
 	/**
 	 * Returns the question type of the question
@@ -62,18 +71,6 @@ class assWrappedQuestion extends assQuestion
 		return $this->factory->getTypeTag();
 	}
 
-	/**
-	 * Returns the names of the additional question data tables
-	 *
-	 * All tables must have a 'question_fi' column.
-	 * Data from these tables will be deleted if a question is deleted
-	 *
-	 * @return mixed 	the name(s) of the additional tables (array or string)
-	 */
-	public function getAdditionalTableName()
-	{
-		return '';
-	}
 
 	/**
 	 * Collects all texts in the question which could contain media objects
@@ -145,36 +142,35 @@ class assWrappedQuestion extends assQuestion
 	public function loadFromDb(int $question_id): void
 	{
 		global $DIC;
-		$ilDB = $DIC->database();
-                
-		// load the basic question data
-		$result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
-				. $ilDB->quote($question_id, 'integer'));
 
-		if ($result->numRows() > 0) {
-			 $data = $ilDB->fetchAssoc($result);
-			 $this->setId($question_id);
-			 $this->setObjId($data['obj_fi']);
-			 $this->setOriginalId($data['original_id']);
-			 $this->setOwner($data['owner']);
-			 $this->setTitle((string) $data['title']);
-			 $this->setAuthor($data['author']);
-			 $this->setPoints($data['points']);
-			 $this->setComment((string) $data['description']);
+		$repo = new ilQuestionBaseRepo($DIC->database());
+		if (!empty($base_settings = $repo->getBaseSettingsForId($question_id))) {
+			$this->setId($base_settings->getQuestionId());
+			$this->setObjId($base_settings->getObjId());
+			$this->setTitle($base_settings->getTitle());
+			$this->setComment($base_settings->getComment());
+			$this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($base_settings->getQuestion(), 1));
+			$this->setAuthor($base_settings->getAuthor());
+			$this->setOwner($base_settings->getOwner());
+			list($hours, $minutes, $seconds) = $base_settings->getEstimatedWorkingTimeParts();
+			$this->setEstimatedWorkingTime($hours, $minutes, $seconds);
+			$this->setPoints($base_settings->getMaxPoints());
+			$this->setNrOfTries($base_settings->getNrOfTries());
+			$this->setLastChange($base_settings->getModified());
+			$this->setOriginalId($base_settings->getOriginalId());
+			$this->setExternalId($base_settings->getExternalId());
 
-			 $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
-			 $this->setEstimatedWorkingTime(substr($data['working_time'], 0, 2), substr($data['working_time'], 3, 2), substr($data['working_time'], 6, 2));
+			try {
+				$this->setAdditionalContentEditingMode($base_settings->getAdditionalContentEditiongMode());
+			}
+			catch(ilTestQuestionPoolException $e) {
+			}
 
-			 // now you can load additional data
-			 // ...
-
-			 try
-			 {
-				 $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
-			 }
-			 catch(ilTestQuestionPoolException $e)
-			 {
-			 }
+			try {
+				$this->setLifecycle(ilAssQuestionLifecycle::getInstance($base_settings->getLifecycle()));
+			} catch (ilTestQuestionPoolInvalidArgumentException $e) {
+				$this->setLifecycle(ilAssQuestionLifecycle::getDraftInstance());
+			}
 		}
 
 		// loads additional stuff like suggested solutions
@@ -348,31 +344,22 @@ class assWrappedQuestion extends assQuestion
 	 * 		savePreviewData()
 	 * 		saveWorkingData()
 	 * 		calculateReachedPointsForSolution()
-	 *
-	 * @return	array	('value1' => string|null, 'value2' => float|null)
 	 */
-	protected function getSolutionSubmit()
+	protected function getSolutionSubmit() : ilQuestionSolution
 	{
-		$value1 = trim(ilUtil::stripSlashes($_POST['question'.$this->getId().'value1']));
-		$value2 = trim(ilUtil::stripSlashes($_POST['question'.$this->getId().'value2']));
-
-		return array(
-			'value1' => empty($value1)? null : (string) $value1,
-			'value2' => empty($value2)? null : (float) $value2
-		);
+		// this has to be provided by the active question canvas
+		$json = trim(ilUtil::stripSlashes($_POST['question'.$this->getId().'json']));
+		return $this->factory->getSolutionHandler()->getSolutionFromJSON($json);
 	}
 
 	/**
 	 * Get a stored solution for a user and test pass
-	 * This is a wrapper to provide the same structure as getSolutionSubmit()
 	 *
 	 * @param int 	$active_id		active_id of hte user
 	 * @param int	$pass			number of the test pass
 	 * @param bool	$authorized		get the authorized solution
-	 *
-	 * @return	array	('value1' => string|null, 'value2' => float|null)
 	 */
-	public function getSolutionStored($active_id, $pass, $authorized = null)
+	public function getSolutionStored($active_id, $pass, $authorized = null) : ilQuestionSolution
 	{
 		// This provides an array with records from tst_solution
 		// The example question should only store one record per answer
@@ -389,50 +376,35 @@ class assWrappedQuestion extends assQuestion
 			$solutions = $this->getTestOutputSolutions($active_id, $pass);
 		}
 
-
-		if (empty($solutions))
-		{
-			// no solution stored yet
-			$value1 = null;
-			$value2 = null;
+		$pairs = [];
+		foreach ($solutions as $row) {
+			$pairs = new ilQuestionSolutionValuePair($row['value1'], $row['value2']);
 		}
-		else
-		{
-			// If the process locker isn't activated in the Test and Assessment administration
-			// then we may have multiple records due to race conditions
-			// In this case the last saved record wins
-			$solution = end($solutions);
-
-			$value1 = $solution['value1'];
-			$value2 = $solution['value2'];
-		}
-
-		return array(
-			'value1' => empty($value1)? null : (string) $value1,
-			'value2' => empty($value2)? null : (float) $value2
-		);
+		return $this->factory->getSolutionHandler()->getSolutionFromValuePairs($pairs);
 	}
 
 
 	/**
-	 * Calculate the reached points from a solution array
+	 * Calculate the reached points from a solution
+	 * The json representation is coing from a preview session
 	 *
-	 * @param	array	('value1' => string, 'value2' => float)
+	 * @param	ilQuestionSolution|string $solution object or json representation of the solution
 	 * @return  float	reached points
 	 */
 	protected function calculateReachedPointsForSolution($solution)
 	{
-		// in our example we take the points entered by the student
-		// and adjust them to be in the allowed range
-		$points = (float) $solution['value2'];
-		if ($points <= 0 || $points > $this->getMaximumPoints())
-		{
-			$points = 0;
+		if (is_string($solution)) {
+			$solution = $this->factory->getSolutionHandler()->getSolutionFromJSON($solution);
 		}
+
+		$grader = $this->factory->getBackendGrader(
+			$this->getStoredBasicSettings(),
+			$this->factory->getTypeSettings($this->getId())
+		);
 
 		// return the raw points given to the answer
 		// these points will afterwards be adjusted by the scoring options of a test
-		return $points;
+		return $grader->getReachedPoints($solution);
 	}
 
 
@@ -492,8 +464,7 @@ class assWrappedQuestion extends assQuestion
 		// save the submitted values avoiding race conditions
 		$this->getProcessLocker()->executeUserSolutionUpdateLockOperation(function() use (&$entered_values, $solution, $active_id, $pass, $authorized) {
 
-
-			$entered_values = isset($solution['value1']) || isset($solution['value2']);
+			$entered_values = !$solution->isEmpty();
 
 			if ($authorized)
 			{
@@ -530,17 +501,13 @@ class assWrappedQuestion extends assQuestion
 		return true;
 	}
 
-
 	/**
-	 * Reworks the allready saved working data if neccessary
-	 * @param integer $active_id
-	 * @param integer $pass
-	 * @param boolean $obligationsAnswered
-	 * @param boolean $authorized
+	 * Save a posted solution in the preview session
+	 * This must be JSON because objects can't be stred directly
 	 */
-	protected function reworkWorkingData($active_id, $pass, $obligationsAnswered, $authorized)
+	protected function savePreviewData(ilAssQuestionPreviewSession $previewSession): void
 	{
-		// normally nothing needs to be reworked
+		$previewSession->setParticipantsSolution($this->getSolutionSubmit()->toJSON());
 	}
 
 
@@ -560,21 +527,20 @@ class assWrappedQuestion extends assQuestion
 		$worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(1) . $startrow, $this->getTitle());
 
 		$solution = $this->getSolutionStored($active_id, $pass, true);
-		$value1 = isset($solution['value1']) ? $solution['value1'] : '';
-		$value2 = isset($solution['value2']) ? $solution['value2'] : '';
 
 		$row = $startrow + 1;
+		foreach ($solution->toValuePairs() as $pair)
+		{
+			$worksheet->setCell($row, 0, 'label_value1');
+			$worksheet->setBold($worksheet->getColumnCoord(0) . $row);
+			$worksheet->setCell($row, 1, $pair->getValue1());
+			$row++;
 
-		$worksheet->setCell($row, 0, $this->plugin->txt('label_value1'));
-		$worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-		$worksheet->setCell($row, 1, $value1);
-		$row++;
-
-		$worksheet->setCell($row, 0, $this->plugin->txt('label_value2'));
-		$worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-		$worksheet->setCell($row, 1, $value2);
-		$row++;
-
+			$worksheet->setCell($row, 0, 'label_value2');
+			$worksheet->setBold($worksheet->getColumnCoord(0) . $row);
+			$worksheet->setCell($row, 1, $pair->getValue2());
+			$row++;
+		}
 		return $row + 1;
 	}
 
@@ -593,9 +559,7 @@ class assWrappedQuestion extends assQuestion
 	 */
 	function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter,  array $import_mapping, array &$solutionhints = []): array
 	{
-		$import = new assExampleQuestionImport($this);
-		$import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
-
+		// todo
 		return $import_mapping;
 	}
 
@@ -614,8 +578,8 @@ class assWrappedQuestion extends assQuestion
 		bool $force_image_references = false
 	): string
 	{
-		$export = new assExampleQuestionExport($this);
-		return $export->toXML($a_include_header, $a_include_binary, $a_shuffle, $test_output, $force_image_references);
+		// todo
+		return '';
 	}
 }
 

@@ -896,4 +896,54 @@ interface Factory
      * @return \ILIAS\UI\Component\Toast\Factory
      */
     public function toast(): C\Toast\Factory;
+
+    /**
+     * ---
+     * description:
+     *   purpose:
+     *      Question components are used for the presentation of assessment questions
+     *   composition:
+     *      An active canvas MUST include one active question presentation.
+     *      An active canvas MAY include no or one grader.
+     *      An inactive canvas MUST include one inactive question presentation.
+     *   effect:
+     *      The question is shown inside the canvas.
+     *      Inactive presentations are just shown as they are. They don't communicate with their canvas.
+     *      An active canvas sends a signal with a user solution to the presentation and the presentation shows it.
+     *      An active canvas sends a signal to request the current user solution from the presentation.
+     *      An active presentation sends a signal with the current user solution to the canvas.
+     *      An active canvas sends a signal with answer specific feedback to the presentation and the presentation shows it.
+     *
+     * background:
+     *      Questions should be used in the same way by differnt ILIAS modules, e.g. Test, Question Pool or Learning Module
+     *      Canvases are created by ILIAS components that show assessment questions.
+     *      Presentations are created by the question types.
+     *      Graders are created by the question types.
+     *
+     * rules:
+     *   usage:
+     *      1: An active canvas and presentation is used for the interaction with a test question (e.g. preview or test)
+     *      2: An inactive canvas and presentation is used for print views or the presentation of results and solutions
+     *      3: A grader is included if the question should ork offline
+     *   composition:
+     *      1: How this component is to be assembled.
+     *   interaction:
+     *      1: How the interaction with this object takes place.
+     *   wording:
+     *      1: How the wording of labels or captions must be.
+     *   style:
+     *      1: How this element should look like.
+     *   ordering:
+     *      1: How different elements of this instance are to be ordered.
+     *   responsiveness:
+     *      1: How this element behaves on changing screen sizes
+     *   accessibility:
+     *      1: How this element is made accessible
+     *
+     * ---
+     * @param   string $content
+     * @return \ILIAS\UI\Component\Question\Factory
+     **/
+    public function question(): C\Question\Factory;
+
 }

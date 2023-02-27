@@ -2,7 +2,7 @@
 
 /**
  * Service class for handling test questions
- * Hide the differences between classic core and plugin questiin types an the new factory based types
+ * Hide the differences between classic core and plugin question types an the new factory based types
  *
  * @see ilAssQuestionType, ilAssQuestionTypeList
  */

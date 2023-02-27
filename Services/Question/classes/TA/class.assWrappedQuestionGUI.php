@@ -13,7 +13,7 @@
 class assWrappedQuestionGUI extends assQuestionGUI
 {
 	protected ilQuestionFactory $factory;
-
+	protected \ILIAS\DI\Container $dic;
 
 	/**
 	 * @var assWrappedQuestion	The question object
@@ -32,6 +32,7 @@ class assWrappedQuestionGUI extends assQuestionGUI
 
 		parent::__construct();
 
+		$this->dic = $DIC;
 		$this->object = new assWrappedQuestion();
 		if ($id >= 0)
 		{
@@ -237,74 +238,35 @@ class assWrappedQuestionGUI extends assQuestionGUI
 		$show_question_text = TRUE
 	): string
 	{
-		// get the solution of the user for the active pass or from the last pass if allowed
-		if (($active_id > 0) && (!$show_correct_solution))
-		{
+
+		$base_settings = $this->object->getStoredBasicSettings();
+		$type_settings = $this->factory->getTypeSettings($this->object->getId());
+		$grader = $this->factory->getBackendGrader($base_settings, $type_settings);
+
+		if ($show_correct_solution) {
+			$solution = $grader->getCorrectSolution();
+			$feedback = null;
+		}
+		else {
 			$solution = $this->object->getSolutionStored($active_id, $pass, true);
-			$value1 = isset($solution["value1"]) ? $solution["value1"] : "";
-			$value2 = isset($solution["value2"]) ? $solution["value2"] : "";
-		}
-		else
-		{
-			// show the correct solution
-			$value1 =  $this->lng->txt("any_text");
-			$value2 = $this->object->getMaximumPoints();
+			$feedback = $graphicalOutput ? $grader->getTypeFeedback($solution) : null;
 		}
 
-		// get the solution template
-		$template = new ilTemplate("tpl.qtype_ta_solution.html", true, true, "Services/Question");
+		if (!$show_question_text) {
+			$base_settings = $base_settings->withQuestion('');
+		}
+
+		$canvas = $this->dic->ui()->factory()->question()->canvas()->inactive()
+			->withPresentation($this->factory->getInactivePresentation(
+				$base_settings,
+				$type_settings,
+				$solution,
+				$feedback
+			))->withPresentationRenderer($this->factory->getRenderer());
+
+		$questionoutput = $this->dic->ui()->renderer()->render($canvas);
+
 		$solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html", TRUE, TRUE, "Modules/TestQuestionPool");
-
-		if (($active_id > 0) && (!$show_correct_solution))
-		{
-			if ($graphicalOutput)
-			{
-				// copied from assNumericGUI, yet not really understood
-				if($this->object->getStep() === NULL)
-				{
-					$reached_points = $this->object->getReachedPoints($active_id, $pass);
-				}
-				else
-				{
-					$reached_points = $this->object->calculateReachedPoints($active_id, $pass);
-				}
-
-				// output of ok/not ok icons for user entered solutions
-				// in this example we have ony one relevant input field (points)
-				// so we just need to set the icon beneath this field
-				// question types with partial answers may have a more complex output
-				if ($reached_points == $this->object->getMaximumPoints())
-				{
-					$template->setCurrentBlock("icon_ok");
-					$template->setVariable("ICON_OK", ilUtil::getImagePath("icon_ok.svg"));
-					$template->setVariable("TEXT_OK", $this->lng->txt("answer_is_right"));
-					$template->parseCurrentBlock();
-				}
-				else
-				{
-					$template->setCurrentBlock("icon_ok");
-					$template->setVariable("ICON_NOT_OK", ilUtil::getImagePath("icon_not_ok.svg"));
-					$template->setVariable("TEXT_NOT_OK", $this->lng->txt("answer_is_wrong"));
-					$template->parseCurrentBlock();
-				}
-			}
-		}
-
-		// fill the template variables
-		// adapt this to your structure of answers
-		$template->setVariable("LABEL_VALUE1", $this->lng->txt('label_value1'));
-		$template->setVariable("LABEL_VALUE2", $this->lng->txt('label_value2'));
-
-		$template->setVariable("VALUE1", empty($value1) ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : ilLegacyFormElementsUtil::prepareFormOutput($value1));
-		$template->setVariable("VALUE2", empty($value2) ? "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" : ilLegacyFormElementsUtil::prepareFormOutput($value2));
-
-		$questiontext = $this->object->getQuestion();
-		if ($show_question_text==true)
-		{
-			$template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($questiontext, TRUE));
-		}
-
-		$questionoutput = $template->get();
 
 		$feedback = ($show_feedback && !$this->isTestPresentationContext()) ? $this->getGenericFeedbackOutput($active_id, $pass) : "";
 		if (strlen($feedback))
