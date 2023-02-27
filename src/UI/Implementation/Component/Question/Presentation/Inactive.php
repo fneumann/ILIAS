@@ -13,13 +13,13 @@ class Inactive implements InactivePresentation
     protected \ilQuestionBaseSettings $base_settings;
     protected \ilQuestionTypeSettings $type_settings;
     protected ?\ilQuestionSolution $solution;
-    protected ?\ilQuestionFeedback $feedback;
+    protected ?\ilQuestionTypeFeedback $feedback;
 
     public function __construct(
         \ilQuestionBaseSettings $base_settings,
         \ilQuestionTypeSettings $type_settings,
         ?\ilQuestionSolution $solution,
-        ?\ilQuestionFeedback $feedback
+        ?\ilQuestionTypeFeedback $feedback
     ) {
         $this->base_settings = $base_settings;
         $this->type_settings = $type_settings;
@@ -44,7 +44,7 @@ class Inactive implements InactivePresentation
         return $this->solution;
     }
 
-    public function getFeedback() : ?\ilQuestionFeedback
+    public function getFeedback() : ?\ilQuestionTypeFeedback
     {
         return $this->feedback;
     }

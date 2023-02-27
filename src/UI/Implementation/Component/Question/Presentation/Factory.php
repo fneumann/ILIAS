@@ -31,11 +31,11 @@ class Factory implements Question\Presentation\Factory
 
     public function active() : Active
     {
-        // TODO: Implement active() method.
+        throw new \ILIAS\UI\NotImplementedException();
     }
 
     public function inactive() : Inactive
     {
-        // TODO: Implement inactive() method.
+        throw new \ILIAS\UI\NotImplementedException();
     }
 }

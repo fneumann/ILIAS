@@ -151,8 +151,8 @@ class assWrappedQuestionGUI extends assQuestionGUI
 		}
 
 		$solution = $this->object->getSolutionStored($active_id, $pass, null);
-		$value1 = isset($solution["value1"]) ? $solution["value1"] : "";
-		$value2 = isset($solution["value2"]) ? $solution["value2"] : "";
+		$value1 = 'Demo';
+		$value2 = $this->object->getStoredBasicSettings()->getMaxPoints();
 
 		// fill the question output template
 		// in out example we have 1:1 relation for the database field
@@ -187,10 +187,9 @@ class assWrappedQuestionGUI extends assQuestionGUI
 		{
 			$solution = $this->getPreviewSession()->getParticipantsSolution();
 		}
-		else
-		{
-			$solution = array('value1' => null, 'value2' => null);
-		}
+
+		$value1 = 'Demo';
+		$value2 = $this->object->getStoredBasicSettings()->getMaxPoints();
 
 		// Fill the template with a preview version of the question
 		$template = new ilTemplate("tpl.qtype_ta_output.html", true, true, "Services/Question");
@@ -200,8 +199,8 @@ class assWrappedQuestionGUI extends assQuestionGUI
 		$template->setVariable("LABEL_VALUE1", $this->lng->txt('label_value1'));
 		$template->setVariable("LABEL_VALUE2", $this->lng->txt('label_value2'));
 
-		$template->setVariable("VALUE1", ilLegacyFormElementsUtil::prepareFormOutput($solution['value1'] ?? ''));
-		$template->setVariable("VALUE2", ilLegacyFormElementsUtil::prepareFormOutput($solution['value2'] ?? ''));
+		$template->setVariable("VALUE1", ilLegacyFormElementsUtil::prepareFormOutput($value1 ?? ''));
+		$template->setVariable("VALUE2", ilLegacyFormElementsUtil::prepareFormOutput($value2 ?? ''));
 
 		$questionoutput = $template->get();
 		if(!$show_question_only)

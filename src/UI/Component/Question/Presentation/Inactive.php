@@ -32,11 +32,11 @@ interface Inactive extends Component
         \ilQuestionBaseSettings $base_settings,
         \ilQuestionTypeSettings $type_settings,
         ?\ilQuestionSolution $solution,
-        ?\ilQuestionFeedback $feedback
+        ?\ilQuestionTypeFeedback $feedback
     );
 
     public function getBaseSettings() : \ilQuestionBaseSettings;
     public function getTypeSettings() : \ilQuestionTypeSettings;
     public function getSolution() : ?\ilQuestionSolution;
-    public function getFeedback() : ?\ilQuestionFeedback;
+    public function getFeedback() : ?\ilQuestionTypeFeedback;
 }
