@@ -124,29 +124,7 @@ class ilAssQuestionType
      */
     public function isImportable(): bool
     {
-        if (!$this->isPlugin()) {
-            return true;
-        }
-
-        // Plugins MAY overwrite this method an report back their activation status
-        if (!$this->component_repository->getComponentByTypeAndName(
-            ilComponentInfo::TYPE_MODULES,
-            'TestQuestionPool'
-        )->getPluginSlotById('qst')->hasPluginName($this->getPluginName())) {
-            return false;
-        }
-
-        return $this->component_repository
-            ->getComponentByTypeAndName(
-                ilComponentInfo::TYPE_MODULES,
-                'TestQuestionPool'
-            )
-            ->getPluginSlotById(
-                'qst'
-            )
-            ->getPluginByName(
-                $this->getPluginName()
-            )->isActive();
+        return ilTestQuestions::instance()->isImportable($this->getTag());
     }
 
     /**

@@ -254,7 +254,7 @@ class ilTestQuestionsTableGUI extends ilTable2GUI
         );
 
         if ($this->isQuestionManagingEnabled()) {
-            $editHref = $this->getQuestionEditLink($a_set, $a_set['type_tag'] . 'GUI', 'editQuestion');
+            $editHref = $this->getQuestionEditLink($a_set, ilTestQuestions::instance()->getQuestionGUIClass($a_set['type_tag']), 'editQuestion');
             $actions->addItem($this->lng->txt('edit_question'), '', $editHref);
 
             $editPageHref = $this->getQuestionEditLink($a_set, 'ilAssQuestionPageGUI', 'edit');

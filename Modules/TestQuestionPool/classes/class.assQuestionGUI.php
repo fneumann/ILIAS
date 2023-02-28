@@ -432,10 +432,7 @@ abstract class assQuestionGUI
             return null;
         }
 
-        assQuestion::_includeClass($question_type, 1);
-
-        $question_type_gui = $question_type . 'GUI';
-        $question = new $question_type_gui();
+        $question = ilTestQuestions::instance()->getQuestionGUI($question_type);
 
         $feedbackObjectClassname = assQuestion::getFeedbackClassNameByQuestionType($question_type);
         $question->object->feedbackOBJ = new $feedbackObjectClassname($question->object, $ilCtrl, $ilDB, $lng);
@@ -462,7 +459,7 @@ abstract class assQuestionGUI
      */
     public static function _getClassNameForQType($q_type): string
     {
-        return $q_type . "GUI";
+        return ilTestQuestions::instance()->getQuestionGUIClass($q_type);
     }
 
     public function populateJavascriptFilesRequiredForWorkForm(ilGlobalTemplateInterface $tpl): void
@@ -1711,7 +1708,7 @@ abstract class assQuestionGUI
         $q_type = $this->object->getQuestionType();
 
         if (strlen($q_type)) {
-            $classname = $q_type . "GUI";
+            $classname = ilTestQuestions::instance()->getQuestionGUIClass($q_type);
             $this->ctrl->setParameterByClass(strtolower($classname), "sel_question_types", $q_type);
             $this->ctrl->setParameterByClass(strtolower($classname), "q_id", $this->request->getQuestionId());
         }
