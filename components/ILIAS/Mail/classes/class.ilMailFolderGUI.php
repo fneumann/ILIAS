@@ -230,10 +230,14 @@ class ilMailFolderGUI
         $this->tpl->addBlockFile('ADM_CONTENT', 'adm_content', 'tpl.mail.html', 'components/ILIAS/Mail');
         $this->tpl->setTitle($this->lng->txt('mail'));
 
-        $isTrashFolder = $this->currentFolderId === $this->mbox->getTrashFolder();
+        $folder = $this->mbox->getFolderData($this->currentFolderId);
+        if ($folder === null) {
+            $this->tpl->setOnScreenMessage('failure', $this->lng->txt('mail_operation_on_invalid_folder'));
+            $this->tpl->printToStdout();
+        }
 
         $selected_mail_ids = $this->getMailIdsFromRequest(true);
-        if (!$this->errorDelete && $isTrashFolder && 'deleteMails' === $this->parseCommand($this->ctrl->getCmd())) {
+        if (!$this->errorDelete && $folder->isTrash() && 'deleteMails' === $this->parseCommand($this->ctrl->getCmd())) {
             $confirmationGui = new ilConfirmationGUI();
             $confirmationGui->setHeaderText($this->lng->txt('mail_sure_delete'));
             $selected_mail_ids = $this->getMailIdsFromRequest();
@@ -249,37 +253,44 @@ class ilMailFolderGUI
             $oneConfirmationDialogueRendered = true;
         }
 
-        $mtree = new ilTree($this->user->getId());
-        $mtree->setTableNames('mail_tree', 'mail_obj_data');
+        if ($old = true) {
+            $mailtable = $this->getMailFolderTable();
+            $mailtable->setSelectedItems($selected_mail_ids);
 
-        $isUserSubFolder = false;
-        $isUserRootFolder = false;
+            try {
+                $mailtable->prepareHTML();
+            } catch (Exception $e) {
+                $this->tpl->setOnScreenMessage('failure', $this->lng->txt($e->getMessage()) !== '-' . $e->getMessage() . '-' ?
+                    $this->lng->txt($e->getMessage()) :
+                    $e->getMessage());
+            }
 
-        $folder_d = $mtree->getNodeData($this->currentFolderId);
-        if ($folder_d['m_type'] === 'user_folder') {
-            $isUserSubFolder = true;
-        } elseif ($folder_d['m_type'] === 'local') {
-            $isUserRootFolder = true;
+            $table_html = $mailtable->getHTML();
+        } else {
+            $mailtable = new \ILIAS\Mail\Folder\MailFolderTableUI(
+                $this,
+                'showFolder',
+                'handleTableActions',
+                $this->currentFolderId,
+                $folder->isTrash(),
+                $folder->isSent(),
+                $folder->isDrafts(),
+                $selected_mail_ids,
+                $this->ui_factory,
+                $this->ui_renderer,
+                $this->lng,
+                $this->ctrl,
+                $this->http->request(),
+                new ILIAS\Data\Factory()
+            );
+            $table_html = $this->ui_renderer->render($mailtable->get());
         }
-
-        $mailtable = $this->getMailFolderTable();
-        $mailtable->setSelectedItems($selected_mail_ids);
-
-        try {
-            $mailtable->prepareHTML();
-        } catch (Exception $e) {
-            $this->tpl->setOnScreenMessage('failure', $this->lng->txt($e->getMessage()) !== '-' . $e->getMessage() . '-' ?
-                $this->lng->txt($e->getMessage()) :
-                $e->getMessage());
-        }
-
-        $table_html = $mailtable->getHTML();
 
         if (!$oneConfirmationDialogueRendered && !$this->confirmTrashDeletion) {
             $this->toolbar->setFormAction($this->ctrl->getFormAction($this, 'showFolder'));
 
-            if ($isUserRootFolder || $isUserSubFolder) {
-                $this->addSubFolderCommands($isUserSubFolder);
+            if ($folder->isUserRootFolder() || $folder->isUserFolder()) {
+                $this->addSubFolderCommands($folder->isUserFolder());
             }
         }
 
@@ -396,14 +407,14 @@ class ilMailFolderGUI
             return;
         }
 
-        $folderData = $this->mbox->getFolderData($this->currentFolderId);
-        if ($folderData === null) {
+        $folder_data = $this->mbox->getFolderData($this->currentFolderId);
+        if ($folder_data === null) {
             $this->tpl->setOnScreenMessage('failure', $this->lng->txt('mail_operation_on_invalid_folder'), true);
             $this->ctrl->setParameterByClass(ilMailGUI::class, 'mobj_id', $this->mbox->getInboxFolder());
             $this->ctrl->redirectByClass(ilMailGUI::class);
         }
 
-        if ($folderData['title'] === $form->getInput('subfolder_title')) {
+        if ($folder_data->getTitle() === $form->getInput('subfolder_title')) {
             $this->showFolder();
             return;
         }
@@ -423,7 +434,7 @@ class ilMailFolderGUI
         if (null === $form) {
             $form = $this->getSubFolderForm('edit');
             $form->setValuesByArray(
-                ['subfolder_title' => $this->mbox->getFolderData($this->currentFolderId)['title'] ?? '']
+                ['subfolder_title' => (string) $this->mbox->getFolderData($this->currentFolderId)?->getTitle()]
             );
         }
 
@@ -762,13 +773,8 @@ class ilMailFolderGUI
             $form->addItem($att);
         }
 
-        $isTrashFolder = false;
-        if ($this->mbox->getTrashFolder() === $mailData['folder_id']) {
-            $isTrashFolder = true;
-        }
-
-        $currentFolderData = $this->mbox->getFolderData((int) $mailData['folder_id']);
-        if ($currentFolderData === null) {
+        $current_folder = $this->mbox->getFolderData((int) $mailData['folder_id']);
+        if ($current_folder === null) {
             $this->tpl->setOnScreenMessage('failure', $this->lng->txt('mail_operation_on_invalid_folder'), true);
             $this->ctrl->setParameterByClass(ilMailGUI::class, 'mobj_id', $this->mbox->getInboxFolder());
             $this->ctrl->redirectByClass(ilMailGUI::class);
@@ -777,9 +783,7 @@ class ilMailFolderGUI
         $this->ctrl->setParameter($this, 'mobj_id', $this->currentFolderId);
         $this->tabs->addTab(
             'current_folder',
-            $currentFolderData['type'] === 'user_folder' ? $currentFolderData['title'] : $this->lng->txt(
-                'mail_' . $currentFolderData['title']
-            ),
+            $current_folder->getTitle(),
             $this->ctrl->getLinkTarget($this, 'showFolder')
         );
         $this->ctrl->clearParameters($this);
@@ -788,18 +792,14 @@ class ilMailFolderGUI
         $move_links = [];
         $folders = $this->mbox->getSubFolders();
         foreach ($folders as $folder) {
-            if (($folder['type'] !== 'trash' || !$isTrashFolder) &&
-                $folder['obj_id'] !== $mailData['folder_id']) {
-                $folder_name = $folder['title'];
-                if ($folder['type'] !== 'user_folder') {
-                    $folder_name = $this->lng->txt('mail_' . $folder['title']);
-                }
+            if ((!$folder->isTrash() || !$current_folder->isTrash()) &&
+                $folder->getFolderId() !== $mailData['folder_id']) {
 
                 $move_links[] = $this->ui_factory->button()->shy(
                     sprintf(
                         $this->lng->txt('mail_move_to_folder_x'),
-                        $folder_name
-                    ) . ($folder['type'] === 'trash' ? ' (' . $this->lng->txt('delete') . ')' : ''),
+                        $folder->getTitle()
+                    ) . ($folder->isTrash() ? ' (' . $this->lng->txt('delete') . ')' : ''),
                     '#',
                 )->withOnLoadCode(static fn($id): string => "
                         document.getElementById('$id').addEventListener('click', function(e) {
@@ -810,7 +810,7 @@ class ilMailFolderGUI
                             action_params.delete('cmd');
                             action_params.append('cmd', 'moveSingleMail');
                             action_params.delete('folder_id');
-                            action_params.append('folder_id', '" . $folder['obj_id'] . "');
+                            action_params.append('folder_id', '" . $folder->getFolderId() . "');
 
                             action.search = action_params.toString();
 
@@ -825,7 +825,7 @@ class ilMailFolderGUI
             }
         }
 
-        if ($isTrashFolder) {
+        if ($current_folder->isTrash()) {
             $deleteBtn = $this->ui_factory->button()
                                           ->standard($this->lng->txt('delete'), '#')
                                           ->withOnLoadCode(static fn($id): string => "

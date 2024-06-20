@@ -296,15 +296,15 @@ class ilMailFolderTableGUI extends ilTable2GUI
             if ($key === 'moveMails') {
                 $folders = $this->_parentObject->mbox->getSubFolders();
                 foreach ($folders as $folder) {
-                    if ($folder['type'] !== 'trash' || !$this->isTrashFolder()) {
-                        if ($folder['type'] !== 'user_folder') {
-                            $label = $action . ' ' . $this->lng->txt('mail_' . $folder['title']) .
-                                ($folder['type'] === 'trash' ? ' (' . $this->lng->txt('delete') . ')' : '');
-                            $this->addMultiCommand($key . '_' . $folder['obj_id'], $label);
+                    if (!$folder->isTrash() || !$this->isTrashFolder()) {
+                        if (!$folder->isUserFolder()) {
+                            $label = $action . ' ' . $folder->getTitle() .
+                                ($folder->isTrash() ? ' (' . $this->lng->txt('delete') . ')' : '');
+                            $this->addMultiCommand($key . '_' . $folder->getFolderId(), $label);
                         } else {
                             $this->addMultiCommand(
-                                $key . '_' . $folder['obj_id'],
-                                $action . ' ' . $folder['title']
+                                $key . '_' . $folder->getFolderId(),
+                                $action . ' ' . $folder->getTitle()
                             );
                         }
                     }
