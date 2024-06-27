@@ -35,22 +35,17 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private \ILIAS\UI\URLBuilderToken $action_parameter_token;
     private \ILIAS\UI\URLBuilderToken $row_id_token;
 
-    private MailFolderRecords $records;
 
     /**
-     * @param list<array{"checked": bool, "filename": string, "filesize": int, "filecreatedate": int}> $records
+     *
      */
     public function __construct(
         private readonly \ilMailFolderGUI $parent_gui,
         private readonly string $parent_cmd,
-        private readonly string $parent_handler_cmd,
-        private readonly int $mail_folder_id,
-        private readonly bool $is_trash_folder,
-        private readonly bool $is_sent_folder,
-        private readonly bool $is_drafts_folder,
+        private readonly MailFolderData $folder,
+        private readonly MailFolderSearch $records,
         private readonly array $selected_mail_ids,
         private readonly \ILIAS\UI\Factory $ui_factory,
-        private readonly \ILIAS\UI\Renderer $ui_renderer,
         private readonly \ilLanguage $lng,
         private readonly \ilCtrlInterface $ctrl,
         private readonly \Psr\Http\Message\ServerRequestInterface $http_request,
@@ -70,10 +65,6 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         );
     }
 
-    public function isTrashFolder()
-    {
-        return $this->is_trash_folder;
-    }
 
     public function getNumberOfMails(): int
     {
@@ -85,7 +76,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return $this->ui_factory
             ->table()
             ->data(
-                $this->lng->txt('attachment'),
+                $this->getTitle(),
                 $this->getColumnDefinition(),
                 $this
             )
@@ -105,20 +96,16 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private function getColumnDefinition(): array
     {
         return [
-            'filename' => $this->ui_factory
+            'sender' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('mail_file_name'))
+                ->text($this->lng->txt('sender'))
                 ->withIsSortable(true),
-            'filesize' => $this->ui_factory
+
+            'subject' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('mail_file_size'))
-                ->withIsSortable(true),
-            'filecreatedate' => $this->ui_factory
-                ->table()
-                ->column()
-                ->text($this->lng->txt('create_date'))
+                ->text($this->lng->txt('subject'))
                 ->withIsSortable(true),
         ];
     }
@@ -139,34 +126,6 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return $actions;
     }
 
-    /**
-     * @return MailFolderRecords
-     */
-    private function getRecords(\ILIAS\Data\Range $range, \ILIAS\Data\Order $order): MailFolderRecords
-    {
-        $records = $this->records;
-
-        [$order_field, $order_direction] = $order->join([], static function ($ret, $key, $value) {
-            return [$key, $value];
-        });
-
-        usort($records, static function (array $left, array $right) use ($order_field): int {
-            if ($order_field === 'filename') {
-                return ilStr::strCmp($left[$order_field], $right[$order_field]);
-            }
-
-            return $left[$order_field] <=> $right[$order_field];
-        });
-
-        if ($order_direction === 'DESC') {
-            $records = array_reverse($records);
-        }
-
-        $records = array_slice($records, $range->getStart(), $range->getLength());
-
-        return $records;
-    }
-
     public function getRows(
         \ILIAS\UI\Component\Table\DataRowBuilder $row_builder,
         array $visible_column_ids,
@@ -175,20 +134,18 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $filter_data,
         ?array $additional_parameters
     ): \Generator {
-        foreach ($this->getRecords($range, $order) as $item) {
-            $record = [
-                'filename' => $item['filename'],
-                'filesize' => ilUtil::formatSize($item['filesize'], 'long'),
-                'filecreatedate' => ilDatePresentation::formatDate(new ilDateTime($item['filecreatedate'], IL_CAL_UNIX))
+        foreach ($this->records->getRecords($range, $order) as $record) {
+            $data = [
+                'subject' => $record->getSubject()
             ];
 
             yield $row_builder
-                ->buildDataRow(urlencode($record['filename']), $record);
+                ->buildDataRow($record->getId(), $data);
         }
     }
 
     public function getTotalRowCount(?array $filter_data, ?array $additional_parameters): ?int
     {
-        return count($this->records);
+        return $this->records->getTotalCount();
     }
 }

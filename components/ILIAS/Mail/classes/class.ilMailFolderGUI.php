@@ -45,6 +45,7 @@ class ilMailFolderGUI
     private readonly ilErrorHandling $error;
     protected readonly Factory $ui_factory;
     protected readonly Renderer $ui_renderer;
+    protected readonly ilUIService $ui_service;
 
     public function __construct()
     {
@@ -61,6 +62,7 @@ class ilMailFolderGUI
         $this->error = $DIC['ilErr'];
         $this->ui_factory = $DIC->ui()->factory();
         $this->ui_renderer = $DIC->ui()->renderer();
+        $this->ui_service = $DIC->uiService();
 
         $this->umail = new ilMail($this->user->getId());
         $this->mbox = new ilMailbox($this->user->getId());
@@ -253,38 +255,34 @@ class ilMailFolderGUI
             $oneConfirmationDialogueRendered = true;
         }
 
-        if ($old = true) {
-            $mailtable = $this->getMailFolderTable();
-            $mailtable->setSelectedItems($selected_mail_ids);
 
-            try {
-                $mailtable->prepareHTML();
-            } catch (Exception $e) {
-                $this->tpl->setOnScreenMessage('failure', $this->lng->txt($e->getMessage()) !== '-' . $e->getMessage() . '-' ?
-                    $this->lng->txt($e->getMessage()) :
-                    $e->getMessage());
-            }
+        $filter = new \ILIAS\Mail\Folder\MailFilterUI(
+            $this->ctrl->getFormAction($this, 'showFolder'),
+            ilSearchSettings::getInstance()->enabledLucene(),
+            $folder,
+            $this->ui_factory,
+            $this->ui_service->filter(),
+            $this->lng
+        );
 
-            $table_html = $mailtable->getHTML();
-        } else {
-            $mailtable = new \ILIAS\Mail\Folder\MailFolderTableUI(
-                $this,
-                'showFolder',
-                'handleTableActions',
-                $this->currentFolderId,
-                $folder->isTrash(),
-                $folder->isSent(),
-                $folder->isDrafts(),
-                $selected_mail_ids,
-                $this->ui_factory,
-                $this->ui_renderer,
-                $this->lng,
-                $this->ctrl,
-                $this->http->request(),
-                new ILIAS\Data\Factory()
-            );
-            $table_html = $this->ui_renderer->render($mailtable->get());
-        }
+        $search = new \ILIAS\Mail\Folder\MailFolderSearch(
+            $folder,
+            $filter->getData(),
+            ilSearchSettings::getInstance()->enabledLucene(),
+        );
+
+        $mailtable = new \ILIAS\Mail\Folder\MailFolderTableUI(
+            $this,
+            'showFolder',
+            $folder,
+            $search,
+            $selected_mail_ids,
+            $this->ui_factory,
+            $this->lng,
+            $this->ctrl,
+            $this->http->request(),
+            new ILIAS\Data\Factory()
+        );
 
         if (!$oneConfirmationDialogueRendered && !$this->confirmTrashDeletion) {
             $this->toolbar->setFormAction($this->ctrl->getFormAction($this, 'showFolder'));
@@ -294,7 +292,7 @@ class ilMailFolderGUI
             }
         }
 
-        if ($this->confirmTrashDeletion && $mailtable->isTrashFolder() && $mailtable->getNumberOfMails() > 0) {
+        if ($this->confirmTrashDeletion && $folder->isTrash() && $mailtable->getNumberOfMails() > 0) {
             $confirmationGui = new ilConfirmationGUI();
             $confirmationGui->setHeaderText($this->lng->txt('mail_empty_trash_confirmation'));
             $this->ctrl->setParameter($this, 'mobj_id', $this->currentFolderId);
@@ -305,7 +303,7 @@ class ilMailFolderGUI
             $this->tpl->setVariable('CONFIRMATION', $confirmationGui->getHTML());
         }
 
-        $this->tpl->setVariable('MAIL_TABLE', $table_html);
+        $this->tpl->setVariable('MAIL_TABLE', $this->ui_renderer->render([$filter->get(), $mailtable->get()]));
         $this->tpl->printToStdout();
     }
 

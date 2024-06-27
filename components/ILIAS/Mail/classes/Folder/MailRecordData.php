@@ -2,10 +2,16 @@
 
 namespace ILIAS\Mail\Folder;
 
-class MailFolderRecord
+class MailRecordData
 {
+
+
+
     public function __construct()
     {
 
     }
+
+
+
 }

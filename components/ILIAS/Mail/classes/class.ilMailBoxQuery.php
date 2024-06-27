@@ -36,15 +36,193 @@ class ilMailBoxQuery
     public static array $filter = [];
     public static array $filtered_ids = [];
 
+
     /**
      * @return array{set: array[], cnt: int, cnt_unread: int}
      * @throws Exception
      */
     public static function _getMailBoxListData(): array
     {
+        $mails = self::getCounts();
+        $mails['set'] = self::getSet();
+        return $mails;
+    }
+
+
+    /**
+     * @return array{cnt: int, cnt_unread: int}
+     * @throws Exception
+     */
+    public static function getCounts(): array
+    {
         global $DIC;
 
-        $mails = ['cnt' => 0, 'cnt_unread' => 0, 'set' => []];
+        $counts = ['cnt' => 0, 'cnt_unread' => 0];
+
+        $queryCount = 'SELECT COUNT(mail_id) cnt FROM mail '
+            . 'LEFT JOIN usr_data ON usr_id = sender_id '
+            . 'WHERE user_id = %s '
+            . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
+            . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
+            . 'AND folder_id = %s '
+            . self::getFilterCondition();
+
+        if (self::$filtered_ids) {
+            $queryCount .= ' AND ' . $DIC->database()->in(
+                    'mail_id',
+                    self::$filtered_ids,
+                    false,
+                    'integer'
+                ) . ' ';
+        }
+
+        $queryCount .= ' UNION ALL '
+            . 'SELECT COUNT(mail_id) cnt FROM mail '
+            . 'LEFT JOIN usr_data ON usr_id = sender_id '
+            . 'WHERE user_id = %s '
+            . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
+            . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
+            . 'AND folder_id = %s '
+            . self::getFilterCondition() . ' '
+            . 'AND m_status = %s';
+
+        if (self::$filtered_ids) {
+            $queryCount .= ' AND ' . $DIC->database()->in(
+                    'mail_id',
+                    self::$filtered_ids,
+                    false,
+                    'integer'
+                ) . ' ';
+        }
+
+        $res = $DIC->database()->queryF(
+            $queryCount,
+            ['integer', 'integer', 'integer', 'integer', 'text'],
+            [self::$userId, self::$folderId, self::$userId, self::$folderId, 'unread']
+        );
+
+        $counter = 0;
+        while ($cnt_row = $DIC->database()->fetchAssoc($res)) {
+            if ($counter === 0) {
+                $counts['cnt'] = (int) $cnt_row['cnt'];
+            } elseif ($counter === 1) {
+                $counts['cnt_unread'] = (int) $cnt_row['cnt'];
+            } else {
+                break;
+            }
+
+            ++$counter;
+        }
+
+        return $counts;
+    }
+
+
+    /**
+     * @return array{mail_id: int, usrer_id: int, folder_id: int, sender_id: int, attachments: array}
+     * @throws Exception
+     */
+    public static function getSet(): array
+    {
+        global $DIC;
+
+        $sortColumn = '';
+        $firstnameSelection = '';
+        if (self::$orderColumn === 'from') {
+            // Because of the user id of automatically generated mails and ordering issues we have to do some magic
+            $firstnameSelection = '
+				,(CASE
+					WHEN (usr_id = ' . ANONYMOUS_USER_ID . ') THEN firstname 
+					ELSE ' . $DIC->database()->quote(ilMail::_getIliasMailerName(), 'text') . '
+				END) fname
+			';
+        }
+
+        $query = 'SELECT mail.*' . $sortColumn . ' ' . $firstnameSelection . ' FROM mail '
+               . 'LEFT JOIN usr_data ON usr_id = sender_id '
+               . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
+               . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
+               . 'WHERE user_id = %s '
+               . self::getFilterCondition() . ' '
+               . 'AND folder_id = %s';
+
+        if (self::$filtered_ids) {
+            $query .= ' AND ' . $DIC->database()->in(
+                'mail_id',
+                self::$filtered_ids,
+                false,
+                'integer'
+            ) . ' ';
+        }
+
+        $orderDirection = 'ASC';
+        if (in_array(strtolower(self::$orderDirection), ['desc', 'asc'], true)) {
+            $orderDirection = self::$orderDirection;
+        }
+
+        if (self::$orderColumn === 'from') {
+            $query .= ' ORDER BY '
+                    . ' fname ' . $orderDirection . ', '
+                    . ' lastname ' . $orderDirection . ', '
+                    . ' login ' . $orderDirection . ', '
+                    . ' import_name ' . $orderDirection;
+        } elseif (self::$orderColumn !== '') {
+            if (
+                !in_array(strtolower(self::$orderColumn), ['m_subject', 'send_time', 'rcp_to'], true) &&
+                !$DIC->database()->tableColumnExists('mail', strtolower(self::$orderColumn))) {
+                // @todo: Performance problem...
+                self::$orderColumn = 'send_time';
+            }
+
+            $query .= ' ORDER BY ' . strtolower(self::$orderColumn) . ' ' . $orderDirection;
+        } else {
+            $query .= ' ORDER BY send_time DESC';
+        }
+
+        $DIC->database()->setLimit(self::$limit, self::$offset);
+        $res = $DIC->database()->queryF(
+            $query,
+            ['integer', 'integer'],
+            [self::$userId, self::$folderId]
+        );
+
+        $set = [];
+        while ($row = $DIC->database()->fetchAssoc($res)) {
+            if (isset($row['attachments'])) {
+                $row['attachments'] = (array) unserialize(
+                    stripslashes($row['attachments']),
+                    ['allowed_classes' => false]
+                );
+            } else {
+                $row['attachments'] = [];
+            }
+
+            if (isset($row['mail_id'])) {
+                $row['mail_id'] = (int) $row['mail_id'];
+            }
+
+            if (isset($row['user_id'])) {
+                $row['user_id'] = (int) $row['user_id'];
+            }
+
+            if (isset($row['folder_id'])) {
+                $row['folder_id'] = (int) $row['folder_id'];
+            }
+
+            if (isset($row['sender_id'])) {
+                $row['sender_id'] = (int) $row['sender_id'];
+            }
+
+            $set[] = $row;
+        }
+
+        return $set;
+    }
+
+
+    protected function getFilterCondition() : string
+    {
+        global $DIC;
 
         $filter = [
             'mail_filter_sender' => 'CONCAT(CONCAT(firstname, lastname), login)',
@@ -98,20 +276,20 @@ class ilMailBoxQuery
 
             if (null !== self::$filter['period']['start']) {
                 $dateFilterParts[] = 'send_time >= ' . $DIC->database()->quote(
-                    (new DateTimeImmutable(
-                        '@' . self::$filter['period']['start']
-                    ))->format('Y-m-d 00:00:00'),
-                    'timestamp'
-                );
+                        (new DateTimeImmutable(
+                            '@' . self::$filter['period']['start']
+                        ))->format('Y-m-d 00:00:00'),
+                        'timestamp'
+                    );
             }
 
             if (null !== self::$filter['period']['end']) {
                 $dateFilterParts[] = 'send_time <= ' . $DIC->database()->quote(
-                    (new DateTimeImmutable(
-                        '@' . self::$filter['period']['end']
-                    ))->format('Y-m-d 23:59:59'),
-                    'timestamp'
-                );
+                        (new DateTimeImmutable(
+                            '@' . self::$filter['period']['end']
+                        ))->format('Y-m-d 23:59:59'),
+                        'timestamp'
+                    );
             }
 
             if (count($dateFilterParts) > 0) {
@@ -119,149 +297,6 @@ class ilMailBoxQuery
             }
         }
 
-        $queryCount = 'SELECT COUNT(mail_id) cnt FROM mail '
-                    . 'LEFT JOIN usr_data ON usr_id = sender_id '
-                    . 'WHERE user_id = %s '
-                    . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-                    . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-                    . 'AND folder_id = %s '
-                    . $filter_qry;
-
-        if (self::$filtered_ids) {
-            $queryCount .= ' AND ' . $DIC->database()->in(
-                'mail_id',
-                self::$filtered_ids,
-                false,
-                'integer'
-            ) . ' ';
-        }
-
-        $queryCount .= ' UNION ALL '
-                    . 'SELECT COUNT(mail_id) cnt FROM mail '
-                    . 'LEFT JOIN usr_data ON usr_id = sender_id '
-                    . 'WHERE user_id = %s '
-                    . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-                    . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-                    . 'AND folder_id = %s '
-                    . $filter_qry . ' '
-                    . 'AND m_status = %s';
-
-        if (self::$filtered_ids) {
-            $queryCount .= ' AND ' . $DIC->database()->in(
-                'mail_id',
-                self::$filtered_ids,
-                false,
-                'integer'
-            ) . ' ';
-        }
-
-        $res = $DIC->database()->queryF(
-            $queryCount,
-            ['integer', 'integer', 'integer', 'integer', 'text'],
-            [self::$userId, self::$folderId, self::$userId, self::$folderId, 'unread']
-        );
-
-        $counter = 0;
-        while ($cnt_row = $DIC->database()->fetchAssoc($res)) {
-            if ($counter === 0) {
-                $mails['cnt'] = (int) $cnt_row['cnt'];
-            } elseif ($counter === 1) {
-                $mails['cnt_unread'] = (int) $cnt_row['cnt'];
-            } else {
-                break;
-            }
-
-            ++$counter;
-        }
-
-        $sortColumn = '';
-        $firstnameSelection = '';
-        if (self::$orderColumn === 'from') {
-            // Because of the user id of automatically generated mails and ordering issues we have to do some magic
-            $firstnameSelection = '
-				,(CASE
-					WHEN (usr_id = ' . ANONYMOUS_USER_ID . ') THEN firstname 
-					ELSE ' . $DIC->database()->quote(ilMail::_getIliasMailerName(), 'text') . '
-				END) fname
-			';
-        }
-
-        $query = 'SELECT mail.*' . $sortColumn . ' ' . $firstnameSelection . ' FROM mail '
-               . 'LEFT JOIN usr_data ON usr_id = sender_id '
-               . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-               . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-               . 'WHERE user_id = %s '
-               . $filter_qry . ' '
-               . 'AND folder_id = %s';
-
-        if (self::$filtered_ids) {
-            $query .= ' AND ' . $DIC->database()->in(
-                'mail_id',
-                self::$filtered_ids,
-                false,
-                'integer'
-            ) . ' ';
-        }
-
-        $orderDirection = 'ASC';
-        if (in_array(strtolower(self::$orderDirection), ['desc', 'asc'], true)) {
-            $orderDirection = self::$orderDirection;
-        }
-
-        if (self::$orderColumn === 'from') {
-            $query .= ' ORDER BY '
-                    . ' fname ' . $orderDirection . ', '
-                    . ' lastname ' . $orderDirection . ', '
-                    . ' login ' . $orderDirection . ', '
-                    . ' import_name ' . $orderDirection;
-        } elseif (self::$orderColumn !== '') {
-            if (
-                !in_array(strtolower(self::$orderColumn), ['m_subject', 'send_time', 'rcp_to'], true) &&
-                !$DIC->database()->tableColumnExists('mail', strtolower(self::$orderColumn))) {
-                // @todo: Performance problem...
-                self::$orderColumn = 'send_time';
-            }
-
-            $query .= ' ORDER BY ' . strtolower(self::$orderColumn) . ' ' . $orderDirection;
-        } else {
-            $query .= ' ORDER BY send_time DESC';
-        }
-
-        $DIC->database()->setLimit(self::$limit, self::$offset);
-        $res = $DIC->database()->queryF(
-            $query,
-            ['integer', 'integer'],
-            [self::$userId, self::$folderId]
-        );
-        while ($row = $DIC->database()->fetchAssoc($res)) {
-            if (isset($row['attachments'])) {
-                $row['attachments'] = (array) unserialize(
-                    stripslashes($row['attachments']),
-                    ['allowed_classes' => false]
-                );
-            } else {
-                $row['attachments'] = [];
-            }
-
-            if (isset($row['mail_id'])) {
-                $row['mail_id'] = (int) $row['mail_id'];
-            }
-
-            if (isset($row['user_id'])) {
-                $row['user_id'] = (int) $row['user_id'];
-            }
-
-            if (isset($row['folder_id'])) {
-                $row['folder_id'] = (int) $row['folder_id'];
-            }
-
-            if (isset($row['sender_id'])) {
-                $row['sender_id'] = (int) $row['sender_id'];
-            }
-
-            $mails['set'][] = $row;
-        }
-
-        return $mails;
+        return $filter_qry;
     }
 }
