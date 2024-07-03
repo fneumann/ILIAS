@@ -64,7 +64,6 @@ class MailFolderData
     {
         return $this->type === self::TYPE_SENT;
     }
-
     public function isTrash(): bool
     {
         return $this->type === self::TYPE_TRASH;
@@ -79,4 +78,16 @@ class MailFolderData
     {
         return $this->type === self::TYPE_USER;
     }
+
+    public function hasIncomingMails(): bool
+    {
+        return !$this->isDrafts() && !$this->isSent();
+    }
+
+    public function hasOutgoingMails(): bool
+    {
+        return $this->isDrafts() || $this->isSent();
+    }
+
+
 }

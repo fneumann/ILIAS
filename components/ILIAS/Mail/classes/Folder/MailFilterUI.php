@@ -39,11 +39,10 @@ class MailFilterUI
         private readonly ilLanguage $lng
     ) {
         $inputs = [];
-        if ($folder->isDrafts() || $folder->isSent()) {
-            $inputs['recipients'] = $this->ui_factory->input()->field()->text($this->lng->txt('recipients'));
-        }
-        else {
+        if ($this->folder->hasIncomingMails()) {
             $inputs['sender'] = $this->ui_factory->input()->field()->text($this->lng->txt('sender'));
+        } else {
+            $inputs['recipients'] = $this->ui_factory->input()->field()->text($this->lng->txt('recipients'));
         }
 
         $inputs['subject'] = $this->ui_factory->input()->field()->text($this->lng->txt('subject'));

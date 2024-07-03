@@ -28,6 +28,9 @@ use ILIAS\UI\Component\Table\Data as DataTable;
 use ILIAS\UI\Component\Table\Column\Column as TableColumn;
 use ILIAS\UI\Component\Table\Action\Action as TableAction;
 use ILIAS\UI\URLBuilder;
+use ILIAS\Mail\Message\MailRecordData;
+use ilMail;
+use ilMailUserCache;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
@@ -35,16 +38,13 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private \ILIAS\UI\URLBuilderToken $action_parameter_token;
     private \ILIAS\UI\URLBuilderToken $row_id_token;
 
-
-    /**
-     *
-     */
     public function __construct(
         private readonly \ilMailFolderGUI $parent_gui,
         private readonly string $parent_cmd,
         private readonly MailFolderData $folder,
-        private readonly MailFolderSearch $records,
+        private readonly MailFolderSearch $search,
         private readonly array $selected_mail_ids,
+        private readonly ilMail $mail,
         private readonly \ILIAS\UI\Factory $ui_factory,
         private readonly \ilLanguage $lng,
         private readonly \ilCtrlInterface $ctrl,
@@ -62,13 +62,8 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ] = (new URLBuilder($form_action))->acquireParameters(
             ['mail', 'folder'],
             'table_action',
+            'entry_ids'
         );
-    }
-
-
-    public function getNumberOfMails(): int
-    {
-        return 0;
     }
 
     public function get(): DataTable
@@ -85,21 +80,22 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             ->withRequest($this->http_request);
     }
 
-    private function getTitle(): string
-    {
-
-    }
-
     /**
-     * @return array<string, TableColumn>
+     * @return TableColumn[]
      */
     private function getColumnDefinition(): array
     {
-        return [
+        $columns = [
             'sender' => $this->ui_factory
                 ->table()
                 ->column()
                 ->text($this->lng->txt('sender'))
+                ->withIsSortable(true),
+
+            'recipients' => $this->ui_factory
+                ->table()
+                ->column()
+                ->text($this->lng->txt('recipients'))
                 ->withIsSortable(true),
 
             'subject' => $this->ui_factory
@@ -108,6 +104,14 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
                 ->text($this->lng->txt('subject'))
                 ->withIsSortable(true),
         ];
+
+        if ($this->folder->hasOutgoingMails()) {
+            unset($columns['sender']);
+        } else {
+            unset($columns['recipients']);
+        }
+
+        return $columns;
     }
 
     /**
@@ -134,18 +138,55 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $filter_data,
         ?array $additional_parameters
     ): \Generator {
-        foreach ($this->records->getRecords($range, $order) as $record) {
-            $data = [
-                'subject' => $record->getSubject()
-            ];
 
-            yield $row_builder
-                ->buildDataRow($record->getId(), $data);
+        foreach ($this->search->getRecords($range, $order) as $record) {
+
+            if ($this->folder->hasIncomingMails()) {
+                $data = [
+                    'subject' => $record->getSubject(),
+                    'sender' => $this->getSender($record),
+                ];
+            } else {
+                $data = [
+                    'subject' => $record->getSubject(),
+                    'recipients' => $this->getRecipients($record)
+                ];
+            }
+
+            yield $row_builder->buildDataRow((string) $record->getMailId(), $data);
         }
     }
 
     public function getTotalRowCount(?array $filter_data, ?array $additional_parameters): ?int
     {
-        return $this->records->getTotalCount();
+        return $this->search->getCount();
+    }
+
+    private function getTitle(): string
+    {
+        return sprintf(
+            '%s: %s %s (%s %s)',
+            $this->folder->getTitle(),
+            $this->search->getCount(),
+            $this->lng->txt('mail_s'),
+            $this->search->getUnread(),
+            $this->lng->txt('unread')
+        );
+    }
+
+    private function getSender(MailRecordData $record): string
+    {
+        if ($record->getSenderId() == ANONYMOUS_USER_ID) {
+            return ilMail::_getIliasMailerName();
+        }
+        if (!empty($user = ilMailUserCache::getUserObjectById($record->getSenderId()))) {
+            return $user->getPublicName();
+        }
+        return trim(($record->getImportName() ?? '') . ' (' . $this->lng->txt('user_deleted') . ')');
+    }
+
+    private function getRecipients(MailRecordData $record): string
+    {
+        return $this->mail->formatNamesForOutput((string) $record->getRcpTo());
     }
 }

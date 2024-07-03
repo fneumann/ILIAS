@@ -255,7 +255,6 @@ class ilMailFolderGUI
             $oneConfirmationDialogueRendered = true;
         }
 
-
         $filter = new \ILIAS\Mail\Folder\MailFilterUI(
             $this->ctrl->getFormAction($this, 'showFolder'),
             ilSearchSettings::getInstance()->enabledLucene(),
@@ -271,12 +270,13 @@ class ilMailFolderGUI
             ilSearchSettings::getInstance()->enabledLucene(),
         );
 
-        $mailtable = new \ILIAS\Mail\Folder\MailFolderTableUI(
+        $table = new \ILIAS\Mail\Folder\MailFolderTableUI(
             $this,
             'showFolder',
             $folder,
             $search,
             $selected_mail_ids,
+            $this->umail,
             $this->ui_factory,
             $this->lng,
             $this->ctrl,
@@ -292,7 +292,7 @@ class ilMailFolderGUI
             }
         }
 
-        if ($this->confirmTrashDeletion && $folder->isTrash() && $mailtable->getNumberOfMails() > 0) {
+        if ($this->confirmTrashDeletion && $folder->isTrash() && $search->getCount() > 0) {
             $confirmationGui = new ilConfirmationGUI();
             $confirmationGui->setHeaderText($this->lng->txt('mail_empty_trash_confirmation'));
             $this->ctrl->setParameter($this, 'mobj_id', $this->currentFolderId);
@@ -303,7 +303,7 @@ class ilMailFolderGUI
             $this->tpl->setVariable('CONFIRMATION', $confirmationGui->getHTML());
         }
 
-        $this->tpl->setVariable('MAIL_TABLE', $this->ui_renderer->render([$filter->get(), $mailtable->get()]));
+        $this->tpl->setVariable('MAIL_TABLE', $this->ui_renderer->render([$filter->get(), $table->get()]));
         $this->tpl->printToStdout();
     }
 
