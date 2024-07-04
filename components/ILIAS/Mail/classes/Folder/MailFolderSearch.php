@@ -96,15 +96,16 @@ class MailFolderSearch
      * @return MailRecordData[]
      */
     public function getRecords(
-        \ILIAS\Data\Range $range,
-        \ILIAS\Data\Order $order,
+        int $limit,
+        int $offset,
+        ?string $order_column,
+        ?string $order_direction
     ): array {
-        [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
 
         $records = $this->mailbox_query
             ->withFilteredIds($this->getFilteredIds())
-            ->withOffset($range->getStart())
-            ->withLimit($range->getLength())
+            ->withLimit($limit)
+            ->withOffset($offset)
             ->withOrderColumn($order_column)
             ->withOrderDirection($order_direction)
             ->query(true);

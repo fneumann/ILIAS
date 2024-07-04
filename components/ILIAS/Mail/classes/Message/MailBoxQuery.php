@@ -64,7 +64,7 @@ class MailBoxQuery
     {
         $clone = clone $this;
         $clone->folder_id = $folder_id;
-        return $this;
+        return $clone;
     }
 
     public function withSender(?string $sender): MailBoxQuery
@@ -242,7 +242,7 @@ class MailBoxQuery
                . 'LEFT JOIN usr_data ON usr_id = sender_id '
                . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
                . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-               . 'WHERE user_id = %s '
+               . 'WHERE user_id = ' . $this->db->quote($this->user_id, 'integer')
                . $this->getFilterCondition() . ' ';
 
         if ($this->order_column === 'from') {
@@ -258,14 +258,14 @@ class MailBoxQuery
         }
 
         $this->db->setLimit($this->limit, $this->offset);
-        $res = $this->db->queryF($query, ['integer'], [$this->user_id]);
+        $res = $this->db->query($query);
 
         $set = [];
         while ($row = $this->db->fetchAssoc($res)) {
             $set[] = new MailRecordData(
                 isset($row['mail_id']) ? (int) $row['mail_id'] : 0,
                 isset($row['user_id']) ? (int) $row['user_id'] : 0,
-                isset($row['folder_id']) ? (int) $row['user_id'] : 0,
+                isset($row['folder_id']) ? (int) $row['folder_id'] : 0,
                 isset($row['sender_id']) ? (int) $row['sender_id'] : null,
                 isset($row['send_time']) ? (string) $row['send_time'] : null,
                 isset($row['m_status']) ? (string) $row['m_status'] : null,
@@ -293,8 +293,8 @@ class MailBoxQuery
 
         $text_conditions = [
             [$this->sender, 'CONCAT(CONCAT(firstname, lastname), login)'],
-            [$this->recipients, 'mail_filter_recipients' => 'CONCAT(CONCAT(rcp_to, rcp_cc), rcp_bcc)'],
-            [$this->subject, 'mail_filter_subject' => 'm_subject'],
+            [$this->recipients, 'CONCAT(CONCAT(rcp_to, rcp_cc), rcp_bcc)'],
+            [$this->subject, 'm_subject'],
             [$this->body, 'm_message'],
         ];
 

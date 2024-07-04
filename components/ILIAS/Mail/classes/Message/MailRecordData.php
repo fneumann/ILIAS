@@ -22,6 +22,9 @@ namespace ILIAS\Mail\Message;
 
 class MailRecordData
 {
+    public const STATUS_READ = 'read';
+
+
     public function __construct(
         private readonly int $mail_id,
         private readonly int $user_id,
@@ -120,5 +123,15 @@ class MailRecordData
     public function getTplCtxParams(): ?string
     {
         return $this->tpl_ctx_params;
+    }
+
+    public function isRead(): bool
+    {
+        return $this->status === self::STATUS_READ;
+    }
+
+    public function hasAttachments()
+    {
+        return !empty($this->attachments);
     }
 }

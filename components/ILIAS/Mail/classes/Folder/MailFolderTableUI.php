@@ -31,12 +31,25 @@ use ILIAS\UI\URLBuilder;
 use ILIAS\Mail\Message\MailRecordData;
 use ilMail;
 use ilMailUserCache;
+use ILIAS\Refinery\Factory as Refinery;
+use ILIAS\Data\DateFormat\DateFormat;
+use DateTimeImmutable;
+use ILIAS\UI\Factory;
+use ILIAS\UI\Renderer;
+use ILIAS\UI\Component\Link\Link;
+use ILIAS\UI\Component\Symbol\Icon\Standard;
+use ILIAS\UI\Component\Symbol\Symbol;
+use ILIAS\UI\Component\Symbol\Avatar\Avatar;
+use ILIAS\UI\Implementation\Component\Symbol\Icon\Icon;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
     private \ILIAS\UI\URLBuilder $url_builder;
     private \ILIAS\UI\URLBuilderToken $action_parameter_token;
     private \ILIAS\UI\URLBuilderToken $row_id_token;
+
+    /** @var string[] */
+    private array $avatars = [];
 
     public function __construct(
         private readonly \ilMailFolderGUI $parent_gui,
@@ -45,11 +58,14 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         private readonly MailFolderSearch $search,
         private readonly array $selected_mail_ids,
         private readonly ilMail $mail,
-        private readonly \ILIAS\UI\Factory $ui_factory,
+        private readonly Factory $ui_factory,
+        private readonly Renderer $ui_renderer,
         private readonly \ilLanguage $lng,
         private readonly \ilCtrlInterface $ctrl,
         private readonly \Psr\Http\Message\ServerRequestInterface $http_request,
-        private readonly \ILIAS\Data\Factory $df
+        private readonly \ILIAS\Data\Factory $df,
+        private readonly Refinery $refinery,
+        private readonly DateFormat $date_format
     ) {
         $form_action = $this->df->uri(
             \ilUtil::_getHttpPath() . '/' .
@@ -86,6 +102,19 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private function getColumnDefinition(): array
     {
         $columns = [
+            'status' => $this->ui_factory
+                ->table()
+                ->column()
+                ->statusIcon($this->lng->txt('status'))
+                ->withIsSortable(true),
+
+            'avatar' => $this->ui_factory
+                ->table()
+                ->column()
+                ->text($this->lng->txt('avatar'))
+                ->withIsSortable(true),
+
+
             'sender' => $this->ui_factory
                 ->table()
                 ->column()
@@ -101,11 +130,25 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             'subject' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('subject'))
+                ->link($this->lng->txt('subject'))
+                ->withIsSortable(true),
+
+            'attachments' => $this->ui_factory
+                ->table()
+                ->column()
+                ->text($this->lng->txt('attachments'))
+                ->withIsSortable(true),
+
+            'date' => $this->ui_factory
+                ->table()
+                ->column()
+                ->date($this->lng->txt('date'), $this->df->dateFormat()->withTime24($this->date_format))
                 ->withIsSortable(true),
         ];
 
         if ($this->folder->hasOutgoingMails()) {
+            unset($columns['status']);
+            unset($columns['avatar']);
             unset($columns['sender']);
         } else {
             unset($columns['recipients']);
@@ -139,17 +182,40 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $additional_parameters
     ): \Generator {
 
-        foreach ($this->search->getRecords($range, $order) as $record) {
+        $columns = [
+            'subject' => 'm_subject',
+            'sender' => 'from',
+            'recipients' => 'rcp_to',
+            'date' => 'send_time'
+               ];
+
+        [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
+
+
+        foreach ($this->search->getRecords(
+            $range->getLength(),
+            $range->getStart(),
+            $columns[$order_column] ?? '',
+            $order_direction
+        ) as $record) {
+
+            $this->ctrl->setParameter($this->parent_gui, 'mail_id', $record->getMailId());
 
             if ($this->folder->hasIncomingMails()) {
                 $data = [
-                    'subject' => $record->getSubject(),
+                    'status' => $this->getStatus($record),
+                    'avatar' => $this->getAvatar($record),
                     'sender' => $this->getSender($record),
+                    'subject' => $this->getSubject($record),
+                    'attachments' => $this->getAttachments($record),
+                    'date' => $this->getDate($record)
                 ];
             } else {
                 $data = [
-                    'subject' => $record->getSubject(),
-                    'recipients' => $this->getRecipients($record)
+                    'recipients' => $this->getRecipients($record),
+                    'subject' => $this->getSubject($record),
+                    'attachments' => $this->getAttachments($record),
+                    'date' => $this->getDate($record)
                 ];
             }
 
@@ -174,6 +240,24 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         );
     }
 
+    private function getAvatar(MailRecordData $record): string
+    {
+        if (!array_key_exists($record->getSenderId(), $this->avatars)) {
+            $user = ilMailUserCache::getUserObjectById($record->getSenderId());
+            $this->avatars[$record->getSenderId()] = isset($user)
+                ? $this->ui_renderer->render($user->getAvatar())
+                : '';
+        }
+        return $this->avatars[$record->getSenderId()];
+    }
+
+    private function getStatus(MailRecordData $record): Icon
+    {
+        return $record->isRead()
+            ? $this->ui_factory->symbol()->icon()->standard('mail', $this->lng->txt('read'), 'small')
+            : $this->ui_factory->symbol()->icon()->standard('nota', $this->lng->txt('unread'), 'small');
+    }
+
     private function getSender(MailRecordData $record): string
     {
         if ($record->getSenderId() == ANONYMOUS_USER_ID) {
@@ -187,6 +271,28 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getRecipients(MailRecordData $record): string
     {
-        return $this->mail->formatNamesForOutput((string) $record->getRcpTo());
+        return $this->refinery->encode()->htmlSpecialCharsAsEntities()->transform(
+            $this->mail->formatNamesForOutput((string) $record->getRcpTo())
+        );
+    }
+
+    private function getSubject(MailRecordData $record): Link
+    {
+        return $this->ui_factory->link()->standard(
+            $this->refinery->encode()->htmlSpecialCharsAsEntities()->transform($record->getSubject()),
+            $this->ctrl->getLinkTarget($this->parent_gui, 'showMail')
+        );
+    }
+
+    private function getDate(MailRecordData $record): DateTimeImmutable
+    {
+        return new \DateTimeImmutable($record->getSendTime());
+    }
+
+    private function getAttachments(MailRecordData $record): string
+    {
+        return $record->hasAttachments()
+            ? $this->ui_renderer->render($this->ui_factory->symbol()->glyph()->attachment())
+            : '';
     }
 }

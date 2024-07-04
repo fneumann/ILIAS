@@ -270,6 +270,8 @@ class ilMailFolderGUI
             ilSearchSettings::getInstance()->enabledLucene(),
         );
 
+        $this->user->getDateFormat();
+
         $table = new \ILIAS\Mail\Folder\MailFolderTableUI(
             $this,
             'showFolder',
@@ -278,10 +280,13 @@ class ilMailFolderGUI
             $selected_mail_ids,
             $this->umail,
             $this->ui_factory,
+            $this->ui_renderer,
             $this->lng,
             $this->ctrl,
             $this->http->request(),
-            new ILIAS\Data\Factory()
+            new ILIAS\Data\Factory(),
+            $this->refinery,
+            $this->user->getDateFormat()
         );
 
         if (!$oneConfirmationDialogueRendered && !$this->confirmTrashDeletion) {
@@ -1066,37 +1071,5 @@ class ilMailFolderGUI
             $this->ctrl->setParameter($this, 'mobj_id', $this->currentFolderId);
             $this->ctrl->redirect($this);
         }
-    }
-
-    protected function getMailFolderTable(): ilMailFolderTableGUI
-    {
-        $table = new ilMailFolderTableGUI(
-            $this,
-            $this->currentFolderId,
-            'showFolder',
-            $this->currentFolderId === $this->mbox->getTrashFolder(),
-            $this->currentFolderId === $this->mbox->getSentFolder(),
-            $this->currentFolderId === $this->mbox->getDraftsFolder()
-        );
-
-        return $table;
-    }
-
-    protected function applyFilter(): void
-    {
-        $table = $this->getMailFolderTable();
-        $table->resetOffset();
-        $table->writeFilterToSession();
-
-        $this->showFolder();
-    }
-
-    protected function resetFilter(): void
-    {
-        $table = $this->getMailFolderTable();
-        $table->resetOffset();
-        $table->resetFilter();
-
-        $this->showFolder();
     }
 }
