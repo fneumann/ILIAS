@@ -18,6 +18,8 @@
 
 declare(strict_types=1);
 
+use ILIAS\Test\Settings\MainSettings\SettingsMainGUI;
+
 use ILIAS\UI\Factory as UIFactory;
 use ILIAS\UI\Renderer as UIRenderer;
 
@@ -50,7 +52,7 @@ class ilTestInfoScreenToolbarGUI extends ilToolbarGUI
         private ilTestSession $test_session,
         private ilDBInterface $db,
         private ilAccessHandler $access,
-        private ilCtrl $ctrl,
+        private ilCtrlInterface $ctrl,
         protected ilLanguage $lng,
         private UIFactory $ui_factory,
         private UIRenderer $ui_renderer,
@@ -227,7 +229,7 @@ class ilTestInfoScreenToolbarGUI extends ilToolbarGUI
     {
         return sprintf(
             $this->lng->txt('tst_skill_triggerings_num_req_answers_not_reached_warn'),
-            ilObjAssessmentFolder::getSkillTriggerAnswerNumberBarrier()
+            ilObjTestFolder::getSkillTriggerAnswerNumberBarrier()
         );
     }
 
@@ -262,7 +264,7 @@ class ilTestInfoScreenToolbarGUI extends ilToolbarGUI
             if ($this->access->checkAccess("write", "", $this->getTestOBJ()->getRefId())) {
                 $links[] = $this->ui_factory->link()->standard(
                     $this->lng->txt('test_edit_settings'),
-                    $this->buildLinkTarget('ilobjtestsettingsmaingui')
+                    $this->buildLinkTarget(SettingsMainGUI::class)
                 );
             }
 

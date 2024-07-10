@@ -19,6 +19,8 @@
 declare(strict_types=1);
 
 use ILIAS\TestQuestionPool\Import\TestQuestionsImportTrait;
+use ILIAS\Test\TestDIC;
+use ILIAS\Test\Logging\TestLogger;
 
 /**
  * Importer class for files
@@ -35,13 +37,13 @@ class ilTestImporter extends ilXmlImporter
      */
     public static $finallyProcessedTestsRegistry = [];
 
-    private ilLogger $log;
-    private ilDBInterface $db;
+    private readonly TestLogger $logger;
+    private readonly ilDBInterface $db;
 
     public function __construct()
     {
         global $DIC;
-        $this->log = $DIC['ilLog'];
+        $this->logger = TestDIC::dic()['logging.logger'];
         $this->db = $DIC['ilDB'];
 
         parent::__construct();
@@ -87,20 +89,13 @@ class ilTestImporter extends ilXmlImporter
         $new_obj->loadFromDb();
 
         if (!file_exists($xmlfile)) {
-            $this->log->write(__METHOD__ . ': Cannot find xml definition: ' . $xmlfile);
+            $this->logger->error(__METHOD__ . ': Cannot find xml definition: ' . $xmlfile);
             return;
         }
         if (!file_exists($qtifile)) {
-            $this->log->write(__METHOD__ . ': Cannot find xml definition: ' . $qtifile);
+            $this->logger->error(__METHOD__ . ': Cannot find xml definition: ' . $qtifile);
             return;
         }
-
-        /* @var ilObjTest $new_obj */
-
-        // FIXME: Copied from ilObjTestGUI::importVerifiedFileObject
-        // TODO: move all logic to ilObjTest::importVerifiedFile and call
-        // this method from ilObjTestGUI and ilTestImporter
-        $new_obj->getMarkSchema()->flush();
 
         // start parsing of QTI files
         $qti_parser = new ilQTIParser(
@@ -155,7 +150,7 @@ class ilTestImporter extends ilXmlImporter
         $results_file_path = ilSession::get("tst_import_results_file");
         // import test results
         if ($results_file_path !== null && file_exists($results_file_path)) {
-            $results = new ilTestResultsImportParser($results_file_path, $new_obj, $this->db, $this->log);
+            $results = new ilTestResultsImportParser($results_file_path, $new_obj, $this->db, $this->logger);
             $results->setQuestionIdMapping($a_mapping->getMappingsOfEntity('components/ILIAS/Test', 'quest'));
             $results->setSrcPoolDefIdMapping($a_mapping->getMappingsOfEntity('components/ILIAS/Test', 'rnd_src_pool_def'));
             $results->startParsing();

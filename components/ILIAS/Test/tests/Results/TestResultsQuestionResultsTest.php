@@ -18,11 +18,11 @@
 
 declare(strict_types=1);
 
-namespace ILIAS\components\Test\test;
+namespace ILIAS\Test\Access\test;
 
 use PHPUnit\Framework\TestCase;
 
-class QuestionResultTest extends TestCase
+class TestResultsQuestionResultsTest extends TestCase
 {
     public function testTestResultsQuestionResultsBasicProps(): void
     {

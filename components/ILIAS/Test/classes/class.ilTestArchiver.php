@@ -18,11 +18,15 @@
 
 declare(strict_types=1);
 
+use ILIAS\Test\RequestDataCollector;
+
+use ILIAS\TestQuestionPool\Questions\GeneralQuestionPropertiesRepository;
+
 use ILIAS\UI\Factory as UIFactory;
 use ILIAS\UI\Renderer as UIRenderer;
-use ILIAS\Test\InternalRequestService;
 use ILIAS\HTTP\GlobalHttpState;
 use ILIAS\Refinery\Factory as RefineryFactory;
+use ILIAS\ResourceStorage\Services as IRSS;
 
 /**
  * Class ilTestArchiver
@@ -96,23 +100,7 @@ class ilTestArchiver
 
     protected $external_directory_path;
     protected $client_id;
-    protected $test_obj_id;
-    protected $test_ref_id;
     protected $archive_data_index;
-
-    protected ilLanguage $lng;
-    protected ilDBInterface $db;
-    protected ilCtrl $ctrl;
-    protected ilObjUser $user;
-    protected ilTabsGUI $tabs;
-    protected ilToolbarGUI $toolbar;
-    protected ilGlobalTemplateInterface $tpl;
-    protected UIFactory $ui_factory;
-    protected UIRenderer $ui_renderer;
-    protected ilAccess $access;
-    protected InternalRequestService $testrequest;
-    protected GlobalHttpState $http;
-    protected RefineryFactory $refinery;
 
     protected ilTestHTMLGenerator $html_generator;
 
@@ -121,37 +109,35 @@ class ilTestArchiver
      */
     protected $participantData;
 
-    private \ILIAS\ResourceStorage\Services $irss;
-
     #endregion
 
-    public function __construct(int $test_obj_id, ?int $test_ref_id = null)
-    {
+    public function __construct(
+        private readonly ilLanguage $lng,
+        private readonly ilDBInterface $db,
+        private readonly ilCtrlInterface $ctrl,
+        private readonly ilObjUser $user,
+        private readonly ilTabsGUI $tabs,
+        private readonly ilToolbarGUI $toolbar,
+        private readonly ilGlobalTemplateInterface $tpl,
+        private readonly UIFactory $ui_factory,
+        private readonly UIRenderer $ui_renderer,
+        private readonly GlobalHttpState $http,
+        private readonly RefineryFactory $refinery,
+        private readonly ilAccess $access,
+        private readonly IRSS $irss,
+        private readonly GeneralQuestionPropertiesRepository $questionrepository,
+        private readonly RequestDataCollector $testrequest,
+        private readonly int $test_obj_id,
+        private ?int $test_ref_id = null
+    ) {
         /** @var ILIAS\DI\Container $DIC */
         global $DIC;
-        $this->lng = $DIC['lng'];
-        $this->db = $DIC['ilDB'];
-        $this->ctrl = $DIC['ilCtrl'];
-        $this->user = $DIC['ilUser'];
-        $this->tabs = $DIC['ilTabs'];
-        $this->toolbar = $DIC['ilToolbar'];
-        $this->tpl = $DIC['tpl'];
-        $this->ui_factory = $DIC['ui.factory'];
-        $this->ui_renderer = $DIC['ui.renderer'];
-        $this->access = $DIC['ilAccess'];
-        $this->testrequest = $DIC->test()->internal()->request();
-        $this->http = $DIC->http();
-        $this->refinery = $DIC->refinery();
-        $this->irss = $DIC->resourceStorage();
-
         $ilias = $DIC['ilias'];
 
         $this->html_generator = new ilTestHTMLGenerator();
 
         $this->external_directory_path = $ilias->ini_ilias->readVariable('clients', 'datadir');
-        $this->client_id = $ilias->client_id;
-        $this->test_obj_id = $test_obj_id;
-        $this->test_ref_id = $test_ref_id;
+        $this->client_id = CLIENT_ID;
 
         $this->archive_data_index = $this->readArchiveDataIndex();
 
@@ -258,7 +244,8 @@ class ilTestArchiver
      * @param $pass
      * @return void
      */
-    public function handInParticipantUploadedResults($active_fi, $pass, $tst_obj){
+    public function handInParticipantUploadedResults($active_fi, $pass, $tst_obj)
+    {
         $questions = $tst_obj->getQuestionsOfPass($active_fi, $pass);
         foreach ($questions as $question) {
             $question = $tst_obj->getQuestionDataset($question['question_fi']);
@@ -275,11 +262,11 @@ class ilTestArchiver
                 $local_folder = CLIENT_WEB_DIR . '/assessment/tst_' . $tst_obj->test_id . self::DIR_SEP . $active_fi . self::DIR_SEP . $question->question_id . '/files/';
                 if (file_exists($local_folder)) {
                     $folder_content = scandir($local_folder);
-                    $folder_content = array_diff($folder_content, array('.', '..'));
+                    $folder_content = array_diff($folder_content, ['.', '..']);
                     foreach ($folder_content as $file_name) {
-                        if (preg_match('/file_(\d+)_(\d+)_(\d+)/', $file_name, $matches)){
-                            if ($active_fi == intval($matches[1]) && $pass == $matches[2]){
-                                $local_file= $local_folder . $file_name;
+                        if (preg_match('/file_(\d+)_(\d+)_(\d+)/', $file_name, $matches)) {
+                            if ($active_fi == intval($matches[1]) && $pass == $matches[2]) {
+                                $local_file = $local_folder . $file_name;
                                 $target_destination = $archive_folder . $file_name;
                                 copy($local_file, $target_destination);
                                 $this->logArchivingProcess(date(self::LOG_DTSGROUP_FORMAT) . self::LOG_ADDITION_STRING . $target_destination);
@@ -289,11 +276,11 @@ class ilTestArchiver
                 }
                 // IRSS
                 $resource_id = $tst_obj->getTextAnswer($active_fi, $question->question_id, $pass);
-                if ($resource_id == ''){
+                if ($resource_id == '') {
                     continue;
                 }
                 $irss_unique_id = $this->irss->manage()->find($resource_id);
-                if ($irss_unique_id != null){
+                if ($irss_unique_id != null) {
                     $resource = $this->irss->manage()->getResource($irss_unique_id);
                     $information = $resource->getCurrentRevision()->getInformation();
                     $stream = $this->irss->consume()->stream($irss_unique_id);
@@ -445,6 +432,7 @@ class ilTestArchiver
             $this->ui_factory,
             $this->ui_renderer,
             new ilTestParticipantAccessFilterFactory($this->access),
+            $this->questionrepository,
             $this->testrequest,
             $this->http,
             $this->refinery
@@ -453,7 +441,7 @@ class ilTestArchiver
 
         $objectiveOrientedContainer = new ilTestObjectiveOrientedContainer();
         $gui->setObjectiveParent($objectiveOrientedContainer);
-        $array_of_actives = array();
+        $array_of_actives = [];
         $participants = $test->getParticipants();
 
         foreach ($participants as $key => $value) {
@@ -733,7 +721,7 @@ class ilTestArchiver
          */
         $data_index_file = $this->getTestArchive() . self::DIR_SEP . self::DATA_INDEX_FILENAME;
 
-        $contents = array();
+        $contents = [];
 
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
         if (@file_exists($data_index_file)) {
@@ -805,13 +793,13 @@ class ilTestArchiver
             throw new Exception('Invalid date format. Expected ISO 8601 format.');
         }
 
-        $line = array(
+        $line = [
             'identifier' => $active_fi . '|' . $pass,
             'yyyy' => date_format($date, 'Y'),
             'mm' => date_format($date, 'm'),
             'dd' => date_format($date, 'd'),
             'directory' => $active_fi . '_' . $pass . '_' . $user_firstname . '_' . $user_lastname . '_' . $matriculation
-        );
+        ];
         return $line;
     }
 
@@ -849,7 +837,7 @@ class ilTestArchiver
         /** @noinspection PhpAssignmentInConditionInspection */
         if ($handle = opendir($directory)) {
             while (($file = readdir($handle)) !== false) {
-                if (!in_array($file, array( '.', '..' )) && !is_dir($directory . $file)) {
+                if (!in_array($file, [ '.', '..' ]) && !is_dir($directory . $file)) {
                     if ($pattern && strpos($file, $pattern) === 0) {
                         $filecount++;
                     }

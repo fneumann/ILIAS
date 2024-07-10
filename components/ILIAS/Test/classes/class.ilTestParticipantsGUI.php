@@ -19,9 +19,9 @@
 declare(strict_types=1);
 
 use ILIAS\UI\Factory as UIFactory;
-use ILiAS\UI\Renderer as UIRenderer;
+use ILIAS\UI\Renderer as UIRenderer;
 
-use ILIAS\Test\InternalRequestService;
+use ILIAS\Test\RequestDataCollector;
 
 /**
  * Class ilTestParticipantsGUI
@@ -57,11 +57,11 @@ class ilTestParticipantsGUI
         protected UIFactory $ui_factory,
         protected UIRenderer $ui_renderer,
         protected ilLanguage $lng,
-        protected ilCtrl $ctrl,
+        protected ilCtrlInterface $ctrl,
         protected ilDBInterface $db,
         protected ilTabsGUI $tabs,
         protected ilToolbarGUI $toolbar,
-        protected InternalRequestService $testrequest
+        protected RequestDataCollector $testrequest
     ) {
         $this->participant_access_filter = new ilTestParticipantAccessFilterFactory($access);
     }
@@ -111,14 +111,14 @@ class ilTestParticipantsGUI
         switch ($this->ctrl->getNextClass($this)) {
             case 'ilrepositorysearchgui':
                 $gui = new ilRepositorySearchGUI();
-                $gui->setCallback($this, self::CALLBACK_ADD_PARTICIPANT, array());
+                $gui->setCallback($this, self::CALLBACK_ADD_PARTICIPANT, []);
 
                 $gui->addUserAccessFilterCallable($this->participant_access_filter->getManageParticipantsUserFilter(
                     $this->getTestObj()->getRefId()
                 ));
 
 
-                $this->ctrl->setReturn($this, self::CMD_SHOW);
+                $this->ctrl->setReturnByClass(self::class, self::CMD_SHOW);
                 $this->ctrl->forwardCommand($gui);
 
                 break;
@@ -294,10 +294,10 @@ class ilTestParticipantsGUI
         ilRepositorySearchGUI::fillAutoCompleteToolbar(
             $this,
             $toolbar,
-            array(
+            [
                 'auto_complete_name' => $this->lng->txt('user'),
                 'submit_name' => $this->lng->txt('add')
-            )
+            ]
         );
         $toolbar->addSeparator();
 

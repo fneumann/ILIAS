@@ -428,6 +428,9 @@ adve#:#adve_use_physical#:#str|emp|imp durch <b>B</b>|<i>I</i>|<u>U</u> ersetzen
 adve#:#adve_use_physical_info#:#Die Einstellung ersetzt die Buttons der semantischen Styleklassen für strong, emphatic und important durch die fest definierten Auszeichnungen <b>B</b> (bold), <i>I</i> (italic) und <u>U</u> (underline). Achtung: hierbei kann es zu Inkonsistenzen kommen, wenn über den Styleeditor den Styleklassen für strong, emphatic und important andere Auszeichnungen zugeordnet wurden.
 adve#:#adve_use_tiny_mce#:#TinyMCE für WYSIWYG-Editieren aktivieren
 assessment#:#action#:#Aktion
+assessment#:#activate_logging#:#Protokollieren des Test und Assessments aktivieren
+assessment#:#activate_manual_scoring#:#Aktivieren der manuellen Bewertung für
+assessment#:#activate_manual_scoring_desc#:#Alle Fragen des gewählten Fragetyps können manuell bewertet werden. Achtung: Das nachträgliche Ändern von Ergebnissen kann rechtliche Auswirkungen haben!###Modified as part of gender mainstreaming activities for ILIAS 8
 assessment#:#addSuggestedSolution#:#Inhalte zur Wiederholung
 assessment#:#add_answers#:#Antworten hinzufügen
 assessment#:#add_circle#:#Kreis hinzufügen
@@ -589,6 +592,7 @@ assessment#:#concatenation#:#Verknüpfung
 assessment#:#conf_delete_pass#:#Durchgang wirklich löschen?
 assessment#:#confirm_delete_all_user_data#:#Sind Sie sicher, dass Sie alle Datensätze der Umfrage löschen wollen?
 assessment#:#confirm_delete_single_user_data#:#Sind Sie sicher, dass Sie alle Testdaten der ausgewählten Benutzer entfernen wollen?
+assessment#:#confirm_log_deletion#:#Sind Sie sicher, dass Sie die ausgewählten Protokolleinträge löschen möchten? Die gelöschten Einträge werden unwiderruflich gelöscht.
 assessment#:#confirm_sync_questions#:#Die Frage, die Sie geändert haben, wurde mit dem Einfügen in den Test als Kopie eines Originals angelegt. Wollen Sie Ihre Änderungen jetzt auch auf die Originalfrage anwenden?
 assessment#:#coordinates#:#Koordinaten
 assessment#:#copy_and_link_to_questionpool#:#Zu Fragenpool hinzufügen
@@ -601,6 +605,7 @@ assessment#:#create_gaps#:#Lücken erzeugen und aktualisieren
 assessment#:#create_new#:#Erstelle neue
 assessment#:#customstyle#:#Eigenes Stylesheet
 assessment#:#dashboard_tab#:#Teilnehmer
+assessment#:#date_time#:#Datum und Uhrzeit
 assessment#:#definition#:#Definition
 assessment#:#definition_image#:#Bild
 assessment#:#definition_text#:#Text
@@ -628,19 +633,6 @@ assessment#:#dont_use_questionpool#:#Fragen nicht in einen Fragenpool einfügen 
 assessment#:#duplicate#:#Kopieren
 assessment#:#duplicate_matching_values_selected#:#Sie haben mindestens einen doppelten Zuordnungswert ausgewählt!
 assessment#:#duplicate_order_values_entered#:#Sie haben mindestens eine doppelte Reihenfolge angegeben!
-assessment#:#ects_allow_ects_grades#:#ECTS-Note zusätzlich zur erreichten Note anzeigen
-assessment#:#ects_fx_threshold#:#Grenzwert
-assessment#:#ects_fx_threshold_info#:#Bitte geben Sie den Grenzwert an, ab dem durchgefallene Teilnehmer die ECTS-Note 'FX' erhalten.
-assessment#:#ects_grade#:#ECTS-Note
-assessment#:#ects_grade_a_desc#:#ausgezeichnete Leistungen und nur wenige unbedeutende Fehler
-assessment#:#ects_grade_b_desc#:#überdurchschnittliche Leistungen, aber einige Fehler
-assessment#:#ects_grade_c_desc#:#insgesamt gute und solide Arbeit, jedoch mit einigen grundlegenden Fehlern
-assessment#:#ects_grade_d_desc#:#mittelmäßig, jedoch deutliche Mängel
-assessment#:#ects_grade_desc_prefix#:#Bedeutung der Note:
-assessment#:#ects_grade_e_desc#:#die gezeigten Leistungen entsprechen den Mindestanforderungen
-assessment#:#ects_grade_f_desc#:#es sind erhebliche Verbesserungen erforderlich
-assessment#:#ects_grade_fx_desc#:#es sind Verbesserungen erforderlich, bevor die Leistung anerkannt wird
-assessment#:#ects_output_of_ects_grades#:#Ausgabe von ECTS-Noten
 assessment#:#edit_answer#:#Antwort ändern
 assessment#:#edit_concluding_remarks#:#Abschließende Bemerkung bearbeiten
 assessment#:#edit_introduction#:#Einleitung bearbeiten
@@ -715,6 +707,7 @@ assessment#:#export_cert_ignored_for_users_s#:#Für das folgende Konto liegt kei
 assessment#:#export_cert_no_users#:#Ein Zertifikats-Archiv kann nicht generiert werden, da aktuell keine Teilnehmer existierten.
 assessment#:#export_essay_qst_with_html#:#Exportiere Freitext-Frage mit HTML Code
 assessment#:#export_essay_qst_with_html_desc#:#Wenn aktiviert, haben Sie die Möglichkeit Freitext-Fragen mit dem eingegebenen HTML-Code nach Excel zu exportieren.
+assessment#:#export_legacy_logs#:#Legacy-Log-Daten exportieren
 assessment#:#extratime#:#Zeitverlängerung
 assessment#:#factor#:#Faktor
 assessment#:#failed_official#:#nicht bestanden
@@ -778,14 +771,17 @@ assessment#:#hints#:#Hinweise
 assessment#:#identical_scoring#:#Identische Bewertung
 assessment#:#identical_scoring_desc#:#Wenn ausgewählt, werden Lücken mit identischen Lösungen entsprechend der Vorgaben bewertet, selbst wenn die gleiche Lösung mehrere Male verwendet wurde. Ist das Kontrollkästchen nicht ausgewählt, wird nur die erste verwendete identische Lösung bewertet.
 assessment#:#imagemap#:#Imagemap
+assessment#:#imap_line_color#:#Imagemap Linienfarbe
 assessment#:#import_question#:#Fragen importieren
 assessment#:#imported#:#importiert
 assessment#:#in_range#:#Innerhalb des Bereichs
+assessment#:#in_trash#:#Im Papierkorb
 assessment#:#info_answer_type_change#:#Die Frage beinhaltet bereits Bilder. Der Fragentyp konnte deshalb nicht auf mehrzeilige Antworten geändert werden.
 assessment#:#info_text_upload#:#Wählen Sie eine Textdatei (UTF-8) mit Antworten zum Hochladen aus.
 assessment#:#insert_after#:#Einfügen hinter
 assessment#:#insert_before#:#Einfügen vor
 assessment#:#insert_gap#:#Lücke einfügen
+assessment#:#interaction_type#:#Interaktion
 assessment#:#internal_links#:#Interne Verweise
 assessment#:#intprecision#:#Teilbar durch
 assessment#:#intprecision_info#:#"Teilbar durch" hat nur Auswirkungen auf die Variablenerzeugung, wenn der Wert für die Präzision 0 beträgt. In diesem Fall legt "Teilbar durch" fest, durch welche ganze Zahl die erzeugte Variable teilbar sein muss. Ein Wert von 10 erzeugt also nur ganze Zahlen, die durch 10 teilbar sind, ein Wert von 5 erzeugt ganze Zahlen, die durch 5 teilbar sind usw. Bei einer Präzision von 0 ist "Teilbar durch" ein Pflichtfeld und muss eine positive, ganze Zahl enthalten. Voreingestellt ist der Wert 1 für beliebige ganze Zahlen.
@@ -843,23 +839,53 @@ assessment#:#lacex_example_header#:#Beispiele
 assessment#:#last_update#:#Aktualisiert
 assessment#:#legend#:#Legende
 assessment#:#locked#:#gesperrt
-assessment#:#log_added_extratime#:#Es wurden zusätzliche %d Minuten Bearbeitungsdauer für die Teilnehmer-ID %d hinzugefügt
-assessment#:#log_answer_changed_points#:#Manuelles Setzen der Punkte des Teilnehmers %s von %d auf %d Punkte durch %s
-assessment#:#log_create_new_test#:#Neuer Test erzeugt
-assessment#:#log_manual_feedback#:#%s hat eine manuelle Bewertung für den Teilnehmer %s und die Frage %s erstellt: %s
-assessment#:#log_mark_added#:#Note hinzugefügt
-assessment#:#log_mark_changed#:#Note geändert
-assessment#:#log_mark_removed#:#Note entfernt
-assessment#:#log_modified_test#:#Der Test wurde verändert
-assessment#:#log_question_added#:#Frage hinzugefügt an Position
-assessment#:#log_question_position_changed#:#Fragenposition geändert
-assessment#:#log_question_removed#:#Frage entfernt
-assessment#:#log_selected_user_data_removed#:#Testdaten des Benutzer %s entfernen
-assessment#:#log_user_answered_question#:#Ein Benutzer beantwortet eine Frage und erhielt %s Punkte
-assessment#:#log_user_entered_values#:#Der Benutzer hat Werte eingetragen
-assessment#:#log_user_not_entered_values#:#Der Benutzer hat keine Werte eingetragen
+assessment#:#log_deletion_not_allowed#:#Es fehlen Ihnen die Berechtigung, um Protokolleinträge zu löschen.
+assessment#:#log_entry_type#:#Typ des Protokolleintrags
+assessment#:#log_ip#:#IP-Adresse protokollieren
+assessment#:#log_ip_info#:#Die IP-Adresse wird bei Interaktionen von Teilnehmenden protokolliert. Bestehende Protokolleinträge werden beim Deaktivieren nicht gelöscht.
+assessment#:#log_participant_data_delete_warning#:#Für diesen Test sind Protokolldaten von Teilnehmenden vorhanden. Diese werden beim Umstellen auf "Testergebnisse ohne Namen/Anonymer Test" gelöscht.
+assessment#:#log_text#:#Protokolleintrag
 assessment#:#log_user_solution_willingly_deleted#:#Der Benutzer hat seine Antwort entfernt.
-assessment#:#log_wrong_test_password_entered#:#Teilnehmer hat falsches Testpasswort eingegeben.
+assessment#:#logging_settings#:#Protokolldaten
+assessment#:#logs_answer_deleted#:#Antwort gelöscht
+assessment#:#logs_answer_submitted#:#Antwort eingereicht
+assessment#:#logs_deleted#:#Die ausgewählten Protokolleinträge wurden gelöscht.
+assessment#:#logs_error_on_participant_interaction#:#Fehler während Teilnehmerinteraktion
+assessment#:#logs_error_on_question_administration_interaction#:#Fehler während Fragenadministartionsinteraktion
+assessment#:#logs_error_on_scoring_interaction#:#Fehler währed Bewertungsinteraktion
+assessment#:#logs_error_on_test_administration_interaction#:#Fehler während Testadministrationsinteraktion
+assessment#:#logs_error_on_undefined_interaction#:#Fehler während unbestimmter Interaktion
+assessment#:#logs_extra_time_added#:#Zeitverlängerung gewährt
+assessment#:#logs_main_settings_modified#:#Einstellungen des Tests geändert
+assessment#:#logs_mark_schema_modified#:#Notenschema geändert
+assessment#:#logs_mark_schema_reset#:#Notenschema zurückgesetzt
+assessment#:#logs_new_test_created#:#Neuen Test erstellt
+assessment#:#logs_output#:#Ausgabe der Protokolldaten
+assessment#:#logs_participant_data_removed#:#Testdaten entfernt
+assessment#:#logs_pi#:#Teilnehmerinteraktion
+assessment#:#logs_qai#:#Fragenadministrationsinteraktion
+assessment#:#logs_question_added#:#Frage hinzugefügt
+assessment#:#logs_question_graded#:#Frage bewertet
+assessment#:#logs_question_grading_reset#:#Bewertung zurückgesetzt
+assessment#:#logs_question_modified#:#Frage bearbeitet
+assessment#:#logs_question_modified_in_corrections#:#Frage in Nachkorrektur bearbeitet
+assessment#:#logs_question_moved#:#Frage verschoben
+assessment#:#logs_question_removed#:#Frage entfernt
+assessment#:#logs_question_removed_in_corrections#:#Frage in der Nachkorrektur entfernt
+assessment#:#logs_question_selection_criteria_modified#:#Frageauswahlkriterien geändert
+assessment#:#logs_question_shown#:#Frage angezeigt
+assessment#:#logs_question_skipped#:#Frage übersprungen
+assessment#:#logs_question_synchronisation_reset#:#Fragesynchronisation aufgehoben
+assessment#:#logs_questions_synchronised#:#Frangen synchronisiert
+assessment#:#logs_scoring_settings_modified#:#Auswertungseinstellungen geändert
+assessment#:#logs_si#:#Bewertungsinteraktion
+assessment#:#logs_tai#:#Testadministrationsinteraktion
+assessment#:#logs_te#:#Fehler
+assessment#:#logs_test_deleted#:#Test gelöscht
+assessment#:#logs_test_run_finished#:#Testdurchlauf beendet
+assessment#:#logs_test_run_of_participant_closed#:#Testdurchlauf beendet
+assessment#:#logs_test_run_started#:#Testdurchlauf gestartet
+assessment#:#logs_wrong_test_password_provided#:#Teilnehmer hat falsches Testpasswort eingegeben.
 assessment#:#longmenu#:#Longmenu
 assessment#:#longmenu_answeroptions_differ#:#Diese Frage funktioniert nicht richtig, denn sie hat nicht die gleiche Anzahl Lücken im Text wie in den Antwortoptionen.
 assessment#:#longmenu_text#:#‘Long Menu’-Text
@@ -877,7 +903,6 @@ assessment#:#manscoring_results_pass#:#Manuell bewertbare Fragen für Testdurchl
 assessment#:#manual_editing#:#Manuelle Editierung
 assessment#:#mark_schema#:#Notenschema
 assessment#:#mark_schema_invalid#:#Das Notenschema konnte nicht erfolgreich validiert werden. Bitte erstellen Sie ein gültiges Schema.
-assessment#:#mark_tst_ects#:#Ihre ECTS-Note lautet "[markects]" (European Credit Transfer System)
 assessment#:#matches#:#passt zu
 assessment#:#matching_pairs#:#Zuordnungspaare
 assessment#:#matching_shuffle_definitions#:#Nur Definitionen
@@ -894,7 +919,7 @@ assessment#:#maxsize#:#Maximale Dateigröße
 assessment#:#maxsize_info#:#Geben Sie die maximale Größe in Bytes an, die eine hochgeladene Datei haben darf. Wenn Sie das Feld leer lassen, wird die Einstellung des zugrunde liegenden Systems verwendet.
 assessment#:#min_auto_complete#:#Autovervollständigung
 assessment#:#min_ip_label#:#Kleinste IP mit Zugriff
-assessment#:#min_percentage_ne_0#:#Sie müssen einen minimalen Prozentsatz von 0 Prozent festlegen. Das Notenschema wurde nicht gespeichert.
+assessment#:#min_percentage_ne_0#:#Das Notenschema muss mindestens eine Stufe mit einem minimalen Prozentsatz von 0 Prozent enthalten.
 assessment#:#misc#:#Verschiedene Optionen
 assessment#:#msg_circle_added#:#Kreis hinzugefügt
 assessment#:#msg_deleted_export_files#:#Exportdatei(en) gelöscht
@@ -911,7 +936,7 @@ assessment#:#new_unit#:#Neue Einheit
 assessment#:#next_question#:#Weiter
 assessment#:#next_question_rows#:#Fragen %d - %d von %d →
 assessment#:#no_manual_feedback_export_info#:#Manuelle Rückmeldungen werden nicht exportiert.
-assessment#:#no_passed_mark#:#Sie müssen wenigstens einen Notenschritt als BESTANDEN markieren! Das Notenschema wurde nicht gespeichert!
+assessment#:#no_passed_mark#:#Sie müssen wenigstens einen Notenschritt als BESTANDEN markieren!
 assessment#:#no_question_selected_for_move#:#Bitte wählen Sie mindestens eine Frage aus, um sie zu verschieben!
 assessment#:#no_questions_available#:#Es sind keine Fragen verfügbar!
 assessment#:#no_result_type#:#Keine Einschränkung
@@ -1091,6 +1116,7 @@ assessment#:#qst_preview_reset_msg#:#Die Vorschau wurde zurückgesetzt.
 assessment#:#qst_use_nested_answers#:#Einrückung in Antworten verwenden
 assessment#:#que_contains_unused_var#:#Im Fragen-Text sind Variablen enthalten, die in keiner Formel verwendet werden.
 assessment#:#question_browse_area_info#:#Wählen Sie bitte ein Objekt, aus dem sie Fragen importieren wollen.
+assessment#:#question_complete_title#:#Vollständig
 assessment#:#question_cumulated_statistics#:#Kumulierte Fragenstatistik
 assessment#:#question_id#:#Fragen-ID
 assessment#:#question_id_short#:#ID
@@ -1222,6 +1248,7 @@ assessment#:#suggest_range#:#Bereich vorschlagen
 assessment#:#suggestedSolutionType#:#verweisen auf
 assessment#:#suggested_solution#:#Inhalte zur Wiederholung
 assessment#:#suggested_solution_added_successfully#:#Der Hinweis auf Inhalte zur Wiederholung wurde erfolgreich hinzugefügt!
+assessment#:#sync_question_to_pool#:#Frage synchronisieren
 assessment#:#ta_resulttable_vc_mode_aria#:#Anzeigeoptionen für Fragen
 assessment#:#tab_nest_answers#:#Einrückung
 assessment#:#tax_filter#:#Taxonomie
@@ -1549,6 +1576,7 @@ assessment#:#tst_manscoring_user_notification#:#Benachrichtigung senden
 assessment#:#tst_mark#:#Note
 assessment#:#tst_mark_create_new_mark_step#:#Neue Notenstufe erzeugen
 assessment#:#tst_mark_minimum_level#:#Mindestprozentsatz
+assessment#:#tst_mark_minimum_level_invalid#:#Der Mindestprozentsatz muss zwischen 0 und 100 liegen.
 assessment#:#tst_mark_official_form#:#Offizielle Bezeichnung
 assessment#:#tst_mark_passed#:#Bestanden
 assessment#:#tst_mark_reset_to_simple_mark_schema#:#Auf Einfaches Notenschema zurücksetzen
@@ -2000,7 +2028,6 @@ assessment#:#units#:#Einheiten
 assessment#:#unlimited#:#unbegrenzt
 assessment#:#unlock#:#Entsperren
 assessment#:#uploaded_material#:#Hochgeladene Materialien
-assessment#:#use_ects_fx#:#Verwenden der ECTS-Note 'FX'
 assessment#:#use_previous_solution#:#Verwende vorherige Lösung
 assessment#:#use_previous_solution_advice#:#Die angezeigte Lösung wurde vormals von Ihnen abgegeben. Sie müssen die Übernahme dieser Lösung unterhalb der Frage bestätigen, falls Sie die Lösung ohne Änderungen übernehmen wollen.
 assessment#:#user_has_finished_a_test#:#Ein Teilnehmer hat einen Test beendet.
@@ -2009,6 +2036,7 @@ assessment#:#user_not_invited#:#Sie sind kein Teilnehmer der Prüfung.
 assessment#:#user_wrong_clientip#:#Falsche Client IP
 assessment#:#value_between_x_and_y#:#Der Wert muss zwischen %s und %s liegen
 assessment#:#values#:#Werte
+assessment#:#variable#:#Variable
 assessment#:#variable_x#:#Variable %s
 assessment#:#variables#:#Variablen
 assessment#:#wait_for_next_pass_hint_msg#:#Erneuter Durchlauf möglich ab folgendem Zeitpunkt: %s
@@ -3436,7 +3464,6 @@ common#:#action_aborted#:#Aktion abgebrochen
 common#:#actions#:#Aktionen
 common#:#actions_for#:#Aktionen für %s
 common#:#activate#:#Aktivieren
-common#:#activate_assessment_logging#:#Protokollieren des Test und Assessments aktivieren
 common#:#activate_https#:#HTTPS aktivieren (Anmeldung)
 common#:#activate_tracking#:#Tracking aktivieren
 common#:#activation#:#Verfügbarkeit
@@ -3503,24 +3530,6 @@ common#:#approve_recipient#:#E-Mail-Benachrichtigung für (Anmeldename ID)
 common#:#archive#:#Archiv
 common#:#archive_broken#:#Archiv scheint beschädigt oder leer zu sein.
 common#:#are_you_sure#:#Sind Sie sicher?
-common#:#ass_log_admin#:#Administration der Protokolldaten
-common#:#ass_log_count_datasets#:#Protokolleinträge
-common#:#ass_log_delete_entries#:#Protokolleinträge löschen
-common#:#ass_log_delete_no_selection#:#Bitte wählen Sie mindestens einen Test aus, dessen Protokolleinträge Sie löschen wollen!
-common#:#ass_log_deleted#:#Die Protokolleinträge für die ausgewählten Tests wurden gelöscht!
-common#:#ass_log_output#:#Ausgabe der Protokolldaten
-common#:#assessment_imap_line_color#:#Imagemap Linienfarbe
-common#:#assessment_log#:#Test und Assessment-Aktivitäten für eine bestimmte Zeitperiode protokollieren
-common#:#assessment_log_datetime#:#Datum/Uhrzeit
-common#:#assessment_log_deleted#:#Alle protokollierten Daten für den Test wurden über die Administrationsoberfläche gelöscht.
-common#:#assessment_log_for_test#:#Für den Test
-common#:#assessment_log_log_entries#:#Protokolleinträge
-common#:#assessment_log_logging#:#Protokolldaten
-common#:#assessment_log_manual_scoring_activate#:#Aktivieren der manuellen Bewertung für
-common#:#assessment_log_manual_scoring_desc#:#Alle Fragen des gewählten Fragetyps können manuell bewertet werden. Achtung: Das nachträgliche Ändern von Ergebnissen kann rechtliche Auswirkungen haben!###Modified as part of gender mainstreaming activities for ILIAS 8
-common#:#assessment_log_question#:#Frage
-common#:#assessment_log_text#:#Protokolleintrag
-common#:#assessment_settings_reporting_language#:#Sprache der Protokollierung
 common#:#assf_allowed_questiontypes#:#Verfügbare Fragetypen
 common#:#assf_allowed_questiontypes_desc#:#Alle ausgewählten Fragetypen werden für diese ILIAS-Installation zur Verfügung stehen. Wenn Sie die Erzeugung von bestimmten Fragetypen verhindern wollen, müssen Sie die Auswahl bei diesen Fragetypen entfernen.
 common#:#assf_questiontypes#:#Frageneinstellungen
@@ -4728,7 +4737,7 @@ common#:#msg_deleted_role#:#Rolle gelöscht
 common#:#msg_deleted_roles_rolts#:#Rollen und Rollenvorlagen gelöscht
 common#:#msg_failed#:#Aktion fehlgeschlagen
 common#:#msg_form_save_error#:#Die Formulardaten konnten nicht gespeichert werden. Bitte überprüfen Sie die Formularfelder auf detaillierte Fehlermeldungen.
-common#:#msg_info_blacklisted#:#Leider dürfen Sie diese Datei aus Sicherheitsgründen nicht hochladen.
+common#:#msg_info_blacklisted#:#Diese Datei kann aus Sicherheitsgründen nicht hochgeladen werden.
 common#:#msg_input_char_limit_max#:#Sie müssen die festgelegte Höchstzahl von Zeichen beachten. Ihr Beitrag ist zu lang.
 common#:#msg_input_char_limit_min#:#Sie müssen die festgelegte Mindestanzahl an Zeichen eingeben. Ihr Beitrag ist zu kurz.
 common#:#msg_input_does_not_match_regexp#:#Bitte geben Sie einen gültigen Wert ein.
@@ -5603,7 +5612,7 @@ common#:#shib_email#:#Attribut für E-Mail-Adresse
 common#:#shib_federation_name#:#Name der Shibboleth-Föderation
 common#:#shib_firstname#:#Attribut für Vornamen
 common#:#shib_gender#:#Attribut für Anrede (muss 'n', 'm' oder 'f' sein)
-common#:#shib_general_login_instructions#:#Um sich über %s anzumelden, klicken Sie bitte auf den Anmelde-Button und wählen Sie auf der folgenden Seite Ihre Organisation aus.<br />Bei Fragen dazu, wenden Sie sich bitte an den %s
+common#:#shib_general_login_instructions#:#Um sich über %s anzumelden, klicken Sie bitte auf den Anmelde-Button und wählen auf der folgenden Seite Ihre Organisation aus. Bei Fragen dazu wenden Sie sich bitte an den %s
 common#:#shib_general_wayf_login_instructions#:#Falls Sie keiner der angegebenen Organisationen angehören und Zugang zu einem Kurs auf diesem Server benötigen, wenden Sie sich bitte an den %s
 common#:#shib_idp_list#:#Bitte geben Sie eine Liste von Identity-Providern an, aus denen der Benutzer auf der ILIAS-Anmeldeseite auswählen kann.<br />In jeder Zeile muss ein Komma-getrenntes Tupel sein, welches aus der<strong>providerID eines IdP</strong> (schauen Sie dazu die Shibboleth-Metadaten an) und dem <strong>Namen eines IdP</strong> besteht, so wie er in der Drop-Down Liste angezeigt werden soll.<br />Als optionaler dritter Parameter kann die <strong>Location eines Shibboleth Session Initiators</strong> angegeben werden, welcher benutzt werden kann falls Ihre ILIAS-Installation Teil von mehreren Föderationen ist.
 common#:#shib_institution#:#Attribut für Institution
@@ -5787,6 +5796,7 @@ common#:#treeview#:#Baumansicht ein
 common#:#tst#:#Test
 common#:#tst_add#:#Test anlegen
 common#:#tst_edit_questions#:#Fragen bearbeiten
+common#:#tst_history_read#:#Verlauf einsehen
 common#:#tst_new#:#Neuen Test anlegen
 common#:#tst_results#:#Testergebnisse
 common#:#tst_run#:#Ausführen
@@ -8796,6 +8806,7 @@ dcl#:#dcl_tableview_required_visible#:#Verpflichtend & Sichtbar
 dcl#:#dcl_tableview_visible#:#Sichtbar
 dcl#:#dcl_tableviews#:#Ansichten
 dcl#:#dcl_tableviews_confirm_delete#:#Sind Sie sicher, dass die folgenden Ansichten gelöscht werden sollen?
+dcl#:#dcl_tableviews_of_X#:#Ansichten der Tabelle %s
 dcl#:#dcl_tableviews_table#:#Ansichten der ausgewählten Tabelle
 dcl#:#dcl_text#:#Texteingabe
 dcl#:#dcl_text_area#:#Mehrzeiliges Texteingabefeld
@@ -8823,9 +8834,15 @@ dcl#:#dcl_width#:#Breite
 dcl#:#dcl_wrong_input_type#:#Der eingegebene Text passt nicht zum Typ dieses Feldes (falscher Typ).
 dcl#:#dcl_wrong_length#:#Der eingegebene Text ist zu lang.
 dcl#:#dcl_wrong_regex#:#Der eingegebene Text passt nicht zur Spezifikation dieses Feldes (regulärer Ausdruck).
-dcl#:#dlc_xls_async_export#:#Asynchroner XLSX-Export
+dcl#:#dcl_xls_async_export#:#Asynchroner XLSX-Export
+dcl#:#disable_comments#:#Kommentare deaktivieren
+dcl#:#disable_visible#:#Sichtbarkeit deaktivieren
+dcl#:#enable_comments#:#Kommentare aktivieren
+dcl#:#enable_visible#:#Sichtbarkeit aktivieren
+dcl#:#entry_of#:#Eintrag %1$d von %2$d
 dcl#:#fieldtitle_allow_chars#:#Nicht Erlaubte Zeichen: %s
 dcl#:#fileupload_not_migrated#:#Die Datei wurde noch nicht migriert und kann deshalb nicht angezeigt werden. Bitte wenden Sie sich an Ihre Systemadministration.
+dcl#:#set_as_default#:#Als Standard setzen
 didactic#:#activate_exclusive_template#:#Standard ausgrauen
 didactic#:#activate_exclusive_template_info#:#Die Standard-Vorlage wird überall dort ausgegraut, wo diese didaktische Vorlage aktiv ist.
 didactic#:#activate_local_didactic_template#:#Gültigkeitsbereich
@@ -10474,7 +10491,7 @@ iass#:#iass_upload_file#:#Prüfungsblatt
 iass#:#iass_user_removed#:#Benutzer wurde erfolgreich entfernt.
 iass#:#iass_usr_amend#:#Prüfungsdaten nachträglich ändern
 iass#:#iass_usr_download_attachment#:#Datei herunterladen
-iass#:#iass_usr_edit#:#Bewerten
+iass#:#iass_usr_edit#:#Prüfungsdaten bearbeiten
 iass#:#iass_usr_remove#:#Entfernen
 iass#:#iass_usr_view#:#Prüfungsdaten
 iass#:#il_iass_member#:#Teilnehmer
@@ -10905,7 +10922,7 @@ lso#:#lso_edit_permission#:#Rechteeinstellungen ändern
 lso#:#lso_header_delete_members#:#Sie möchten folgende Mitglieder aus der Lernsequenz austragen?
 lso#:#lso_header_edit_members#:#Mitglieder bearbeiten
 lso#:#lso_intropages_deprecationhint#:#Sie können die Einleitungs- und Abschlussseite unter "Inhalt" editieren.
-lso#:#lso_legacy_info#:#Das Objekt öffnet sich in einem neuen Tab Ihres Browsers. Bitte kommen Sie nach Bearbeitung des Inhalts in diesen Tab zurück. Laden Sie die Seite neu, wenn sie den Inhalt bearbeitet haben aber die "Weiter"-Schaltfläche weiterhin deaktiviert bleibt.
+lso#:#lso_legacy_info#:#Das Objekt öffnet sich in einem neuen Tab Ihres Browsers. Bitte kommen Sie nach Bearbeitung des Inhalts in diesen Tab zurück. Laden Sie die Seite neu, wenn sie den Inhalt bearbeitet haben, aber die „Weiter“-Schaltfläche weiterhin deaktiviert bleibt.
 lso#:#lso_mail_admission_new_bod#:#Sie sind in Lernsequenz „%s“ als Mitglied aufgenommen worden.
 lso#:#lso_mail_admission_new_sub#:#Mitgliedschaft in Lernsequenz „%s“
 lso#:#lso_mail_dismiss_bod#:#hre Mitgliedschaft in Lernsequenz „%s“ wurde beendet.
@@ -11597,9 +11614,8 @@ mathjax#:#mathjax_polyfill_url#:#Url eines Polyfills
 mathjax#:#mathjax_polyfill_url_desc_line1#:#Für MathJax 2 nicht benötigt
 mathjax#:#mathjax_polyfill_url_desc_line2#:#Für MathJax 3 z.B. https://polyfill.io/v3/polyfill.min.js?features=es6
 mathjax#:#mathjax_script_url#:#URL des MathJax-Skripts
-mathjax#:#mathjax_script_url_desc_line1#:#Für MathJax 2 z.B. https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe
-mathjax#:#mathjax_script_url_desc_line2#:#Für MathJax 3 z.B. https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-mathjax#:#mathjax_script_url_desc_line3#:#Bitte verwenden Sie den Safe Mode, um XSS-Angriffe durch MathJax-Code mit Javascript zu vermeiden. Für MathJax 2 kann er an die CDN-Url als Parameter angefügt werden (s.o). Für MathJax 3 müssen Sie ein Skript einbinden, dass ihn konfiguriert, bevor MathJax geladen wird. Verwenden Sie z.B. https://ihre-domain/ihr-ilias/Services/MathJax/js/cdn-mathjax3-es5-tex-mml-chtml-safe.js
+mathjax#:#mathjax_script_url_desc_line1#:#Für MathJax 2 z.B. %s
+mathjax#:#mathjax_script_url_desc_line2#:#Bitte verwenden Sie den Safe Mode, um XSS-Angriffe durch MathJax-Code mit Javascript zu vermeiden. Für MathJax 2 kann er an die CDN-Url als Parameter angefügt werden (s.o). Für MathJax 3 müssen Sie ein Skript einbinden, dass ihn konfiguriert, bevor MathJax geladen wird. Verwenden Sie z.B. %s
 mathjax#:#mathjax_server_address#:#Server-Adresse
 mathjax#:#mathjax_server_address_info#:#z.B. http://localhost:8003
 mathjax#:#mathjax_server_cache_cleared#:#Der MathJax-Cache wurde geleert.
@@ -13888,7 +13904,7 @@ rbac#:#coms_read#:#Lesezugriff auf Administration für Kommentare
 rbac#:#coms_visible#:#Administration für Kommentare ist sichtbar.
 rbac#:#coms_write#:#Einstellungen in Administration für Kommentare ändern
 rbac#:#condition_failed#:#Nicht bestanden
-rbac#:#condition_learning_progress#:#gemäß Lernfortschritt
+rbac#:#condition_learning_progress#:#Lernfortschritt-Status: Bearbeitet
 rbac#:#contribute#:#Beiträge erstellen
 rbac#:#copa_copy#:#Inhaltsseite kopieren
 rbac#:#copa_delete#:#Inhaltsseite löschen

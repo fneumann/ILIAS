@@ -85,8 +85,6 @@ class ilQuestionPageParser extends ilMDSaxParser
         private readonly string $importdir
     ) {
         global $DIC;
-
-        $this->log = $DIC['ilLog'];
         $lng = $DIC->language();
         $tree = $DIC->repositoryTree();
 
@@ -257,12 +255,8 @@ class ilQuestionPageParser extends ilMDSaxParser
                 }
 
                 // eventually correct links in questions to learning modules
-                if ($type_arr[0] == 'qst') {
-                    assQuestion::_resolveIntLinks($source['id']);
-                }
-                // eventually correct links in survey questions to learning modules
-                if ($type_arr[0] == 'sqst') {
-                    SurveyQuestion::_resolveIntLinks($source['id']);
+                if ($type_arr[0] === 'qst') {
+                    assQuestion::instantiateQuestion($source['id'])->resolveSuggestedSolutionLinks();
                 }
                 $done[$key] = $key;
             }
@@ -497,6 +491,7 @@ class ilQuestionPageParser extends ilMDSaxParser
                     $this->link_targets[$a_attribs["Id"]] = $a_attribs['Id'];
                 }
 
+                // no break
             case 'Definition':
                 $this->in_glossary_definition = true;
                 $this->page_object = new ilGlossaryDefPage();

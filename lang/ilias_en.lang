@@ -29,7 +29,6 @@
 // to the corresponding mode!
 // Language file names refer to ISO 639, see: http://www.oasis-open.org/cover/iso639a.html
 <!-- language file start -->
-    common#:#delete_inactive_user_accounts_include_roles_desc#:#Only ILIAS-Accounts assigned to one of the selected Roles will be deleted.
 acc#:#acc_add_document_btn_label#:#Add Document
 acc#:#acc_crit_type_usr_language#:#Profile Language
 acc#:#acc_criterion_assignment_must_be_unique_insert#:#It is not possible to set the language you have selected as the criterion for displaying this document, as it has already been set as the criterion for displaying a different Accessibility document.
@@ -429,6 +428,9 @@ adve#:#adve_use_physical#:#Use b/i/u instead of str/emp/imp
 adve#:#adve_use_physical_info#:#This setting replaces the semantic style class buttons for ‘strong’, ‘emphatic’ and ‘important’ with physical attribute buttons ‘b’ (bold), ‘i’ (italic) and ‘u’ (underline). Please note, that this may result in inconsistencies if the style editor is used and other physical attributes are assigned to the strong/emphatic/important style classes.
 adve#:#adve_use_tiny_mce#:#Enable TinyMCE for WYSIWYG Editing
 assessment#:#action#:#Action
+assessment#:#activate_logging#:#Activate Test and Assessment Logging
+assessment#:#activate_manual_scoring#:#Activate Manual Scoring for
+assessment#:#activate_manual_scoring_desc#:#If the Manual Scoring is activated for a question type, all questions of this question type could be manually scored by a test author. Please be careful with these settings, because late manual scoring of automatically scored question types could cause even judical problems!
 assessment#:#addSuggestedSolution#:#Add Content for Recapitulation
 assessment#:#add_answers#:#Add answers
 assessment#:#add_circle#:#Add circle area
@@ -590,6 +592,7 @@ assessment#:#concatenation#:#Concatenation
 assessment#:#conf_delete_pass#:#Are you sure you want to delete your existing answers?
 assessment#:#confirm_delete_all_user_data#:#Are you sure you want to delete all user data of the test?
 assessment#:#confirm_delete_single_user_data#:#Are you sure you want to remove the test data of the selected users?
+assessment#:#confirm_log_deletion#:#Are you sure, you want to delete the selected log entries? You will not be able to recover the deleted entries.
 assessment#:#confirm_sync_questions#:#The question you changed is a copy which has been created for use with the active test. Do you want to change the original of the question too?
 assessment#:#coordinates#:#Coordinates
 assessment#:#copy_and_link_to_questionpool#:#Add to question pool
@@ -602,6 +605,7 @@ assessment#:#create_gaps#:#Create and Refresh Gaps
 assessment#:#create_new#:#Create New
 assessment#:#customstyle#:#Custom Style
 assessment#:#dashboard_tab#:#Participants
+assessment#:#date_time#:#Date and Time
 assessment#:#definition#:#Definition
 assessment#:#definition_image#:#Definition Image
 assessment#:#definition_text#:#Definition Text
@@ -629,19 +633,6 @@ assessment#:#dont_use_questionpool#:#Don't insert the questions in a question po
 assessment#:#duplicate#:#Duplicate
 assessment#:#duplicate_matching_values_selected#:#You have selected duplicate matching values!
 assessment#:#duplicate_order_values_entered#:#You have entered duplicate order values!
-assessment#:#ects_allow_ects_grades#:#Show ECTS grade additional to received mark
-assessment#:#ects_fx_threshold#:#Threshold
-assessment#:#ects_fx_threshold_info#:#Please enter the required percentile for granting the ‘FX’ grade.
-assessment#:#ects_grade#:#ECTS Grade
-assessment#:#ects_grade_a_desc#:#outstanding performance with only minor errors
-assessment#:#ects_grade_b_desc#:#above the average standard but with some errors
-assessment#:#ects_grade_c_desc#:#generally sound work with a number of notable errors
-assessment#:#ects_grade_d_desc#:#fair but with significant shortcomings
-assessment#:#ects_grade_desc_prefix#:#Meaning of grade:
-assessment#:#ects_grade_e_desc#:#performance meets the minimum criteria
-assessment#:#ects_grade_f_desc#:#considerable further work is required
-assessment#:#ects_grade_fx_desc#:#some more work required before the credit can be awarded
-assessment#:#ects_output_of_ects_grades#:#Output of ECTS grades
 assessment#:#edit_answer#:#Edit Answer
 assessment#:#edit_concluding_remarks#:#Edit Concluding Remarks
 assessment#:#edit_introduction#:#Edit Introduction
@@ -716,6 +707,7 @@ assessment#:#export_cert_ignored_for_users_s#:#The following account did not ach
 assessment#:#export_cert_no_users#:#A certificate archive cannot be created due to missing test participants.
 assessment#:#export_essay_qst_with_html#:#Export Essay Question with HTML code
 assessment#:#export_essay_qst_with_html_desc#:#If activated it is possible to export Essay Question with HTML to Excel.
+assessment#:#export_legacy_logs#:#Legacy Log-Daten exportieren
 assessment#:#extratime#:#Extra Time
 assessment#:#factor#:#Factor
 assessment#:#failed_official#:#failed
@@ -724,7 +716,7 @@ assessment#:#false#:#False
 assessment#:#feedback_all#:#Show answer specific feedback for all answers.
 assessment#:#feedback_answers#:#Feedback for Every Answer
 assessment#:#feedback_checked#:#Show answer specific feedback for all chosen/selected answers.
-assessment#:#feedback_complete_solution#:#Correct solution
+assessment#:#feedback_complete_solution#:#Correct Solution
 assessment#:#feedback_correct_kprim#:#Show answer specific feedback for all correct answers (Correct answers are those, for that the positive option is to be chosen/selected).
 assessment#:#feedback_correct_sc_mc#:#Show answer specific feedback for all correct answers (Correct answers are those, that lead to a positive score when chosen/selected).
 assessment#:#feedback_generic#:#Correct/Incorrect Answer Feedback
@@ -779,14 +771,17 @@ assessment#:#hints#:#Hints
 assessment#:#identical_scoring#:#Identical Scoring
 assessment#:#identical_scoring_desc#:#If selected, gaps with identical solutions will be scored, even if the same solution was used twice or more. If not selected, only the first occurrence of the same solution will be scored.
 assessment#:#imagemap#:#Image Map
+assessment#:#imap_line_color#:#Image Map Line Color
 assessment#:#import_question#:#Import Question(s)
 assessment#:#imported#:#imported
 assessment#:#in_range#:#Within range
+assessment#:#in_trash#:#In Trash
 assessment#:#info_answer_type_change#:#The question already contains images. You can't change the answer type to multi-line answers.
 assessment#:#info_text_upload#:#Choose an answer text (UTF-8) file to upload.
 assessment#:#insert_after#:#Insert After
 assessment#:#insert_before#:#Insert Before
 assessment#:#insert_gap#:#Insert Gap
+assessment#:#interaction_type#:#Interaction Type
 assessment#:#internal_links#:#Internal Links
 assessment#:#intprecision#:#Divisible By
 assessment#:#intprecision_info#:#‘Divisible by’ affects only the creation of variables, if the value for the precision is 0. In this case, you define for ‘Divisible by’ an integer value, which must be divisible by with the created variable. A value of 10 thus generates only integers that are divisible by 10. A value of 5 produces integers that are divisible by 5, etc. For a precision of 0, ‘Divisible by’ is a mandatory field and must contain a positive integer. The default value is 1 for any integers.
@@ -844,23 +839,53 @@ assessment#:#lacex_example_header#:#Examples
 assessment#:#last_update#:#Updated
 assessment#:#legend#:#Legend
 assessment#:#locked#:#locked
-assessment#:#log_added_extratime#:#Added extra %d minutes for participant id %d
-assessment#:#log_answer_changed_points#:#Manual change of points of test person %s from %d to %d points by %s
-assessment#:#log_create_new_test#:#Created new test
-assessment#:#log_manual_feedback#:#%s added manual feedback for test person %s and question %s: %s
-assessment#:#log_mark_added#:#Mark added
-assessment#:#log_mark_changed#:#Mark changed
-assessment#:#log_mark_removed#:#Mark removed
-assessment#:#log_modified_test#:#The test was modified
-assessment#:#log_question_added#:#Question added at position
-assessment#:#log_question_position_changed#:#Question position changed
-assessment#:#log_question_removed#:#Question removed
-assessment#:#log_selected_user_data_removed#:#Removed test data of user %s
-assessment#:#log_user_answered_question#:#User answered a question and received %s points
-assessment#:#log_user_entered_values#:#User entered values
-assessment#:#log_user_not_entered_values#:#User did not enter values
+assessment#:#log_deletion_not_allowed#:#You don't have the necessary permissions to delete log entries.
+assessment#:#log_entry_type#:#Log Entry Type
+assessment#:#log_ip#:#Log IP
+assessment#:#log_ip_info#:#The IP of Participants is Logged for each interaction with a test. Disabling it does not delete existing IP records.
+assessment#:#log_participant_data_delete_warning#:#This test contains log data for participant interactions that will be deleted when changing the test to a test without names.
+assessment#:#log_text#:#Log message
 assessment#:#log_user_solution_willingly_deleted#:#User deleted the answer.
-assessment#:#log_wrong_test_password_entered#:#Participant entered wrong test password.
+assessment#:#logging_settings#:#Logging
+assessment#:#logs_answer_deleted#:#Answer deleted
+assessment#:#logs_answer_submitted#:#Answer Submitted
+assessment#:#logs_deleted#:#The selected Log Data has been deleted.
+assessment#:#logs_error_on_participant_interaction#:#Error on Participant Interaction
+assessment#:#logs_error_on_question_administration_interaction#:#Error on Question Administration Interaction
+assessment#:#logs_error_on_scoring_interaction#:#Error on Scoring Interaction
+assessment#:#logs_error_on_test_administration_interaction#:#Error on Test Administration Interaction
+assessment#:#logs_error_on_undefined_interaction#:#Error on Undefined Interaction
+assessment#:#logs_extra_time_added#:#Extra Time Added
+assessment#:#logs_main_settings_modified#:#Main Settings Modified
+assessment#:#logs_mark_schema_modified#:#Mark Schema Modified
+assessment#:#logs_mark_schema_reset#:#Mark Schema Reset
+assessment#:#logs_new_test_created#:#New Test Created
+assessment#:#logs_output#:#Log Data Output
+assessment#:#logs_participant_data_removed#:#Participant Data Removed
+assessment#:#logs_pi#:#Participant Interaction
+assessment#:#logs_qai#:#Question Administration Interaction
+assessment#:#logs_question_added#:#Question Added
+assessment#:#logs_question_graded#:#Question Graded
+assessment#:#logs_question_grading_reset#:#Grading Reset
+assessment#:#logs_question_modified#:#Question Modified
+assessment#:#logs_question_modified_in_corrections#:#Question Modified in Corrections
+assessment#:#logs_question_moved#:#Question Moved
+assessment#:#logs_question_removed#:#Question Removed
+assessment#:#logs_question_removed_in_corrections#:#Question Removed in Corrections
+assessment#:#logs_question_selection_criteria_modified#:#Question Selection Criteria Modified
+assessment#:#logs_question_shown#:#Question Shown
+assessment#:#logs_question_skipped#:#Question Skipped
+assessment#:#logs_question_synchronisation_reset#:#Question Synchronisation Reset
+assessment#:#logs_questions_synchronised#:#Questions Synchonised
+assessment#:#logs_scoring_settings_modified#:#Scoring Settings Modified
+assessment#:#logs_si#:#Scoring Interaction
+assessment#:#logs_tai#:#Test Administration Interaction
+assessment#:#logs_te#:#Error
+assessment#:#logs_test_deleted#:#Test Deleted
+assessment#:#logs_test_run_finished#:#Test Run Finished
+assessment#:#logs_test_run_of_participant_closed#:#Run of Participant Closed
+assessment#:#logs_test_run_started#:#Test Run Started
+assessment#:#logs_wrong_test_password_provided#:#Participant entered wrong test password.
 assessment#:#longmenu#:#Longmenu
 assessment#:#longmenu_answeroptions_differ#:#This question does not work correctly, as there are not the same amount of gaps in the text as in the correction options.
 assessment#:#longmenu_text#:#Long Menu Text
@@ -878,7 +903,6 @@ assessment#:#manscoring_results_pass#:#Manual Scored Questions for Pass %s
 assessment#:#manual_editing#:#Manual Editing
 assessment#:#mark_schema#:#Grading System
 assessment#:#mark_schema_invalid#:#The grading system that you have tried to create contains errors. Please make sure that the values in the ‘Minimum Score Required (in %]’ column are correct.
-assessment#:#mark_tst_ects#:#Your ECTS grade is "[markects]" (European Credit Transfer System)
 assessment#:#matches#:#matches
 assessment#:#matching_pairs#:#Matching Pairs
 assessment#:#matching_shuffle_definitions#:#Definitions only
@@ -1092,6 +1116,7 @@ assessment#:#qst_preview_reset_msg#:#The preview has been reset.
 assessment#:#qst_use_nested_answers#:#Nested answers
 assessment#:#que_contains_unused_var#:#The question text contains a variable, that is not used in any result formula!
 assessment#:#question_browse_area_info#:#Please select an object from which you want to import questions.
+assessment#:#question_complete_title#:#Complete
 assessment#:#question_cumulated_statistics#:#Cumulated Question Statistics
 assessment#:#question_id#:#Question ID
 assessment#:#question_id_short#:#ID
@@ -1223,6 +1248,7 @@ assessment#:#suggest_range#:#Suggest Range
 assessment#:#suggestedSolutionType#:#Refer to
 assessment#:#suggested_solution#:#Content for Recapitulation
 assessment#:#suggested_solution_added_successfully#:#You successfully set a content for recapitulation!
+assessment#:#sync_question_to_pool#:#Synchronize Question
 assessment#:#ta_resulttable_vc_mode_aria#:#switch question mode
 assessment#:#tab_nest_answers#:#Nesting
 assessment#:#tax_filter#:#Taxonomy
@@ -1550,6 +1576,7 @@ assessment#:#tst_manscoring_user_notification#:#Send Notification
 assessment#:#tst_mark#:#Mark
 assessment#:#tst_mark_create_new_mark_step#:#Create New Mark Step
 assessment#:#tst_mark_minimum_level#:#Minimum Level (in %)
+assessment#:#tst_mark_minimum_level_invalid#:#Minimum Level must be between 0 and 100.
 assessment#:#tst_mark_official_form#:#Official Form
 assessment#:#tst_mark_passed#:#Passed
 assessment#:#tst_mark_reset_to_simple_mark_schema#:#Reset to Simple Mark Schema
@@ -2001,7 +2028,6 @@ assessment#:#units#:#Units
 assessment#:#unlimited#:#unlimited
 assessment#:#unlock#:#Unlock
 assessment#:#uploaded_material#:#Uploaded Material
-assessment#:#use_ects_fx#:#Use the ‘FX’ grade
 assessment#:#use_previous_solution#:#Use Previous Solution
 assessment#:#use_previous_solution_advice#:#The shown solution for the question is your previously given one. You have to confirm the adoption of the solution, if you like to use it without any change.
 assessment#:#user_has_finished_a_test#:#A participant has finished a test.
@@ -2010,6 +2036,7 @@ assessment#:#user_not_invited#:#You are not supposed to take this test.
 assessment#:#user_wrong_clientip#:#You don't have the right IP address to access this test.
 assessment#:#value_between_x_and_y#:#The value should be between %s and %s
 assessment#:#values#:#Values
+assessment#:#variable#:#Variable
 assessment#:#variable_x#:#Variable %s
 assessment#:#variables#:#Variables
 assessment#:#wait_for_next_pass_hint_msg#:#Additional pass is possible on time: %s
@@ -3436,7 +3463,6 @@ common#:#action_aborted#:#Action aborted
 common#:#actions#:#Actions
 common#:#actions_for#:#Actions for %s
 common#:#activate#:#Set Active
-common#:#activate_assessment_logging#:#Activate Test and Assessment Logging
 common#:#activate_https#:#HTTPS handling by ILIAS<br />(Login)
 common#:#activate_tracking#:#Activation
 common#:#activation#:#Edit Timings
@@ -3503,24 +3529,6 @@ common#:#approve_recipient#:#Login ID of Approver
 common#:#archive#:#Archive
 common#:#archive_broken#:#Archive seems to be broken or empty.
 common#:#are_you_sure#:#Are you sure?
-common#:#ass_log_admin#:#Log Data Administration
-common#:#ass_log_count_datasets#:#Log Entries
-common#:#ass_log_delete_entries#:#Delete Log Entries
-common#:#ass_log_delete_no_selection#:#Please select at least one test to delete the Log Data
-common#:#ass_log_deleted#:#The Log Data for the selected tests has been deleted
-common#:#ass_log_output#:#Log Data Output
-common#:#assessment_imap_line_color#:#Image Map Line Color
-common#:#assessment_log#:#Create a Test and Assessment log for a specific time period
-common#:#assessment_log_datetime#:#Date/Time
-common#:#assessment_log_deleted#:#The Test and Assessment log data has been deleted in the administration
-common#:#assessment_log_for_test#:#For test
-common#:#assessment_log_log_entries#:#log entries
-common#:#assessment_log_logging#:#Logging
-common#:#assessment_log_manual_scoring_activate#:#Activate Manual Scoring for
-common#:#assessment_log_manual_scoring_desc#:#If the Manual Scoring is activated for a question type, all questions of this question type could be manually scored by a test author. Please be careful with these settings, because late manual scoring of automatically scored question types could cause even judical problems!
-common#:#assessment_log_question#:#Question
-common#:#assessment_log_text#:#Log message
-common#:#assessment_settings_reporting_language#:#Reporting language
 common#:#assf_allowed_questiontypes#:#Available Question Types
 common#:#assf_allowed_questiontypes_desc#:#All the checked question types will be available in this ILIAS installation. If you don't want to allow the creation of a certain question type in this installation, you must remove the selection in the associated check box.
 common#:#assf_questiontypes#:#Question Settings
@@ -3893,6 +3901,7 @@ common#:#delete_inactivated_user_accounts_period_desc#:#Accounts will be deleted
 common#:#delete_inactive_user_accounts#:#Delete user accounts with no login for a long time
 common#:#delete_inactive_user_accounts_desc#:#If enabled, user accounts will be deleted depending on the date of their last login.
 common#:#delete_inactive_user_accounts_include_roles#:#Considered roles
+common#:#delete_inactive_user_accounts_include_roles_desc#:#Only ILIAS-Accounts assigned to one of the selected Roles will be deleted.
 common#:#delete_inactive_user_accounts_period#:#Days passed since last login
 common#:#delete_inactive_user_accounts_period_desc#:#All user accounts without login within the defined number of days will be deleted automatically.
 common#:#delete_parameter#:#Delete Parameter
@@ -5778,6 +5787,7 @@ common#:#treeview#:#Show Sidebar
 common#:#tst#:#Test
 common#:#tst_add#:#Add test
 common#:#tst_edit_questions#:#Edit Questions
+common#:#tst_history_read#:#View History
 common#:#tst_new#:#New test
 common#:#tst_results#:#Test Results
 common#:#tst_run#:#Run
@@ -8790,6 +8800,7 @@ dcl#:#dcl_tableview_required_visible#:#Required & Visible
 dcl#:#dcl_tableview_visible#:#Visible
 dcl#:#dcl_tableviews#:#Views
 dcl#:#dcl_tableviews_confirm_delete#:#Do you really want to delete the following Views?
+dcl#:#dcl_tableviews_of_X#:#Views of table %s
 dcl#:#dcl_tableviews_table#:#Views of Selected Table
 dcl#:#dcl_text#:#Text Entry
 dcl#:#dcl_text_area#:#Textarea
@@ -8817,9 +8828,15 @@ dcl#:#dcl_width#:#Width
 dcl#:#dcl_wrong_input_type#:#The value you entered does not match the specification (Wrong Type).
 dcl#:#dcl_wrong_length#:#The text you entered is to long.
 dcl#:#dcl_wrong_regex#:#The text you entered does not match the specification for this field (Regular Expression).
-dcl#:#dlc_xls_async_export#:#Asynchronous XLSX-Export
+dcl#:#dcl_xls_async_export#:#Asynchronous XLSX-Export
+dcl#:#disable_comments#:#Disable comments
+dcl#:#disable_visible#:#Disable visible
+dcl#:#enable_comments#:#Enable comments
+dcl#:#enable_visible#:#Enable visible
+dcl#:#entry_of#:#Entry %1$d of %2$d
 dcl#:#fieldtitle_allow_chars#:#Not allowed chars: %s
 dcl#:#fileupload_not_migrated#:#File has not yet been migration and cannot be displayed. Please contact your System-Administrator.
+dcl#:#set_as_default#:#Set as default
 didactic#:#activate_exclusive_template#:#Grey Out Default
 didactic#:#activate_exclusive_template_info#:#The standard template won't be available wherever this template is active.
 didactic#:#activate_local_didactic_template#:#Scope of Application
@@ -11442,7 +11459,7 @@ mail#:#mail_nacc_user_login#:#User Login
 mail#:#mail_nacc_user_name#:#User Name
 mail#:#mail_new_template#:#New Text Template
 mail#:#mail_no_mail_items#:#No unread mails.
-mail#:#mail_no_permissions_write_smtp#:#You have no permission to write external e-mail
+mail#:#mail_no_permissions_write_smtp#:#You do not have permission to send external e-mails.
 mail#:#mail_no_subject#:#No subject available
 mail#:#mail_no_valid_mailing_list#:#%1$s (not a valid mailing list)
 mail#:#mail_notification_membership_section#:#Membership
@@ -11591,9 +11608,8 @@ mathjax#:#mathjax_polyfill_url#:#Url of a Polyfill
 mathjax#:#mathjax_polyfill_url_desc_line1#:#For MathJax 2 not needed
 mathjax#:#mathjax_polyfill_url_desc_line2#:#For MathJax 3 e.g. https://polyfill.io/v3/polyfill.min.js?features=es6
 mathjax#:#mathjax_script_url#:#URL of the MathJax Script
-mathjax#:#mathjax_script_url_desc_line1#:#For MathJax 2 e.g. https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe
-mathjax#:#mathjax_script_url_desc_line2#:#For MathJax 3 e.g. https://cdn.jsdelivr.net/npm/mathjax@3.0.1/es5/tex-mml-chtml.js
-mathjax#:#mathjax_script_url_desc_line3#:#Please activate the safe mode to avoid XSS attacks by MathJax code with javascript. For MathJax 2 it can be activated by adding the 'Safe' parameter to the CDN url. For MathJax 3 you need to include script that configures it before MathJax is loaded. Use for example https://your-domain/your-ilias/Services/MathJax/js/cdn-mathjax3-es5-tex-mml-chtml-safe.js
+mathjax#:#mathjax_script_url_desc_line1#:#For MathJax 2 e.g. %s
+mathjax#:#mathjax_script_url_desc_line2#:#Please activate the safe mode to avoid XSS attacks by MathJax code with javascript. For MathJax 2 it can be activated by adding the 'Safe' parameter to the CDN url. For MathJax 3 you need to include a script that configures it before MathJax is loaded. Use for example %s
 mathjax#:#mathjax_server_address#:#Server Address
 mathjax#:#mathjax_server_address_info#:#E.g. http://localhost:8003
 mathjax#:#mathjax_server_cache_cleared#:#The MathJax cache was cleared.
@@ -12805,8 +12821,8 @@ noti#:#noti_activate_notification#:#Activate Notification
 noti#:#noti_deactivate_notification#:#Deactivate Notification
 noti#:#noti_notification_activated#:#Notification Activated
 noti#:#noti_notification_deactivated#:#Notification Deactivated
-notifications_adm#:#enable_osd#:#Enable On-Screen Notifications
-notifications_adm#:#enable_osd_desc#:#If enabled, users are notified by a popup about new notifications.
+notifications_adm#:#enable_osd#:#Enable Toasts
+notifications_adm#:#enable_osd_desc#:#If enabled, users are notified by a pop-up about new notifications.
 notifications_adm#:#notification_settings#:#Notification Settings
 notifications_adm#:#osd_delay#:#Presentation Delay
 notifications_adm#:#osd_delay_desc#:#Delay of the visible presentation in milliseconds.
@@ -12817,7 +12833,7 @@ notifications_adm#:#osd_interval#:#Refreshinterval
 notifications_adm#:#osd_interval_desc#:#Polling interval for checking of new notifications in miliseconds. A lower number will notify the user more quickly but increases the number of requests the web server must handle.
 notifications_adm#:#osd_play_sound#:#Play a Sound
 notifications_adm#:#osd_play_sound_desc#:#Play a sound when receiving a new notficiation.
-notifications_adm#:#osd_settings#:#On-Screen Notifications
+notifications_adm#:#osd_settings#:#Toasts
 notifications_adm#:#osd_vanish#:#Presentation Time
 notifications_adm#:#osd_vanish_desc#:#Visible time of a notification on the screen in miliseconds.
 obj#:#activation_visible_when_disabled#:#Visibility
@@ -13884,7 +13900,7 @@ rbac#:#coms_read#:#User has read access to administration of Comments.
 rbac#:#coms_visible#:#Administration of Comments is visible.
 rbac#:#coms_write#:#User can edit settings of administration of Comments.
 rbac#:#condition_failed#:#Failed
-rbac#:#condition_learning_progress#:#Derive from Learning Progress
+rbac#:#condition_learning_progress#:#Learning Progress Status: Completed
 rbac#:#contribute#:#Contribute
 rbac#:#copa_copy#:#Copy Content Page
 rbac#:#copa_delete#:#User can move or delete Content Page
@@ -16765,7 +16781,7 @@ svy#:#svy_finish_survey#:#Finish survey '%1'
 svy#:#svy_invite_participants#:#Invite Participants
 svy#:#svy_link_to_svy#:#Link to Survey
 svy#:#svy_part_overview#:#Overview
-svy#:#svy_placeholders_label#:#Verfügbare Platzhalter
+svy#:#svy_placeholders_label#:#Available Placeholders
 svy#:#svy_print_selection#:#Print View Selection
 svy#:#svy_remove_all_participants#:#Delete all Participant Data
 svy#:#svy_remove_participants#:#Remove Participants

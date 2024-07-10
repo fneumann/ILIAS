@@ -23,10 +23,8 @@ namespace ILIAS\Glossary\Flashcard;
 /**
  * @author Thomas Famula <famula@leifos.de>
  */
-class FlashcardSessionRepository
+class FlashcardSessionRepository implements FlashcardSessionRepositoryInterface
 {
-    public const KEY_BASE = "glo_flashcard_";
-
     public function __construct()
     {
     }
