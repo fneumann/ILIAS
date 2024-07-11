@@ -261,7 +261,8 @@ class ilMailFolderGUI
             $folder,
             $this->ui_factory,
             $this->ui_service->filter(),
-            $this->lng
+            $this->lng,
+            new DateTimeZone($this->user->getTimeZone()),
         );
 
         $search = new \ILIAS\Mail\Folder\MailFolderSearch(
@@ -286,7 +287,8 @@ class ilMailFolderGUI
             $this->http->request(),
             new ILIAS\Data\Factory(),
             $this->refinery,
-            $this->user->getDateFormat()
+            $this->user->getDateFormat(),
+            new DateTimeZone($this->user->getTimeZone())
         );
 
         if (!$oneConfirmationDialogueRendered && !$this->confirmTrashDeletion) {

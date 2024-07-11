@@ -24,6 +24,8 @@ use ILIAS\UI\Factory;
 use ILIAS\UI\Component\Input\Container\Filter\Standard as FilterComponent;
 use ilUIFilterService;
 use ilLanguage;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class MailFilterUI
 {
@@ -36,7 +38,8 @@ class MailFilterUI
         private readonly MailFolderData $folder,
         private readonly Factory $ui_factory,
         private readonly ilUIFilterService $filter_service,
-        private readonly ilLanguage $lng
+        private readonly ilLanguage $lng,
+        private readonly DateTimeZone $user_time_zone
     ) {
         $inputs = [];
         if ($this->folder->hasIncomingMails()) {
@@ -46,11 +49,14 @@ class MailFilterUI
         }
 
         $inputs['subject'] = $this->ui_factory->input()->field()->text($this->lng->txt('subject'));
-        $inputs['body'] = $this->ui_factory->input()->field()->text($this->lng->txt('body'));
+        $inputs['body'] = $this->ui_factory->input()->field()->text($this->lng->txt('mail_filter_body'));
 
         if ($this->lucene_enabled) {
             $inputs['attachment'] = $this->ui_factory->input()->field()->text($this->lng->txt('attachment'));
         }
+
+        $inputs['period'] = $this->ui_factory->input()->field()->duration('mail_filter_period')
+                                                               ->withTimezone($this->user_time_zone->getName());
 
         $this->filter = $this->filter_service->standard(
             self::class,
@@ -80,11 +86,13 @@ class MailFilterUI
         $data = $this->filter_service->getData($this->filter);
 
         return new MailFilterData(
-            isset($data['sender']) ? (string) $data['sender'] : null,
-            isset($data['recipients']) ? (string) $data['recipients'] : null,
-            isset($data['subject']) ? (string) $data['subject'] : null,
-            isset($data['body']) ? (string) $data['body'] : null,
-            isset($data['attachment']) ? (string) $data['body'] : null,
+            empty($data['sender']) ? null : (string) $data['sender'],
+            empty($data['recipients']) ? null : (string) $data['recipients'],
+            empty($data['subject']) ? null : (string) $data['subject'],
+            empty($data['body']) ? null : $data['body'],
+            empty($data['attachment']) ? null : (string) $data['body'],
+            empty($data['period']['start']) ? null : $data['period']['start'],
+            empty($data['period']['end']) ? null : $data['period']['end']
         );
     }
 }

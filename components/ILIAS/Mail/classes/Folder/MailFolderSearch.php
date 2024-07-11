@@ -53,7 +53,9 @@ class MailFolderSearch
             ->withSender($this->filter->getSender())
             ->withSubject($this->filter->getSubject())
             ->withRecipients($this->filter->getRecipients())
-            ->withBody($this->filter->getBody());
+            ->withBody($this->filter->getBody())
+            ->withPeriodStart($this->filter->getPeriodStart())
+            ->withPeriodEnd($this->filter->getPeriodEnd());
 
         if ($this->lucene_enabled && (
             !empty($this->filter->getSender()) ||

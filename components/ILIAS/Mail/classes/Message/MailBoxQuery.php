@@ -24,6 +24,8 @@ use ilDBInterface;
 use ilMail;
 use ilDBConstants;
 use DateTimeImmutable;
+use DateTimeZone;
+use ilTimeZone;
 
 /**
  * Mail query class.
@@ -34,7 +36,7 @@ use DateTimeImmutable;
  */
 class MailBoxQuery
 {
-    public const ORDER_COLUMNS = ['from', 'm_subject', 'send_time', 'rcp_to'];
+    public const ORDER_COLUMNS = ['from', 'm_subject', 'send_time', 'rcp_to', 'attachments'];
     public const ORDER_DIRECTIONS = ['ASC', 'DESC'];
 
     private ?int $folder_id = null;
@@ -45,8 +47,8 @@ class MailBoxQuery
     private ?bool $unread = null;
     private ?bool $system = null;
     private ?bool $attachment = null;
-    private ?bool $period_start = null;
-    private ?bool $period_end = null;
+    private ?DateTimeImmutable $period_start = null;
+    private ?DateTimeImmutable $period_end = null;
     public ?array $filtered_ids = null;
 
     private int $limit = 0;
@@ -238,6 +240,8 @@ class MailBoxQuery
 			';
         }
 
+        $attachment_selection = '';
+
         $query = 'SELECT ' . $fields . $firstname_selection . ' FROM mail '
                . 'LEFT JOIN usr_data ON usr_id = sender_id '
                . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
@@ -267,7 +271,7 @@ class MailBoxQuery
                 isset($row['user_id']) ? (int) $row['user_id'] : 0,
                 isset($row['folder_id']) ? (int) $row['folder_id'] : 0,
                 isset($row['sender_id']) ? (int) $row['sender_id'] : null,
-                isset($row['send_time']) ? (string) $row['send_time'] : null,
+                isset($row['send_time']) ? new DateTimeImmutable($row['send_time']) : null,
                 isset($row['m_status']) ? (string) $row['m_status'] : null,
                 isset($row['m_subject']) ? (string) $row['m_subject'] : null,
                 isset($row['import_name']) ? (string) $row['import_name'] : null,
@@ -335,18 +339,17 @@ class MailBoxQuery
 
         if (!empty($this->period_start)) {
             $filter_parts[] = 'send_time >= ' . $this->db->quote(
-                (new DateTimeImmutable(
-                    '@' . $this->period_start
-                ))->format('Y-m-d 00:00:00'),
+                // convert to server time zone (set by ilias initialisation)
+                $this->period_start->setTimezone(new DateTimeZone(date_default_timezone_get()))
+                                   ->format('Y-m-d H:i:s'),
                 'timestamp'
             );
         }
-
         if (!empty($this->period_end)) {
             $filter_parts[] = 'send_time <= ' . $this->db->quote(
-                (new DateTimeImmutable(
-                    '@' . $this->period_start
-                ))->format('Y-m-d 23:59:59'),
+                // convert to server time zone (set by ilias initialisation)
+                $this->period_end->setTimezone(new DateTimeZone(date_default_timezone_get()))
+                                 ->format('Y-m-d H:i:s'),
                 'timestamp'
             );
         }

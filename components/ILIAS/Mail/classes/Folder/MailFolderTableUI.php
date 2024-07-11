@@ -40,7 +40,8 @@ use ILIAS\UI\Component\Link\Link;
 use ILIAS\UI\Component\Symbol\Icon\Standard;
 use ILIAS\UI\Component\Symbol\Symbol;
 use ILIAS\UI\Component\Symbol\Avatar\Avatar;
-use ILIAS\UI\Implementation\Component\Symbol\Icon\Icon;
+use ILIAS\UI\Component\Symbol\Icon\Icon;
+use DateTimeZone;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
@@ -65,7 +66,8 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         private readonly \Psr\Http\Message\ServerRequestInterface $http_request,
         private readonly \ILIAS\Data\Factory $df,
         private readonly Refinery $refinery,
-        private readonly DateFormat $date_format
+        private readonly DateFormat $date_format,
+        private readonly DateTimeZone $user_time_zone
     ) {
         $form_action = $this->df->uri(
             \ilUtil::_getHttpPath() . '/' .
@@ -111,9 +113,8 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             'avatar' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('avatar'))
+                ->text($this->lng->txt('user_avatar'))
                 ->withIsSortable(true),
-
 
             'sender' => $this->ui_factory
                 ->table()
@@ -182,20 +183,20 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $additional_parameters
     ): \Generator {
 
-        $columns = [
+        $order_columns = [
             'subject' => 'm_subject',
             'sender' => 'from',
             'recipients' => 'rcp_to',
-            'date' => 'send_time'
-               ];
+            'date' => 'send_time',
+            'attachments' => 'attachments'
+        ];
 
         [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
-
 
         foreach ($this->search->getRecords(
             $range->getLength(),
             $range->getStart(),
-            $columns[$order_column] ?? '',
+            $order_columns[$order_column] ?? '',
             $order_direction
         ) as $record) {
 
@@ -253,9 +254,10 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getStatus(MailRecordData $record): Icon
     {
+        // todo: use better icons when available
         return $record->isRead()
-            ? $this->ui_factory->symbol()->icon()->standard('mail', $this->lng->txt('read'), 'small')
-            : $this->ui_factory->symbol()->icon()->standard('nota', $this->lng->txt('unread'), 'small');
+            ? $this->ui_factory->symbol()->icon()->custom('assets/images/browser/blank.png', $this->lng->txt('read'))
+            : $this->ui_factory->symbol()->icon()->standard('mail', $this->lng->txt('unread'));
     }
 
     private function getSender(MailRecordData $record): string
@@ -284,9 +286,9 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         );
     }
 
-    private function getDate(MailRecordData $record): DateTimeImmutable
+    private function getDate(MailRecordData $record): ?DateTimeImmutable
     {
-        return new \DateTimeImmutable($record->getSendTime());
+        return empty($record->getSendTime()) ? null : $record->getSendTime()->setTimezone($this->user_time_zone);
     }
 
     private function getAttachments(MailRecordData $record): string

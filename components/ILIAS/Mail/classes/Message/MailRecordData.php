@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace ILIAS\Mail\Message;
 
+use DateTimeImmutable;
+
 class MailRecordData
 {
     public const STATUS_READ = 'read';
@@ -30,7 +32,7 @@ class MailRecordData
         private readonly int $user_id,
         private readonly int $folder_id,
         private readonly ?int $sender_id = null,
-        private readonly ?string $send_time = null,
+        private readonly ?DateTimeImmutable $send_time = null,
         private readonly ?string $status = null,
         private readonly ?string $subject = null,
         private readonly ?string $import_name = null,
@@ -65,7 +67,7 @@ class MailRecordData
         return $this->sender_id;
     }
 
-    public function getSendTime(): ?string
+    public function getSendTime(): ?DateTimeImmutable
     {
         return $this->send_time;
     }
@@ -110,6 +112,9 @@ class MailRecordData
         return $this->rcp_bc;
     }
 
+    /**
+     * @return string[]|null
+     */
     public function getAttachments(): ?array
     {
         return $this->attachments;
@@ -130,7 +135,7 @@ class MailRecordData
         return $this->status === self::STATUS_READ;
     }
 
-    public function hasAttachments()
+    public function hasAttachments(): bool
     {
         return !empty($this->attachments);
     }
