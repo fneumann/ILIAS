@@ -238,7 +238,6 @@ class ilMailFolderGUI
             $this->tpl->printToStdout();
         }
 
-        $selected_mail_ids = $this->getMailIdsFromRequest(true);
         if (!$this->errorDelete && $folder->isTrash() && 'deleteMails' === $this->parseCommand($this->ctrl->getCmd())) {
             $confirmationGui = new ilConfirmationGUI();
             $confirmationGui->setHeaderText($this->lng->txt('mail_sure_delete'));
@@ -271,14 +270,11 @@ class ilMailFolderGUI
             ilSearchSettings::getInstance()->enabledLucene(),
         );
 
-        $this->user->getDateFormat();
-
         $table = new \ILIAS\Mail\Folder\MailFolderTableUI(
             $this,
-            'showFolder',
+            'handleFolderTableAction',
             $folder,
             $search,
-            $selected_mail_ids,
             $this->umail,
             $this->ui_factory,
             $this->ui_renderer,
@@ -310,8 +306,45 @@ class ilMailFolderGUI
             $this->tpl->setVariable('CONFIRMATION', $confirmationGui->getHTML());
         }
 
-        $this->tpl->setVariable('MAIL_TABLE', $this->ui_renderer->render([$filter->get(), $table->get()]));
+        $this->tpl->setVariable('MAIL_TABLE', $this->ui_renderer->render([
+            $filter->getComponent(),
+            $table->getComponent()]));
         $this->tpl->printToStdout();
+    }
+
+    protected function handleFolderTableAction(): void
+    {
+        $action = $this->http->wrapper()->query()->retrieve(
+            'mail_folder_table_action',
+            $this->refinery->byTrying([
+                $this->refinery->kindlyTo()->string(),
+                $this->refinery->always('')
+            ])
+        );
+
+        $mail_ids = $this->getMailIdsFromRequest();
+        if (empty($mail_ids)) {
+            $this->tpl->setOnScreenMessage('info', $this->lng->txt('mail_select_one'), true);
+            $this->ctrl->redirect($this, 'showFolder');
+        }
+
+        switch ($action) {
+            case 'showMail':
+                $this->showMail($mail_ids[0]);
+                break;
+
+            case 'markMailsRead':
+                $this->markMailsRead($mail_ids);
+                break;
+
+            case 'markMailsUnread':
+                $this->markMailsUnread($mail_ids);
+                break;
+
+            default:
+                $this->ctrl->redirect($this, 'showFolder');
+                break;
+        }
     }
 
     protected function deleteSubFolder(bool $a_show_confirm = true): void
@@ -451,53 +484,41 @@ class ilMailFolderGUI
     /**
      * @return int[]
      */
-    protected function getMailIdsFromRequest(bool $ignoreHttpGet = false): array
+    protected function getMailIdsFromRequest(): array
     {
-        $mailIds = [];
-        if ($this->http->wrapper()->post()->has('mail_id')) {
-            $mailIds = $this->http->wrapper()->post()->retrieve(
-                'mail_id',
-                $this->refinery->kindlyTo()->listOf($this->refinery->kindlyTo()->int())
-            );
-        }
+        $mail_ids = $this->http->wrapper()->query()->retrieve(
+            'mail_folder_table_mail_ids',
+            $this->refinery->byTrying([
+                $this->refinery->kindlyTo()->listOf($this->refinery->kindlyTo()->int()),
+                $this->refinery->always([])
+            ])
+        );
 
-        if ($mailIds === [] && !$ignoreHttpGet) {
-            $mailId = 0;
-            if ($this->http->wrapper()->query()->has('mail_id')) {
-                $mailId = $this->http->wrapper()->query()->retrieve('mail_id', $this->refinery->kindlyTo()->int());
-            }
-            if (is_numeric($mailId)) {
-                $mailIds = [$mailId];
-            }
-        }
-
-        return array_filter(array_map('intval', $mailIds));
+        return $mail_ids;
     }
 
-    protected function markMailsRead(): void
+    /**
+     * @param int[] $mail_ids
+     */
+    protected function markMailsRead(array $mail_ids): void
     {
-        $mailIds = $this->getMailIdsFromRequest();
-        if ($mailIds !== []) {
-            $this->umail->markRead($mailIds);
-            $this->tpl->setOnScreenMessage('success', $this->lng->txt('saved_successfully'));
-        } else {
-            $this->tpl->setOnScreenMessage('info', $this->lng->txt('mail_select_one'));
+        if (!empty($mail_ids)) {
+            $this->umail->markRead($mail_ids);
+            $this->tpl->setOnScreenMessage('success', $this->lng->txt('saved_successfully'), true);
         }
-
-        $this->showFolder();
+        $this->ctrl->redirect($this, 'showFolder');
     }
 
-    protected function markMailsUnread(): void
+    /**
+     * @param int[] $mail_ids
+     */
+    protected function markMailsUnread(array $mail_ids): void
     {
-        $mailIds = $this->getMailIdsFromRequest();
-        if ($mailIds !== []) {
-            $this->umail->markUnread($mailIds);
-            $this->tpl->setOnScreenMessage('success', $this->lng->txt('saved_successfully'));
-        } else {
-            $this->tpl->setOnScreenMessage('info', $this->lng->txt('mail_select_one'));
+        if (!empty($mail_ids)) {
+            $this->umail->markUnread($mail_ids);
+            $this->tpl->setOnScreenMessage('success', $this->lng->txt('saved_successfully'), true);
         }
-
-        $this->showFolder();
+        $this->ctrl->redirect($this, 'showFolder');
     }
 
     protected function moveSingleMail(): void
@@ -601,10 +622,9 @@ class ilMailFolderGUI
         $this->showFolder();
     }
 
-    protected function showMail(): void
+    protected function showMail(?int $mailId = null): void
     {
-        $mailId = 0;
-        if ($this->http->wrapper()->query()->has('mail_id')) {
+        if (!isset($mailId) && $this->http->wrapper()->query()->has('mail_id')) {
             $mailId = $this->http->wrapper()->query()->retrieve('mail_id', $this->refinery->kindlyTo()->int());
         }
 

@@ -81,7 +81,7 @@ class MailFilterUI
     /**
      * Get the filter UI component
      */
-    public function get(): FilterComponent
+    public function getComponent(): FilterComponent
     {
         return $this->filter;
     }
