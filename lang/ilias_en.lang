@@ -11379,14 +11379,16 @@ mail#:#mail_files_deleted#:#File(s) deleted.
 mail#:#mail_filter#:#Filter
 mail#:#mail_filter_attach#:#Attachments
 mail#:#mail_filter_body#:#Body
+mail#:#mail_filter_display#:#Display
 mail#:#mail_filter_field_placeholder#:#Filter these messages ...
-mail#:#mail_filter_only_unread#:#Only Unread
-mail#:#mail_filter_only_user_mails#:#Hide System Notifications
-mail#:#mail_filter_only_with_attachments#:#With Attachments
 mail#:#mail_filter_period#:#Period
-mail#:#mail_filter_period_from#:#From
-mail#:#mail_filter_period_until#:#Until
 mail#:#mail_filter_recipients#:#Recipients
+mail#:#mail_filter_show_read#:#Show Read
+mail#:#mail_filter_show_system_mails#Show System Notifications
+mail#:#mail_filter_show_unread#:#Show Unread
+mail#:#mail_filter_show_user_mails#Show User Mails
+mail#:#mail_filter_show_with_attachments#Show With Attachments
+mail#:#mail_filter_show_without_attachment#Show Without Attachment
 mail#:#mail_filter_sender#:#Sender
 mail#:#mail_filter_subject#:#Subject
 mail#:#mail_filter_txt#:#Filter messages by

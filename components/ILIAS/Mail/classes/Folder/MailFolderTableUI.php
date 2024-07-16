@@ -126,7 +126,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             'recipients' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('recipients'))
+                ->text($this->lng->txt('recipient'))
                 ->withIsSortable(true),
 
             'subject' => $this->ui_factory
@@ -196,13 +196,25 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
         [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
 
-        foreach ($this->search->getRecords(
+        $records = $this->search->getRecords(
             $range->getLength(),
             $range->getStart(),
             $order_columns[$order_column] ?? null,
             $order_direction
-        ) as $record) {
+        );
 
+        // preload user objects for display of avatar and sender
+        if ($this->folder->hasIncomingMails()) {
+            $user_ids = [];
+            foreach ($records as $record) {
+                if ($record->getSenderId() && $record->getSenderId() !== ANONYMOUS_USER_ID) {
+                    $user_ids[$record->getSenderId()] = $record->getSenderId();
+                }
+            }
+            ilMailUserCache::preloadUserObjects($user_ids);
+        }
+
+        foreach ($records as $record) {
             $this->ctrl->setParameter($this->parent_gui, 'mail_id', $record->getMailId());
 
             if ($this->folder->hasIncomingMails()) {

@@ -21,7 +21,6 @@ declare(strict_types=1);
 namespace ILIAS\Mail\Folder;
 
 use Exception;
-use ilMailUserCache;
 use ilSearchSettings;
 use ilMailSearchResult;
 use ilMailLuceneSearcher;
@@ -30,6 +29,11 @@ use ILIAS\Mail\Message\MailBoxQuery;
 use ILIAS\Mail\Message\MailRecordData;
 use ILIAS\Mail\Message\MailBoxOrderColumn;
 
+/**
+ * Search in mail folders
+ * - utilises database and (if available) lucene based search
+ * - caches results for counting of all or unread mails
+ */
 class MailFolderSearch
 {
     private MailBoxQuery $mailbox_query;
@@ -52,11 +56,14 @@ class MailFolderSearch
         ))
             ->withFolderId($this->folder->getFolderId())
             ->withSender($this->filter->getSender())
-            ->withSubject($this->filter->getSubject())
             ->withRecipients($this->filter->getRecipients())
+            ->withSubject($this->filter->getSubject())
             ->withBody($this->filter->getBody())
             ->withPeriodStart($this->filter->getPeriodStart())
-            ->withPeriodEnd($this->filter->getPeriodEnd());
+            ->withPeriodEnd($this->filter->getPeriodEnd())
+            ->withIsUnread($this->filter->isUnread())
+            ->withIsSystem($this->filter->isSystem())
+            ->withHasAttachment($this->filter->hasAttachment());
 
         if ($this->lucene_enabled && (
             !empty($this->filter->getSender()) ||
@@ -69,7 +76,7 @@ class MailFolderSearch
             $query_parser->setFields([
                 'title' => $this->filter->getSubject(),
                 'content' => $this->filter->getBody(),
-                'mattachment' => $this->filter->getAttachment(),
+                'mattachment' => $this->filter->getAttachment(), // only possible with lucene
                 'msender' => $this->filter->getSender(),
             ]);
             $query_parser->parse();
@@ -105,24 +112,13 @@ class MailFolderSearch
         ?string $order_direction
     ): array {
 
-        $records = $this->mailbox_query
+        return $this->mailbox_query
             ->withFilteredIds($this->getFilteredIds())
             ->withLimit($limit)
             ->withOffset($offset)
             ->withOrderColumn($order_column)
             ->withOrderDirection($order_direction)
             ->query(true);
-
-        if ($this->folder->hasIncomingMails()) {
-            $user_ids = [];
-            foreach ($records as $record) {
-                if ($record->getSenderId() && $record->getSenderId() !== ANONYMOUS_USER_ID) {
-                    $user_ids[$record->getSenderId()] = $record->getSenderId();
-                }
-            }
-            ilMailUserCache::preloadUserObjects($user_ids);
-        }
-        return $records;
     }
 
     private function getFilteredIds(): ?array

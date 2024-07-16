@@ -4,6 +4,10 @@ namespace ILIAS\Mail\Folder;
 
 use DateTimeImmutable;
 
+/**
+ * Filter setting for display of mail records
+ * Properties with null value will not be applied as a filter
+ */
 class MailFilterData
 {
     public function __construct(
@@ -14,6 +18,9 @@ class MailFilterData
         private readonly ?string $attachment,
         private readonly ?DateTimeImmutable $period_start,
         private readonly ?DateTimeImmutable $period_end,
+        private readonly ?bool $is_unread,
+        private readonly ?bool $is_system,
+        private readonly ?bool $has_attachment
     ) {
     }
 
@@ -26,7 +33,6 @@ class MailFilterData
     {
         return $this->recipients;
     }
-
 
     public function getSubject(): ?string
     {
@@ -53,4 +59,18 @@ class MailFilterData
         return $this->period_end;
     }
 
+    public function isUnread(): ?bool
+    {
+        return $this->is_unread;
+    }
+
+    public function isSystem(): ?bool
+    {
+        return $this->is_system;
+    }
+
+    public function hasAttachment(): ?bool
+    {
+        return $this->has_attachment;
+    }
 }

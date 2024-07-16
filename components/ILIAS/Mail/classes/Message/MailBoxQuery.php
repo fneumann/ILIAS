@@ -42,9 +42,9 @@ class MailBoxQuery
     private ?string $recipients = null;
     private ?string $subject = null;
     private ?string $body = null;
-    private ?bool $unread = null;
-    private ?bool $system = null;
-    private ?bool $attachment = null;
+    private ?bool $is_unread = null;
+    private ?bool $is_system = null;
+    private ?bool $has_attachment = null;
     private ?DateTimeImmutable $period_start = null;
     private ?DateTimeImmutable $period_end = null;
     public ?array $filtered_ids = null;
@@ -96,24 +96,24 @@ class MailBoxQuery
         return $clone;
     }
 
-    public function withUnread(?bool $unread): MailBoxQuery
+    public function withIsUnread(?bool $is_unread): MailBoxQuery
     {
         $clone = clone $this;
-        $clone->unread = $unread;
+        $clone->is_unread = $is_unread;
         return $clone;
     }
 
-    public function withSystem(?bool $system): MailBoxQuery
+    public function withIsSystem(?bool $is_system): MailBoxQuery
     {
         $clone = clone $this;
-        $clone->system = $system;
+        $clone->is_system = $is_system;
         return $clone;
     }
 
-    public function withAttachment(?bool $attachment): MailBoxQuery
+    public function withHasAttachment(?bool $has_attachment): MailBoxQuery
     {
         $clone = clone $this;
-        $clone->attachment = $attachment;
+        $clone->has_attachment = $has_attachment;
         return $clone;
     }
 
@@ -179,7 +179,7 @@ class MailBoxQuery
      */
     public function countUnread(): int
     {
-        return $this->withUnread(true)->count();
+        return $this->withIsUnread(true)->count();
     }
 
     /**
@@ -309,24 +309,24 @@ class MailBoxQuery
             $filter_parts[] = 'folder_id = ' . $this->db->quote($this->folder_id, 'integer');
         }
 
-        if ($this->unread === true) {
+        if ($this->is_unread === true) {
             $filter_parts[] = 'm_status = ' . $this->db->quote('unread', 'text');
-        } elseif ($this->unread === false) {
+        } elseif ($this->is_unread === false) {
             $filter_parts[] = 'm_status != ' . $this->db->quote('unread', 'text');
         }
 
-        if ($this->attachment === true) {
-            $filter_parts[] = '(attachments != ' . $this->db->quote(serialize(null), 'text')
-                            . ' AND attachments != ' . $this->db->quote(serialize([]), 'text') . ')';
-        } elseif ($this->attachment === false) {
-            $filter_parts[] = '(attachments = ' . $this->db->quote(serialize(null), 'text')
-                            . '  OR attachments = ' . $this->db->quote(serialize([]), 'text') . ')';
+        if ($this->is_system === true) {
+            $filter_parts[] = 'sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+        } elseif ($this->is_system === false) {
+            $filter_parts[] = 'sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
         }
 
-        if ($this->system === true) {
-            $filter_parts[] = 'sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
-        } elseif ($this->system === false) {
-            $filter_parts[] = 'sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+        if ($this->has_attachment === true) {
+            $filter_parts[] = '(attachments != ' . $this->db->quote(serialize(null), 'text')
+                            . ' AND attachments != ' . $this->db->quote(serialize([]), 'text') . ')';
+        } elseif ($this->has_attachment === false) {
+            $filter_parts[] = '(attachments = ' . $this->db->quote(serialize(null), 'text')
+                            . '  OR attachments = ' . $this->db->quote(serialize([]), 'text') . ')';
         }
 
         if (!empty($this->period_start)) {
