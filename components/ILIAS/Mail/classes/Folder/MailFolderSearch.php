@@ -28,6 +28,7 @@ use ilMailLuceneSearcher;
 use ilMailLuceneQueryParser;
 use ILIAS\Mail\Message\MailBoxQuery;
 use ILIAS\Mail\Message\MailRecordData;
+use ILIAS\Mail\Message\MailBoxOrderColumn;
 
 class MailFolderSearch
 {
@@ -100,7 +101,7 @@ class MailFolderSearch
     public function getRecords(
         int $limit,
         int $offset,
-        ?string $order_column,
+        ?MailBoxOrderColumn $order_column,
         ?string $order_direction
     ): array {
 
@@ -124,7 +125,7 @@ class MailFolderSearch
         return $records;
     }
 
-    protected function getFilteredIds(): ?array
+    private function getFilteredIds(): ?array
     {
         if (!isset($this->filtered_ids)
             && isset($this->lucene_result)

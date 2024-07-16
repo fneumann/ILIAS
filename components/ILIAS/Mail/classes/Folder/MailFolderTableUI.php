@@ -42,6 +42,7 @@ use ILIAS\UI\Component\Symbol\Symbol;
 use ILIAS\UI\Component\Symbol\Avatar\Avatar;
 use ILIAS\UI\Component\Symbol\Icon\Icon;
 use DateTimeZone;
+use ILIAS\Mail\Message\MailBoxOrderColumn;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
@@ -183,12 +184,14 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $additional_parameters
     ): \Generator {
 
+        // mapping of table columns to allowed order columns of the mailbox  query
         $order_columns = [
-            'subject' => 'm_subject',
-            'sender' => 'from',
-            'recipients' => 'rcp_to',
-            'date' => 'send_time',
-            'attachments' => 'attachments'
+            'status' => MailBoxOrderColumn::STATUS,
+            'subject' => MailBoxOrderColumn::SUBJECT,
+            'sender' => MailBoxOrderColumn::FROM,
+            'recipients' => MailBoxOrderColumn::RCP_TO,
+            'date' => MailBoxOrderColumn::SEND_TIME,
+            'attachments' => MailBoxOrderColumn::ATTACHMENTS
         ];
 
         [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
@@ -196,7 +199,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         foreach ($this->search->getRecords(
             $range->getLength(),
             $range->getStart(),
-            $order_columns[$order_column] ?? '',
+            $order_columns[$order_column] ?? null,
             $order_direction
         ) as $record) {
 

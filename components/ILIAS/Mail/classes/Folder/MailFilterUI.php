@@ -55,7 +55,7 @@ class MailFilterUI
             $inputs['attachment'] = $this->ui_factory->input()->field()->text($this->lng->txt('attachment'));
         }
 
-        $inputs['period'] = $this->ui_factory->input()->field()->duration('mail_filter_period')
+        $inputs['period'] = $this->ui_factory->input()->field()->duration($this->lng->txt('mail_filter_period'))
                                                                ->withTimezone($this->user_time_zone->getName());
 
         $this->filter = $this->filter_service->standard(

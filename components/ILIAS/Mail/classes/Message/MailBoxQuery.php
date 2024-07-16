@@ -26,6 +26,7 @@ use ilDBConstants;
 use DateTimeImmutable;
 use DateTimeZone;
 use ilTimeZone;
+use ILIAS\Data\Order;
 
 /**
  * Mail query class.
@@ -36,9 +37,6 @@ use ilTimeZone;
  */
 class MailBoxQuery
 {
-    public const ORDER_COLUMNS = ['from', 'm_subject', 'send_time', 'rcp_to', 'attachments'];
-    public const ORDER_DIRECTIONS = ['ASC', 'DESC'];
-
     private ?int $folder_id = null;
     private ?string $sender = null;
     private ?string $recipients = null;
@@ -53,8 +51,9 @@ class MailBoxQuery
 
     private int $limit = 0;
     private int $offset = 0;
-    private string $order_direction = '';
-    private string $order_column = '';
+
+    private MailBoxOrderColumn $order_column = MailBoxOrderColumn::SEND_TIME;
+    private string $order_direction = Order::DESC;
 
     public function __construct(
         private readonly ilDBInterface $db,
@@ -156,29 +155,24 @@ class MailBoxQuery
         return $clone;
     }
 
-    public function withOrderDirection(string $order_direction): MailBoxQuery
+    public function withOrderColumn(?MailBoxOrderColumn $order_column): MailBoxQuery
     {
-        $order_direction = strtoupper($order_direction);
-        if (!in_array($order_direction, self::ORDER_DIRECTIONS)) {
-            $order_direction = '';
-        }
-
         $clone = clone $this;
-        $clone->order_direction = $order_direction;
+        if (isset($order_column)) {
+            $clone->order_column = $order_column;
+        }
         return $clone;
     }
 
-    public function withOrderColumn(string $order_column): MailBoxQuery
+    public function withOrderDirection(?string $order_direction): MailBoxQuery
     {
-        $order_column = strtolower($order_column);
-        if (!in_array($order_column, self::ORDER_COLUMNS)) {
-            $order_column = '';
-        }
-
         $clone = clone $this;
-        $clone->order_column = $order_column;
+        if (in_array($order_direction, [Order::ASC, Order::DESC] )) {
+            $clone->order_direction = $order_direction;
+        }
         return $clone;
     }
+
 
     /**
      * Count the number of unread mails with applied filter
@@ -230,7 +224,7 @@ class MailBoxQuery
         }
 
         $firstname_selection = '';
-        if ($this->order_column === 'from') {
+        if ($this->order_column === MailBoxOrderColumn::FROM) {
             // Because of the user id of automatically generated mails and ordering issues we have to do some magic
             $firstname_selection = '
 				,(CASE
@@ -249,16 +243,14 @@ class MailBoxQuery
                . 'WHERE user_id = ' . $this->db->quote($this->user_id, 'integer')
                . $this->getFilterCondition() . ' ';
 
-        if ($this->order_column === 'from') {
+        if ($this->order_column === MailBoxOrderColumn::FROM) {
             $query .= ' ORDER BY '
                     . ' fname ' . $this->order_direction . ', '
                     . ' lastname ' . $this->order_direction . ', '
                     . ' login ' . $this->order_direction . ', '
                     . ' import_name ' . $this->order_direction;
-        } elseif ($this->order_column !== '') {
-            $query .= ' ORDER BY ' . $this->order_column . ' ' . $this->order_direction;
         } else {
-            $query .= ' ORDER BY send_time DESC';
+            $query .= ' ORDER BY ' . $this->order_column->value . ' ' . $this->order_direction;
         }
 
         $this->db->setLimit($this->limit, $this->offset);
@@ -368,5 +360,4 @@ class MailBoxQuery
         }
         return '';
     }
-
 }
