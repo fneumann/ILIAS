@@ -3131,6 +3131,7 @@
 
 	<!-- Resources -->
 <xsl:template match="Resources">
+	<xsl:call-template name="EditLabel"><xsl:with-param name="text"><xsl:value-of select="//LVs/LV[@name='pc_res']/@value"/> <xsl:if test="@Template"> (<xsl:value-of select="@Template"/>)</xsl:if></xsl:with-param></xsl:call-template>
 	<div>
 		<xsl:if test="./ResourceList">
 			[list-<xsl:value-of select="./ResourceList/@Type"/>]
@@ -3576,6 +3577,7 @@
 
 <!-- GridCell -->
 <xsl:template match="GridCell">
+	<xsl:variable name="container_edit_class"><xsl:if test="$mode = 'edit'"> copg-edit-container</xsl:if></xsl:variable>
 	<div>
 		<xsl:attribute name="class">
 			<xsl:if test="@WIDTH_S != ''"> col-xs-<xsl:value-of select="@WIDTH_S"/></xsl:if>
@@ -3583,42 +3585,38 @@
 			<xsl:if test="@WIDTH_L != ''"> col-md-<xsl:value-of select="@WIDTH_L"/></xsl:if>
 			<xsl:if test="@WIDTH_XL != ''"> col-lg-<xsl:value-of select="@WIDTH_XL"/></xsl:if>
 			<xsl:if test="@WIDTH_S = '' and @WIDTH_M = '' and @WIDTH_L = '' and @WIDTH_XL = ''">col-xs-12</xsl:if>
+			<xsl:value-of select="$container_edit_class"/>
 		</xsl:attribute>
-		<div class="flex-col flex-grow">
+		<div style="height:100%">	<!-- this div enforces margin collapsing, see bug 31536, for height see 32067 -->
 			<xsl:if test="$mode = 'edit'">
-				<xsl:attribute name="class">flex-col flex-grow copg-edit-container</xsl:attribute>
+				<xsl:call-template name="EditReturnAnchors"/>
 			</xsl:if>
-			<div style="height:100%">	<!-- this div enforces margin collapsing, see bug 31536, for height see 32067 -->
-				<xsl:if test="$mode = 'edit'">
-					<xsl:call-template name="EditReturnAnchors"/>
+			<!-- insert commands -->
+			<!-- <xsl:value-of select="@HierId"/> -->
+			<xsl:if test="$mode = 'edit'">
+				<!-- drop area (js) -->
+				<xsl:if test="$javascript = 'enable'">
+					<xsl:call-template name="DropArea">
+						<xsl:with-param name="hier_id"><xsl:value-of select="@HierId"/></xsl:with-param>
+						<xsl:with-param name="pc_id"><xsl:value-of select="@PCID"/></xsl:with-param>
+					</xsl:call-template>
 				</xsl:if>
-				<!-- insert commands -->
-				<!-- <xsl:value-of select="@HierId"/> -->
-				<xsl:if test="$mode = 'edit'">
-					<!-- drop area (js) -->
-					<xsl:if test="$javascript = 'enable'">
-						<xsl:call-template name="DropArea">
-							<xsl:with-param name="hier_id"><xsl:value-of select="@HierId"/></xsl:with-param>
-							<xsl:with-param name="pc_id"><xsl:value-of select="@PCID"/></xsl:with-param>
-						</xsl:call-template>
-					</xsl:if>
-					<!-- insert dropdown (no js) -->
-					<xsl:if test= "$javascript = 'disable'">
-						<select size="1" class="ilEditSelect">
-							<xsl:attribute name="name">command<xsl:value-of select="@HierId"/>
-							</xsl:attribute>
-							<xsl:call-template name="EditMenuInsertItems"/>
-						</select>
-						<input class="ilEditSubmit" type="submit">
-							<xsl:attribute name="value"><xsl:value-of select="//LVs/LV[@name='ed_go']/@value"/></xsl:attribute>
-							<xsl:attribute name="name">cmd[exec_<xsl:value-of select="@HierId"/>:<xsl:value-of select="@PCID"/>]</xsl:attribute>
-						</input>
-						<br/>
-					</xsl:if>
+				<!-- insert dropdown (no js) -->
+				<xsl:if test= "$javascript = 'disable'">
+					<select size="1" class="ilEditSelect">
+						<xsl:attribute name="name">command<xsl:value-of select="@HierId"/>
+						</xsl:attribute>
+						<xsl:call-template name="EditMenuInsertItems"/>
+					</select>
+					<input class="ilEditSubmit" type="submit">
+						<xsl:attribute name="value"><xsl:value-of select="//LVs/LV[@name='ed_go']/@value"/></xsl:attribute>
+						<xsl:attribute name="name">cmd[exec_<xsl:value-of select="@HierId"/>:<xsl:value-of select="@PCID"/>]</xsl:attribute>
+					</input>
+					<br/>
 				</xsl:if>
-				<xsl:apply-templates select="PageContent"/>
-				<xsl:comment>End of Grid Cell</xsl:comment>
-			</div>
+			</xsl:if>
+			<xsl:apply-templates select="PageContent"/>
+			<xsl:comment>End of Grid Cell</xsl:comment>
 		</div>
 	</div>
 </xsl:template>
