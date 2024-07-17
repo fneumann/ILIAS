@@ -20,70 +20,56 @@ declare(strict_types=1);
 
 namespace ILIAS\Mail\Folder;
 
-use ilDatePresentation;
-use ilUtil;
-use ilDateTime;
+use ilLanguage;
+use ilMail;
+use ilMailUserCache;
+use ILIAS\Mail\Message\MailBoxOrderColumn;
+use ILIAS\Mail\Message\MailRecordData;
+use ILIAS\Data\Factory as DataFactory;
+use ILIAS\Data\Order;
+use ILIAS\Data\Range;
+use ILIAS\Data\DateFormat\DateFormat;
+use ILIAS\Refinery\Factory as Refinery;
+use ILIAS\UI\Component\Table\DataRowBuilder;
 use ILIAS\UI\Component\Table\Data as DataTable;
 use ILIAS\UI\Component\Table\Column\Column as TableColumn;
 use ILIAS\UI\Component\Table\Action\Action as TableAction;
-use ILIAS\UI\URLBuilder;
-use ILIAS\Mail\Message\MailRecordData;
-use ilMail;
-use ilMailUserCache;
-use ILIAS\Refinery\Factory as Refinery;
-use ILIAS\Data\DateFormat\DateFormat;
-use DateTimeImmutable;
+use ILIAS\UI\Component\Link\Link;
+use ILIAS\UI\Component\Symbol\Icon\Icon;
 use ILIAS\UI\Factory;
 use ILIAS\UI\Renderer;
-use ILIAS\UI\Component\Link\Link;
-use ILIAS\UI\Component\Symbol\Icon\Standard;
-use ILIAS\UI\Component\Symbol\Symbol;
-use ILIAS\UI\Component\Symbol\Avatar\Avatar;
-use ILIAS\UI\Component\Symbol\Icon\Icon;
-use DateTimeZone;
-use ILIAS\Mail\Message\MailBoxOrderColumn;
-use ilMailFolderGUI;
+use ILIAS\UI\URLBuilder;
 use ILIAS\UI\URLBuilderToken;
-use ILIAS\Data\Factory as DataFactory;
+use Psr\Http\Message\ServerRequestInterface;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
-    private URLBuilder $url_builder;
-    private URLBuilderToken $action_parameter_token;
-    private URLBuilderToken $row_id_token;
+    // table actions
+    public const ACTION_SHOW_MAIL = 'showMail';
+    public const ACTION_MARK_READ = 'markMailsRead';
+    public const ACTION_MARK_UNREAD = 'markMailsUnread';
 
     /** @var string[] */
     private array $avatars = [];
 
     public function __construct(
-        private readonly \ilMailFolderGUI $parent_gui,
-        private readonly string $parent_action_cmd,
+        private readonly URLBuilder $url_builder,
+        private readonly URLBuilderToken $action_token,
+        private readonly URLBuilderToken $row_id_token,
         private readonly MailFolderData $folder,
         private readonly MailFolderSearch $search,
         private readonly ilMail $mail,
         private readonly Factory $ui_factory,
         private readonly Renderer $ui_renderer,
-        private readonly \ilLanguage $lng,
-        private readonly \ilCtrlInterface $ctrl,
-        private readonly \Psr\Http\Message\ServerRequestInterface $http_request,
+        private readonly ilLanguage $lng,
+        private readonly ServerRequestInterface $http_request,
         private readonly DataFactory $data_factory,
         private readonly Refinery $refinery,
         private readonly DateFormat $date_format,
         private readonly DateTimeZone $user_time_zone
     ) {
-        $form_action = $this->data_factory->uri(
-            ilUtil::_getHttpPath() . '/' .
-            $this->ctrl->getLinkTarget($this->parent_gui, $this->parent_action_cmd)
-        );
-
-        [   $this->url_builder,
-            $this->action_parameter_token,
-            $this->row_id_token
-        ] = (new URLBuilder($form_action))->acquireParameters(
-            ['mail', 'folder', 'table'],
-            'action',
-            'mail_ids'   // see \ilMailFolderGUI::getMailIdsFromRequest
-        );
     }
 
     public function getComponent(): DataTable
@@ -145,8 +131,10 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             'date' => $this->ui_factory
                 ->table()
                 ->column()
-                ->date($this->lng->txt('date'),
-                    $this->data_factory->dateFormat()->withTime24($this->date_format))
+                ->date(
+                    $this->lng->txt('date'),
+                    $this->data_factory->dateFormat()->withTime24($this->date_format)
+                )
                 ->withIsSortable(true),
         ];
 
@@ -167,39 +155,41 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private function getActions(): array
     {
         $actions = [
-            'showMail' => $this->ui_factory->table()->action()->single(
+            'show' => $this->ui_factory->table()->action()->single(
                 $this->lng->txt('view'),
-                $this->url_builder->withParameter($this->action_parameter_token, 'showMail'),
-                $this->row_id_token),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_SHOW_MAIL),
+                $this->row_id_token
+            ),
 
-            'markMailsRead' => $this->ui_factory->table()->action()->multi(
+            'mark_read' => $this->ui_factory->table()->action()->multi(
                 $this->lng->txt('mail_mark_read'),
-                $this->url_builder->withParameter($this->action_parameter_token, 'markMailsRead'),
-                $this->row_id_token),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_READ),
+                $this->row_id_token
+            ),
 
-            'markMailsUnread' => $this->ui_factory->table()->action()->multi(
+            'mark_unread' => $this->ui_factory->table()->action()->multi(
                 $this->lng->txt('mail_mark_unread'),
-                $this->url_builder->withParameter($this->action_parameter_token, 'markMailsUnread'),
-                $this->row_id_token),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_UNREAD),
+                $this->row_id_token
+            ),
         ];
 
         if ($this->folder->hasOutgoingMails()) {
-            unset($actions['markMailsRead']);
-            unset($actions['markMailsUnread']);
+            unset($actions['mark_read']);
+            unset($actions['mark_unread']);
         }
 
         return $actions;
     }
 
     public function getRows(
-        \ILIAS\UI\Component\Table\DataRowBuilder $row_builder,
+        DataRowBuilder $row_builder,
         array $visible_column_ids,
-        \ILIAS\Data\Range $range,
-        \ILIAS\Data\Order $order,
-        ?array $filter_data,
-        ?array $additional_parameters
+        Range $range,
+        Order $order,
+        ?array $filter_data,            // not used, because data is filtered by MailDataSearch
+        ?array $additional_parameters   // not used
     ): \Generator {
-
         // mapping of table columns to allowed order columns of the mailbox  query
         $order_columns = [
             'status' => MailBoxOrderColumn::STATUS,
@@ -231,8 +221,6 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         }
 
         foreach ($records as $record) {
-            $this->ctrl->setParameter($this->parent_gui, 'mail_id', $record->getMailId());
-
             if ($this->folder->hasIncomingMails()) {
                 $data = [
                     'status' => $this->getStatus($record),
@@ -252,7 +240,8 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             }
 
             yield $row_builder->buildDataRow(
-                (string) $record->getMailId(), $data);
+                (string) $record->getMailId(), $data
+            );
         }
     }
 
@@ -314,7 +303,10 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     {
         return $this->ui_factory->link()->standard(
             $this->refinery->encode()->htmlSpecialCharsAsEntities()->transform($record->getSubject()),
-            $this->ctrl->getLinkTarget($this->parent_gui, 'showMail')
+            (string) $this->url_builder
+                ->withParameter($this->action_token, self::ACTION_SHOW_MAIL)
+                ->withParameter($this->row_id_token, (string) $record->getMailId())
+                ->buildURI()
         );
     }
 
