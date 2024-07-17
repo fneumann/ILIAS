@@ -33,13 +33,7 @@ class ilMailbox
     protected ilLanguage $lng;
     protected ilDBInterface $db;
     protected ilTree $mtree;
-    /** @var array{moveMails: string, markMailsRead: string, markMailsUnread: string, deleteMails: string} */
-    protected array $actions = [
-        'moveMails' => '',
-        'markMailsRead' => '',
-        'markMailsUnread' => '',
-        'deleteMails' => '',
-    ];
+
     /** @var array{b_inbox: string, c_trash: string, d_drafts: string, e_sent: string, z_local : string} */
     protected array $defaultFolders = [
         'b_inbox' => 'inbox',
@@ -72,13 +66,6 @@ class ilMailbox
         // (alternative: make createDefaultFolder call static in ilObjUser->saveAsNew())
         if (is_object($this->lng)) {
             $this->lng->loadLanguageModule("mail");
-
-            $this->actions = [
-                'moveMails' => $this->lng->txt('mail_move_to'),
-                'markMailsRead' => $this->lng->txt('mail_mark_read'),
-                'markMailsUnread' => $this->lng->txt('mail_mark_unread'),
-                'deleteMails' => $this->lng->txt('delete'),
-            ];
         }
     }
 
@@ -145,14 +132,6 @@ class ilMailbox
         $row = $this->db->fetchAssoc($res);
 
         return (int) $row['obj_id'];
-    }
-
-    /**
-     * @return array{moveMails: string, markMailsRead: string, markMailsUnread: string, deleteMails: string}
-     */
-    public function getActions(int $folderId): array
-    {
-        return $this->actions;
     }
 
     /**

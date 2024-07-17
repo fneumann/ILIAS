@@ -47,18 +47,30 @@ use DateTimeZone;
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
     // table actions
-    public const ACTION_SHOW_MAIL = 'showMail';
-    public const ACTION_MARK_READ = 'markMailsRead';
-    public const ACTION_MARK_UNREAD = 'markMailsUnread';
+    public const ACTION_SHOW = 'show';
+    public const ACTION_EDIT = 'edit';
+    public const ACTION_REPLY = 'reply';
+    public const ACTION_FORWARD = 'forward';
+    public const ACTION_DOWNLOAD_ATTACHMENT = 'download';
+    public const ACTION_PRINT = 'print';
+    public const ACTION_MOVE_TO = 'moveTo';
+    public const ACTION_DELETE = 'delete';
+    public const ACTION_MARK_READ = 'markRead';
+    public const ACTION_MARK_UNREAD = 'marUnread';
 
     /** @var string[] */
     private array $avatars = [];
 
+    /**
+     * @param MailFolderData[]  $user_folders
+     */
     public function __construct(
         private readonly URLBuilder $url_builder,
         private readonly URLBuilderToken $action_token,
         private readonly URLBuilderToken $row_id_token,
-        private readonly MailFolderData $folder,
+        private readonly URLBuilderToken $folder_token,
+        private readonly array $user_folders,
+        private readonly MailFolderData $current_folder,
         private readonly MailFolderSearch $search,
         private readonly ilMail $mail,
         private readonly Factory $ui_factory,
@@ -138,7 +150,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
                 ->withIsSortable(true),
         ];
 
-        if ($this->folder->hasOutgoingMails()) {
+        if ($this->current_folder->hasOutgoingMails()) {
             unset($columns['status']);
             unset($columns['avatar']);
             unset($columns['sender']);
@@ -155,28 +167,82 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     private function getActions(): array
     {
         $actions = [
-            'show' => $this->ui_factory->table()->action()->single(
+            self::ACTION_SHOW => $this->ui_factory->table()->action()->single(
                 $this->lng->txt('view'),
-                $this->url_builder->withParameter($this->action_token, self::ACTION_SHOW_MAIL),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_SHOW),
                 $this->row_id_token
             ),
-
-            'mark_read' => $this->ui_factory->table()->action()->multi(
+            self::ACTION_EDIT => $this->ui_factory->table()->action()->single(
+                $this->lng->txt('edit'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_EDIT),
+                $this->row_id_token
+            ),
+            self::ACTION_REPLY => $this->ui_factory->table()->action()->single(
+                $this->lng->txt('reply'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_REPLY),
+                $this->row_id_token
+            ),
+            self::ACTION_FORWARD => $this->ui_factory->table()->action()->single(
+                $this->lng->txt('forward'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_FORWARD),
+                $this->row_id_token
+            ),
+            self::ACTION_DOWNLOAD_ATTACHMENT => $this->ui_factory->table()->action()->single(
+                $this->lng->txt('mail_download_attachment'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_DOWNLOAD_ATTACHMENT),
+                $this->row_id_token
+            ),
+            self::ACTION_PRINT => $this->ui_factory->table()->action()->single(
+                $this->lng->txt('print'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_PRINT),
+                $this->row_id_token
+            ),
+            self::ACTION_MARK_READ => $this->ui_factory->table()->action()->multi(
                 $this->lng->txt('mail_mark_read'),
                 $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_READ),
                 $this->row_id_token
             ),
-
-            'mark_unread' => $this->ui_factory->table()->action()->multi(
+            self::ACTION_MARK_UNREAD => $this->ui_factory->table()->action()->multi(
                 $this->lng->txt('mail_mark_unread'),
                 $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_UNREAD),
                 $this->row_id_token
             ),
+            self::ACTION_DELETE => $this->ui_factory->table()->action()->multi(
+                $this->lng->txt('delete'),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_READ),
+                $this->row_id_token
+            ),
         ];
+        
+        foreach ($this->user_folders as $target_folder) {
+            // todo: check further moving restrictions (e.g. to/from drafts)
+            if ($target_folder->getFolderId() !== $this->current_folder->getFolderId()) {
+                $actions[] = $this->ui_factory->table()->action()->multi(
+                    $this->lng->txt('mail_move_to') .$target_folder->getTitle()
+                     . ($target_folder->isTrash() ? ' (' . $this->lng->txt('delete') . ')' : ''),
+                    $this->url_builder->withParameter($this->action_token, self::ACTION_MOVE_TO)
+                    ->withParameter($this->folder_token, (string) $target_folder->getFolderId()),
+                    $this->row_id_token
+                );
+            }
+        }
 
-        if ($this->folder->hasOutgoingMails()) {
-            unset($actions['mark_read']);
-            unset($actions['mark_unread']);
+        if ($this->current_folder->isDrafts()) {
+            unset($actions[self::ACTION_SHOW]);
+            unset($actions[self::ACTION_REPLY]);
+            unset($actions[self::ACTION_FORWARD]);
+        }
+        else {
+            unset($actions[self::ACTION_EDIT]);
+        }
+
+        if ($this->current_folder->hasOutgoingMails()) {
+            unset($actions[self::ACTION_MARK_READ]);
+            unset($actions[self::ACTION_MARK_UNREAD]);
+        }
+
+        if (!$this->current_folder->isTrash()) {
+            unset($actions[self::ACTION_DELETE]);
         }
 
         return $actions;
@@ -190,7 +256,8 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ?array $filter_data,            // not used, because data is filtered by MailDataSearch
         ?array $additional_parameters   // not used
     ): \Generator {
-        // mapping of table columns to allowed order columns of the mailbox  query
+
+        // mapping of table columns to allowed order columns of the mailbox query
         $order_columns = [
             'status' => MailBoxOrderColumn::STATUS,
             'subject' => MailBoxOrderColumn::SUBJECT,
@@ -210,10 +277,10 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         );
 
         // preload user objects for display of avatar and sender
-        if ($this->folder->hasIncomingMails()) {
+        if ($this->current_folder->hasIncomingMails()) {
             $user_ids = [];
             foreach ($records as $record) {
-                if ($record->getSenderId() && $record->getSenderId() !== ANONYMOUS_USER_ID) {
+                if ($record->hasPersonalSender()) {
                     $user_ids[$record->getSenderId()] = $record->getSenderId();
                 }
             }
@@ -221,7 +288,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         }
 
         foreach ($records as $record) {
-            if ($this->folder->hasIncomingMails()) {
+            if ($this->current_folder->hasIncomingMails()) {
                 $data = [
                     'status' => $this->getStatus($record),
                     'avatar' => $this->getAvatar($record),
@@ -241,7 +308,9 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
             yield $row_builder->buildDataRow(
                 (string) $record->getMailId(), $data
-            );
+            )
+            ->withDisabledAction(self::ACTION_REPLY, !$record->hasPersonalSender())
+            ->withDisabledAction(self::ACTION_DOWNLOAD_ATTACHMENT, !$record->hasAttachments());
         }
     }
 
@@ -254,7 +323,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     {
         return sprintf(
             '%s: %s %s (%s %s)',
-            $this->folder->getTitle(),
+            $this->current_folder->getTitle(),
             $this->search->getCount(),
             $this->lng->txt('mail_s'),
             $this->search->getUnread(),
@@ -304,7 +373,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return $this->ui_factory->link()->standard(
             $this->refinery->encode()->htmlSpecialCharsAsEntities()->transform($record->getSubject()),
             (string) $this->url_builder
-                ->withParameter($this->action_token, self::ACTION_SHOW_MAIL)
+                ->withParameter($this->action_token, $this->current_folder->isDrafts() ? self::ACTION_EDIT : self::ACTION_SHOW)
                 ->withParameter($this->row_id_token, (string) $record->getMailId())
                 ->buildURI()
         );

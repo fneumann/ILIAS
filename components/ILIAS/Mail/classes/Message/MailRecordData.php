@@ -25,6 +25,7 @@ use DateTimeImmutable;
 class MailRecordData
 {
     public const STATUS_READ = 'read';
+    public const STATUS_UNREAD = 'unread';
 
 
     public function __construct(
@@ -138,5 +139,10 @@ class MailRecordData
     public function hasAttachments(): bool
     {
         return !empty($this->attachments);
+    }
+
+    public function hasPersonalSender(): bool
+    {
+        return isset($this->sender_id) && $this->sender_id !== ANONYMOUS_USER_ID;
     }
 }

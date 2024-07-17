@@ -11348,6 +11348,7 @@ mail#:#mail_crs_list_members_not_available_for_at_least_one_crs#:#The members of
 mail#:#mail_crs_roles#:#Send Mail to Course Roles
 mail#:#mail_deleted#:#Mail(s) deleted.
 mail#:#mail_deleted_entry#:#Entries deleted.
+mail#:#mail_download_attachment#:#Download Attachment
 mail#:#mail_download_zip_no_attachments#:#No attachments could be found.
 mail#:#mail_edit_tpl#:#Edit Text Template
 mail#:#mail_email_sys_body#:#This is a test e-mail to test the delivery of system mails to external mail accounts.
@@ -11384,11 +11385,11 @@ mail#:#mail_filter_field_placeholder#:#Filter these messages ...
 mail#:#mail_filter_period#:#Period
 mail#:#mail_filter_recipients#:#Recipients
 mail#:#mail_filter_show_read#:#Show Read
-mail#:#mail_filter_show_system_mails#Show System Notifications
+mail#:#mail_filter_show_system_mails#:#Show System Notifications
 mail#:#mail_filter_show_unread#:#Show Unread
-mail#:#mail_filter_show_user_mails#Show User Mails
-mail#:#mail_filter_show_with_attachments#Show With Attachments
-mail#:#mail_filter_show_without_attachment#Show Without Attachment
+mail#:#mail_filter_show_user_mails#:#Show User Mails
+mail#:#mail_filter_show_with_attachments#:#Show With Attachments
+mail#:#mail_filter_show_without_attachment#:#Show Without Attachment
 mail#:#mail_filter_sender#:#Sender
 mail#:#mail_filter_subject#:#Subject
 mail#:#mail_filter_txt#:#Filter messages by
@@ -11424,7 +11425,7 @@ mail#:#mail_manage_attachments#:#Manage Attachments
 mail#:#mail_manage_attachments_back_to_compose#:#Back to Compose
 mail#:#mail_manage_attachments_drop_files_msg#:#Drop file to upload
 mail#:#mail_mark_read#:#Mark as Read
-mail#:#c#:#Mark as Unread
+mail#:#mail_mark_unread#:#Mark as Unread
 mail#:#mail_max_size_attachments_total#:#Please enter the maximum combined size of all attachments allowed per mail. This setting is not related to other resource limits, e.g. server limits such as ‘upload_max_filesize’, as you can attach multiple files to a single mail.
 mail#:#mail_max_size_attachments_total_error#:#The maximum combined size of all attachments may not exceed:
 mail#:#mail_maxsize_attachment_error#:#The upload limit is:

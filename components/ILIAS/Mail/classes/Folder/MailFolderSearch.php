@@ -31,7 +31,7 @@ use ILIAS\Mail\Message\MailBoxOrderColumn;
 
 /**
  * Search in mail folders
- * - utilises database and (if available) lucene based search
+ * - utilises database and (if available) lucene based searchers
  * - caches results for counting of all or unread mails
  */
 class MailFolderSearch
@@ -81,11 +81,15 @@ class MailFolderSearch
             ]);
             $query_parser->parse();
 
+            // search wil be carried and cached by getFilteredIds
             $this->lucene_result = new ilMailSearchResult();
             $this->lucene_searcher = new ilMailLuceneSearcher($query_parser, $this->lucene_result);
         }
     }
 
+    /**
+     * Get a cached count of mails for the filter criteria
+     */
     public function getCount(): int
     {
         if (!isset($this->count)) {
@@ -94,6 +98,9 @@ class MailFolderSearch
         return $this->count;
     }
 
+    /**
+     * Get a cached count of unread mails for the filter criteria
+     */
     public function getUnread(): int
     {
         if (!isset($this->unread)) {
@@ -103,6 +110,7 @@ class MailFolderSearch
     }
 
     /**
+     * Get ordered and sliced record objects fro the filter criteria
      * @return MailRecordData[]
      */
     public function getRecords(
@@ -121,6 +129,10 @@ class MailFolderSearch
             ->query(true);
     }
 
+    /**
+     * Get the cached mail ids from a lucene search for selected filter criteria
+     * These will be used as additional filter for the mailbox query
+     */
     private function getFilteredIds(): ?array
     {
         if (!isset($this->filtered_ids)

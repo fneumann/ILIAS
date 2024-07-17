@@ -11351,6 +11351,7 @@ mail#:#mail_crs_list_members_not_available_for_at_least_one_crs#:#Die Mitglieder
 mail#:#mail_crs_roles#:#alle Personen mit folgenden lokalen Rollen###Modified as part of gender mainstreaming activities for ILIAS 8. Label is now generalised for all components that support ‘mail to members‘
 mail#:#mail_deleted#:#Die Mail(s) wurden gelöscht
 mail#:#mail_deleted_entry#:#Die Einträge wurden gelöscht
+mail#:#mail_download_attachment#:#Anhang herunterladen
 mail#:#mail_download_zip_no_attachments#:#Es wurden keine Anhänge gefunden.
 mail#:#mail_edit_tpl#:#Textvorlage bearbeiten
 mail#:#mail_email_sys_body#:#Dies ist eine Test-E-Mail um den Versand einer automatisch vom System initiierten E-Mail an externe E-Mail-Adressen zu testen.
@@ -11388,11 +11389,11 @@ mail#:#mail_filter_period#:#Zeitraum
 mail#:#mail_filter_recipients#:#An###Modified as part of gender mainstreaming activities for ILIAS 8
 mail#:#mail_filter_sender#:#Von###Modified as part of gender mainstreaming activities for ILIAS 8
 mail#:#mail_filter_show_read#:#Gelesene
-mail#:#mail_filter_show_system_mails#System-Meldungen
+mail#:#mail_filter_show_system_mails#:#System-Meldungen
 mail#:#mail_filter_show_unread#:#Ungelesene
-mail#:#mail_filter_show_user_mails#Persönliche Mails
-mail#:#mail_filter_show_with_attachments#Mails mit Anhängen
-mail#:#mail_filter_show_without_attachment#Mails ohne Anhang
+mail#:#mail_filter_show_user_mails#:#Persönliche Mails
+mail#:#mail_filter_show_with_attachments#:#Mails mit Anhängen
+mail#:#mail_filter_show_without_attachment#:#Mails ohne Anhang
 mail#:#mail_filter_subject#:#Betreff
 mail#:#mail_filter_txt#:#Suchen in
 mail#:#mail_first_email#:#Erste E-Mail-Adresse
