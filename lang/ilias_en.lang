@@ -11325,6 +11325,7 @@ mail#:#mail_add_folder#:#Add New Sub-Folder
 mail#:#mail_add_recipient#:#Please enter a recipient in the form of a valid e-mail address or ILIAS username.
 mail#:#mail_add_subfolder#:#Add Sub-Folder
 mail#:#mail_add_subject#:#Please enter a subject.
+mail#:#mail_all_in_trash#:#All in Trash
 mail#:#mail_allow_external#:#External E-Mails
 mail#:#mail_allow_external_info#:#Allow the delivery of external e-mails (via-SMTP). Unchecking this box will prevent external mails being sent globally across this installation.
 mail#:#mail_assign_entry_to_mailing_list#:##Add One of Your Contacts to the Mailing List
@@ -11478,7 +11479,8 @@ mail#:#mail_orphaned_mails_desc#:#Deletes orphaned mails and mails that are olde
 mail#:#mail_recipient_not_found#:#%1$s - Please correct this entry in the ‘To’ field.
 mail#:#mail_rename_folder#:#Rename Folder
 mail#:#mail_roles#:#All users with one or more of the following local roles
-mail#:#mail_s#:#Mail(s)
+mail#:#mail_1#:#1 Mail
+mail#:#mail_s#:# %s Mails
 mail#:#mail_salutation_anonymous#:#Hello
 mail#:#mail_salutation_f#:#Dear Ms
 mail#:#mail_salutation_female#:#Output for placeholder &lbrace;&lbrace;MAIL_SALUTATION&rbrace;&rbrace;, if salutation is 'Ms'
@@ -11519,7 +11521,7 @@ mail#:#mail_smtp_user#:#User
 mail#:#mail_subject_prefix#:#Mail Subject
 mail#:#mail_subject_prefix_info#:#Enter a text which will be prepended to the subject line of outgoing auto-generated e-mails. The usage of a prefix is recommended, as it makes it easier for users to filter messages.
 mail#:#mail_subject_too_long#:#The subject is too long.
-mail#:#mail_sure_delete#:#Are you sure you want to delete the selected mail(s)?
+mail#:#mail_sure_delete#:#Are you sure you want to delete the following mail(s)?
 mail#:#mail_sure_delete_entry#:#Are you sure you want to delete the following entries?
 mail#:#mail_sure_delete_file#:#Are you sure you want to delete the selected file(s)?
 mail#:#mail_sure_delete_folder#:#The folder and its contents will be irrevocably deleted.

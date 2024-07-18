@@ -37,6 +37,7 @@ use ILIAS\Data\Order;
  */
 class MailBoxQuery
 {
+    private ilDBInterface $db;
     private ?int $folder_id = null;
     private ?string $sender = null;
     private ?string $recipients = null;
@@ -47,18 +48,18 @@ class MailBoxQuery
     private ?bool $has_attachment = null;
     private ?DateTimeImmutable $period_start = null;
     private ?DateTimeImmutable $period_end = null;
-    public ?array $filtered_ids = null;
-
-    private int $limit = 0;
+    private ?array $filtered_ids = null;
+    private int $limit = 999999;
     private int $offset = 0;
 
     private MailBoxOrderColumn $order_column = MailBoxOrderColumn::SEND_TIME;
     private string $order_direction = Order::DESC;
 
     public function __construct(
-        private readonly ilDBInterface $db,
         private readonly int $user_id,
     ) {
+        global $DIC;
+        $this->db = $DIC->database();
     }
 
     public function withFolderId(?int $folder_id): MailBoxQuery
@@ -191,19 +192,37 @@ class MailBoxQuery
             return 0;
         }
 
-        $query = 'SELECT COUNT(mail_id) cnt FROM mail '
-            . 'LEFT JOIN usr_data ON usr_id = sender_id '
-            . 'WHERE user_id = %s '
-            . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-            . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-            . $this->getFilterCondition();
+        $query = 'SELECT COUNT(mail_id) cnt '
+            . $this->getFrom()
+            . $this->getWhere();
 
-        $res = $this->db->queryF($query, ['integer'], [$this->user_id]);
-
+        $res = $this->db->query($query);
         if ($row = $this->db->fetchAssoc($res)) {
             return (int) $row['cnt'];
         }
         return 0;
+    }
+
+    /**
+     * Get a list of mail ids
+     * @return int[]
+     */
+    public function queryMailIds(): array
+    {
+        if ($this->filtered_ids === []) {
+            return [];
+        }
+
+        $query = 'SELECT mail_id '
+            . $this->getFrom()
+            . $this->getWhere();
+
+        $ids = [];
+        $res = $this->db->query($query);
+        while ($row = $this->db->fetchAssoc($res)) {
+            $ids[] = (int) $row['mail_id'];
+        }
+        return $ids;
     }
 
     /**
@@ -236,12 +255,9 @@ class MailBoxQuery
 
         $attachment_selection = '';
 
-        $query = 'SELECT ' . $fields . $firstname_selection . ' FROM mail '
-               . 'LEFT JOIN usr_data ON usr_id = sender_id '
-               . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-               . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) '
-               . 'WHERE user_id = ' . $this->db->quote($this->user_id, 'integer')
-               . $this->getFilterCondition() . ' ';
+        $query = 'SELECT ' . $fields . $firstname_selection
+                . $this->getFrom()
+                . $this->getWhere();
 
         if ($this->order_column === MailBoxOrderColumn::FROM) {
             $query .= ' ORDER BY '
@@ -283,9 +299,19 @@ class MailBoxQuery
         return $set;
     }
 
-    private function getFilterCondition(): string
+    private function getFrom() {
+        return ' FROM mail '
+            . 'LEFT JOIN usr_data ON usr_id = sender_id '
+            . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
+            . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) ';
+    }
+
+    private function getWhere(): string
     {
-        $filter_parts = [];
+        $parts = [];
+
+        // minimum condition: only mailbox of the given user
+        $parts[] =  'user_id = ' . $this->db->quote($this->user_id, 'integer');
 
         $text_conditions = [
             [$this->sender, 'CONCAT(CONCAT(firstname, lastname), login)'],
@@ -296,7 +322,7 @@ class MailBoxQuery
 
         foreach ($text_conditions as $cond) {
             if (!empty($cond[0])) {
-                $filter_parts[] = $this->db->like(
+                $parts[] = $this->db->like(
                     $cond[1],
                     'text',
                     '%%' . $cond[0] . '%%',
@@ -306,31 +332,31 @@ class MailBoxQuery
         }
 
         if (isset($this->folder_id)) {
-            $filter_parts[] = 'folder_id = ' . $this->db->quote($this->folder_id, 'integer');
+            $parts[] = 'folder_id = ' . $this->db->quote($this->folder_id, 'integer');
         }
 
         if ($this->is_unread === true) {
-            $filter_parts[] = 'm_status = ' . $this->db->quote('unread', 'text');
+            $parts[] = 'm_status = ' . $this->db->quote('unread', 'text');
         } elseif ($this->is_unread === false) {
-            $filter_parts[] = 'm_status != ' . $this->db->quote('unread', 'text');
+            $parts[] = 'm_status != ' . $this->db->quote('unread', 'text');
         }
 
         if ($this->is_system === true) {
-            $filter_parts[] = 'sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+            $parts[] = 'sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
         } elseif ($this->is_system === false) {
-            $filter_parts[] = 'sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+            $parts[] = 'sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
         }
 
         if ($this->has_attachment === true) {
-            $filter_parts[] = '(attachments != ' . $this->db->quote(serialize(null), 'text')
+            $parts[] = '(attachments != ' . $this->db->quote(serialize(null), 'text')
                             . ' AND attachments != ' . $this->db->quote(serialize([]), 'text') . ')';
         } elseif ($this->has_attachment === false) {
-            $filter_parts[] = '(attachments = ' . $this->db->quote(serialize(null), 'text')
+            $parts[] = '(attachments = ' . $this->db->quote(serialize(null), 'text')
                             . '  OR attachments = ' . $this->db->quote(serialize([]), 'text') . ')';
         }
 
         if (!empty($this->period_start)) {
-            $filter_parts[] = 'send_time >= ' . $this->db->quote(
+            $parts[] = 'send_time >= ' . $this->db->quote(
                 // convert to server time zone (set by ilias initialisation)
                 $this->period_start->setTimezone(new DateTimeZone(date_default_timezone_get()))
                                    ->format('Y-m-d H:i:s'),
@@ -338,7 +364,7 @@ class MailBoxQuery
             );
         }
         if (!empty($this->period_end)) {
-            $filter_parts[] = 'send_time <= ' . $this->db->quote(
+            $parts[] = 'send_time <= ' . $this->db->quote(
                 // convert to server time zone (set by ilias initialisation)
                 $this->period_end->setTimezone(new DateTimeZone(date_default_timezone_get()))
                                  ->format('Y-m-d H:i:s'),
@@ -347,7 +373,7 @@ class MailBoxQuery
         }
 
         if (!empty($this->filtered_ids)) {
-            $filter_parts[] = $this->db->in(
+            $parts[] = $this->db->in(
                 'mail_id',
                 $this->filtered_ids,
                 false,
@@ -355,8 +381,8 @@ class MailBoxQuery
             ) . ' ';
         }
 
-        if ($filter_parts !== []) {
-            return ' AND ' . implode(' AND ', $filter_parts);
+        if ($parts !== []) {
+            return ' WHERE ' . implode(' AND ', $parts);
         }
         return '';
     }

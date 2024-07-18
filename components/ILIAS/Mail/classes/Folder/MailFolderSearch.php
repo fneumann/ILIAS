@@ -48,10 +48,7 @@ class MailFolderSearch
         private readonly MailFilterData $filter,
         private readonly bool $lucene_enabled,
     ) {
-        global $DIC;
-
         $this->mailbox_query = (new MailBoxQuery(
-            $DIC->database(),
             $this->folder->getUserId()
         ))
             ->withFolderId($this->folder->getFolderId())
@@ -110,10 +107,32 @@ class MailFolderSearch
     }
 
     /**
-     * Get ordered and sliced record objects fro the filter criteria
+     * Get the ids of all filtered mails
+     * @return int[]
+     */
+    public function getMaiIds(): array
+    {
+        return $this->mailbox_query
+            ->withFilteredIds($this->getFilteredIds())
+            ->queryMailIds();
+    }
+
+    /**
+     * Get record objects of all filtered mails
      * @return MailRecordData[]
      */
-    public function getRecords(
+    public function getRecords(): array
+    {
+        return $this->mailbox_query
+            ->withFilteredIds($this->getFilteredIds())
+            ->query(true);
+    }
+
+    /**
+     * Get record objects of filtered and paged mails
+     * @return MailRecordData[]
+     */
+    public function getPagedRecords(
         int $limit,
         int $offset,
         ?MailBoxOrderColumn $order_column,
@@ -143,5 +162,17 @@ class MailFolderSearch
             $this->filtered_ids = $this->lucene_result->getIds();
         }
         return $this->filtered_ids;
+    }
+
+    /**
+     * Inject already filtered mail ids, e.g. from a selection
+     * @param int[] $ids
+     * @return self
+     */
+    public function forMailIds(array $ids): self
+    {
+        $clone = clone $this;
+        $clone->filtered_ids = $ids;
+        return $clone;
     }
 }

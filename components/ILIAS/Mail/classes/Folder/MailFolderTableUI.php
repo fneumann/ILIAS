@@ -89,7 +89,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return $this->ui_factory
             ->table()
             ->data(
-                $this->getTitle(),
+                $this->getTableTitle(),
                 $this->getColumnDefinition(),
                 $this
             )
@@ -157,7 +157,6 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         } else {
             unset($columns['recipients']);
         }
-
         return $columns;
     }
 
@@ -207,18 +206,18 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
                 $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_UNREAD),
                 $this->row_id_token
             ),
-            self::ACTION_DELETE => $this->ui_factory->table()->action()->multi(
+            self::ACTION_DELETE => $this->ui_factory->table()->action()->standard(
                 $this->lng->txt('delete'),
-                $this->url_builder->withParameter($this->action_token, self::ACTION_MARK_READ),
+                $this->url_builder->withParameter($this->action_token, self::ACTION_DELETE),
                 $this->row_id_token
-            ),
+            )->withAsync(), // for confirmation modal
         ];
         
         foreach ($this->user_folders as $target_folder) {
-            // todo: check further moving restrictions (e.g. to/from drafts)
+            // todo: probably check further moving restrictions (e.g. to/from drafts)
             if ($target_folder->getFolderId() !== $this->current_folder->getFolderId()) {
                 $actions[] = $this->ui_factory->table()->action()->multi(
-                    $this->lng->txt('mail_move_to') .$target_folder->getTitle()
+                    $this->lng->txt('mail_move_to') . ' '. $target_folder->getTitle()
                      . ($target_folder->isTrash() ? ' (' . $this->lng->txt('delete') . ')' : ''),
                     $this->url_builder->withParameter($this->action_token, self::ACTION_MOVE_TO)
                     ->withParameter($this->folder_token, (string) $target_folder->getFolderId()),
@@ -269,7 +268,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
         [$order_column, $order_direction] = $order->join([], fn($ret, $key, $value) => [$key, $value]);
 
-        $records = $this->search->getRecords(
+        $records = $this->search->getPagedRecords(
             $range->getLength(),
             $range->getStart(),
             $order_columns[$order_column] ?? null,
@@ -319,13 +318,14 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return $this->search->getCount();
     }
 
-    private function getTitle(): string
+    private function getTableTitle(): string
     {
         return sprintf(
-            '%s: %s %s (%s %s)',
+            '%s: %s (%s %s)',
             $this->current_folder->getTitle(),
-            $this->search->getCount(),
-            $this->lng->txt('mail_s'),
+            $this->search->getCount() == 1
+                ? $this->lng->txt('mail_1')
+                : sprintf($this->lng->txt('mail_s'), $this->search->getCount()),
             $this->search->getUnread(),
             $this->lng->txt('unread')
         );

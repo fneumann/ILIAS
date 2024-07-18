@@ -58,7 +58,7 @@ class MailFilterUI
         $inputs['display'] = $this->ui_factory->input()->field()->multiSelect($this->lng->txt('mail_filter_display'), [
             'read' => $this->lng->txt('mail_filter_show_read'),
             'unread' => $this->lng->txt('mail_filter_show_unread'),
-            'user' => $this->lng->txt('mail_filter_user_mails'),
+            'user' => $this->lng->txt('mail_filter_show_user_mails'),
             'system' => $this->lng->txt('mail_filter_show_system_mails'),
             'with_attachment' => $this->lng->txt('mail_filter_show_with_attachments'),
             'without_attachment' => $this->lng->txt('mail_filter_show_without_attachment')
@@ -73,8 +73,8 @@ class MailFilterUI
             $inputs,
             // initially rendered
             array_map(fn($value) => true, $inputs),
-            true,
-            true
+            false,
+            false
         );
     }
 
