@@ -215,7 +215,7 @@ class ilMailFolderGUI
 
         if (empty($mail_ids)) {
             // no redirect possible from async call
-            if ($action == MailFolderTableUI::ACTION_DELETE) {
+            if ($action === MailFolderTableUI::ACTION_DELETE) {
                 $modal = $this->ui_factory->modal()->lightbox(
                     $this->ui_factory->modal()->lightboxTextPage(
                         $this->lng->txt('mail_select_one'),
