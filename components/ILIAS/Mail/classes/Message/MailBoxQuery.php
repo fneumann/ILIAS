@@ -33,6 +33,9 @@ use ILIAS\Data\Order;
  */
 class MailBoxQuery
 {
+    private const DEFAULT_ORDER_COLUMN = MailBoxOrderColumn::SEND_TIME;
+    private const DEFAULT_ORDER_DIRECTION = Order::ASC;
+
     private ilDBInterface $db;
     private ?int $folder_id = null;
     private ?string $sender = null;
@@ -48,8 +51,8 @@ class MailBoxQuery
     private int $limit = 999999;
     private int $offset = 0;
 
-    private MailBoxOrderColumn $order_column = MailBoxOrderColumn::SEND_TIME;
-    private string $order_direction = Order::DESC;
+    private MailBoxOrderColumn $order_column = self::DEFAULT_ORDER_COLUMN;
+    private string $order_direction = self::DEFAULT_ORDER_DIRECTION;
 
     public function __construct(
         private readonly int $user_id,
@@ -157,6 +160,8 @@ class MailBoxQuery
         $clone = clone $this;
         if (isset($order_column)) {
             $clone->order_column = $order_column;
+        } else {
+            $clone->order_column = self::DEFAULT_ORDER_COLUMN;
         }
         return $clone;
     }
@@ -166,6 +171,8 @@ class MailBoxQuery
         $clone = clone $this;
         if (in_array($order_direction, [Order::ASC, Order::DESC])) {
             $clone->order_direction = $order_direction;
+        } else {
+            $clone->order_direction = self::DEFAULT_ORDER_DIRECTION;
         }
         return $clone;
     }
