@@ -227,9 +227,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         }
 
         if ($this->current_folder->isDrafts()) {
-            unset($actions[self::ACTION_SHOW]);
-            unset($actions[self::ACTION_REPLY]);
-            unset($actions[self::ACTION_FORWARD]);
+            unset($actions[self::ACTION_SHOW], $actions[self::ACTION_REPLY], $actions[self::ACTION_FORWARD]);
         } else {
             unset($actions[self::ACTION_EDIT]);
         }
