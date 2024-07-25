@@ -318,7 +318,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return sprintf(
             '%s: %s (%s %s)',
             $this->current_folder->getTitle(),
-            $this->search->getCount() == 1
+            $this->search->getCount() === 1
                 ? $this->lng->txt('mail_1')
                 : sprintf($this->lng->txt('mail_s'), $this->search->getCount()),
             $this->search->getUnread(),
