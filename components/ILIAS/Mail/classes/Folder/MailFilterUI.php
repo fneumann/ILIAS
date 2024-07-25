@@ -100,27 +100,16 @@ class MailFilterUI
         $is_system = null;
         $has_attachment = null;
 
+        // contrary filter options are only applied, if only one of them is set
         if (is_array($display = $data['display'] ?? null)) {
-            // filter is applied only if one of read/unread is set
-            if (in_array('unread', $display) && !in_array('read', $display)) {
-                $is_unread = true;
+            if (in_array('read', $display) xor in_array('unread', $display)) {
+                $is_unread = in_array('unread', $display);
             }
-            if (in_array('read', $display) && !in_array('unread', $display)) {
-                $is_unread = false;
+            if (in_array('system', $display) xor in_array('user', $display)) {
+                $is_system = in_array('system', $display);
             }
-            // filter is applied only if one of user/system is set
-            if (in_array('system', $display) && !in_array('user', $display)) {
-                $is_system = true;
-            }
-            if (in_array('user', $display) && !in_array('system', $display)) {
-                $is_system = false;
-            }
-            // filter is applied only if one of with/without attachment is set
-            if (in_array('with_attachment', $display) && !in_array('without_attachment', $display)) {
-                $has_attachment = true;
-            }
-            if (in_array('without_attachment', $display) && !in_array('with_attachment', $display)) {
-                $has_attachment = false;
+            if (in_array('with_attachment', $display) xor in_array('without_attachment', $display)) {
+                $has_attachment = in_array('with_attachment', $display);
             }
         }
 
