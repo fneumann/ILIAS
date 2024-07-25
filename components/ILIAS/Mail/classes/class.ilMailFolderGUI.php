@@ -662,7 +662,7 @@ class ilMailFolderGUI
      * Confirm the deletion of selected mails in async modal
      * @param int[] $mail_ids
      */
-    protected function confirmDeleteMails(array $mail_ids): void
+    protected function confirmDeleteMails(array $mail_ids): never
     {
         $user_timezone = new DateTimeZone($this->user->getTimeZone());
         $records = $this->getFilteredSearch()->forMailIds($mail_ids)->getPagedRecords(10, 0, null, null);
