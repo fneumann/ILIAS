@@ -235,8 +235,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         }
 
         if ($this->current_folder->hasOutgoingMails()) {
-            unset($actions[self::ACTION_MARK_READ]);
-            unset($actions[self::ACTION_MARK_UNREAD]);
+            unset($actions[self::ACTION_MARK_READ], $actions[self::ACTION_MARK_UNREAD]);
         }
 
         if (!$this->current_folder->isTrash()) {
