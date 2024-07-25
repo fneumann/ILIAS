@@ -27,7 +27,6 @@ class MailRecordData
     public const STATUS_READ = 'read';
     public const STATUS_UNREAD = 'unread';
 
-
     public function __construct(
         private readonly int $mail_id,
         private readonly int $user_id,
