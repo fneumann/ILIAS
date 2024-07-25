@@ -19,6 +19,7 @@
 declare(strict_types=1);
 
 use ILIAS\Mail\Folder\MailFolderData;
+use ILIAS\Mail\Folder\MailFolderType;
 
 /**
  * Mail Box class
@@ -269,8 +270,8 @@ class ilMailbox
         return new MailFolderData(
             (int) $row['obj_id'],
             (int) $row['user_id'],
-            (string) $row['m_type'],
-            (string) ($row['m_type'] === MailFolderData::TYPE_USER
+            MailFolderType::from($row['m_type']),
+            (string) ($row['m_type'] === MailFolderType::USER->value
                 ? $row['title']
                 : $this->lng->txt('mail_' . $row['title']))
         );

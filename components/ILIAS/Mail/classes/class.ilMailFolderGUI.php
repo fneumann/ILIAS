@@ -378,7 +378,7 @@ class ilMailFolderGUI
         $components = [];
         $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, $this->folder->getFolderId());
 
-        if ($this->folder->isUserRootFolder()) {
+        if ($this->folder->isUserLocalFolder()) {
             $this->toolbar->addComponent($this->ui_factory->button()->standard(
                 $this->lng->txt('mail_add_subfolder'),
                 $this->ctrl->getLinkTarget($this, self::CMD_ADD_SUB_FOLDER)
@@ -502,7 +502,7 @@ class ilMailFolderGUI
             $form = $form->withRequest($request);
             $data = $form->getData();
             if (!empty($data['folder']['title'])) {
-                $new_folder_id = $this->mbox->renameFolder($this->folder->getFolderId(), (string) $data['folder']['title']);
+                $new_folder_id = $this->mbox->addFolder($this->folder->getFolderId(), (string) $data['folder']['title']);
                 if ($new_folder_id > 0) {
                     $this->tpl->setOnScreenMessage(ilGlobalTemplateInterface::MESSAGE_TYPE_SUCCESS, $this->lng->txt('mail_folder_created'), true);
                     $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, $new_folder_id);

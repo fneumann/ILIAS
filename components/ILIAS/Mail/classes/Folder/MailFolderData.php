@@ -22,28 +22,10 @@ namespace ILIAS\Mail\Folder;
 
 class MailFolderData
 {
-    public const TYPE_ROOT = 'root';
-    public const TYPE_INBOX = 'inbox';
-    public const TYPE_TRASH = 'trash';
-    public const TYPE_DRAFTS = 'drafts';
-    public const TYPE_SENT = 'sent';
-    public const TYPE_LOCAL = 'local';
-    public const TYPE_USER = 'user_folder';
-
-    public const ALL_TYPES = [
-        self::TYPE_ROOT,
-        self::TYPE_INBOX,
-        self::TYPE_TRASH,
-        self::TYPE_DRAFTS,
-        self::TYPE_SENT,
-        self::TYPE_LOCAL,
-        self::TYPE_USER
-    ];
-
     public function __construct(
         private readonly int $folder_id,
         private readonly int $user_id,
-        private readonly string $type,
+        private readonly MailFolderType $type,
         private readonly string $title
     ) {
     }
@@ -63,38 +45,38 @@ class MailFolderData
         return $this->title;
     }
 
-    public function getType(): string
+    public function getType(): MailFolderType
     {
         return $this->type;
     }
 
     public function isInbox(): bool
     {
-        return $this->type === self::TYPE_INBOX;
+        return $this->type === MailFolderType::INBOX;
     }
 
     public function isDrafts(): bool
     {
-        return $this->type === self::TYPE_DRAFTS;
+        return $this->type === MailFolderType::DRAFTS;
     }
 
     public function isSent(): bool
     {
-        return $this->type === self::TYPE_SENT;
+        return $this->type === MailFolderType::SENT;
     }
     public function isTrash(): bool
     {
-        return $this->type === self::TYPE_TRASH;
+        return $this->type === MailFolderType::TRASH;
     }
 
-    public function isUserRootFolder(): bool
+    public function isUserLocalFolder(): bool
     {
-        return $this->type === self::TYPE_LOCAL;
+        return $this->type === MailFolderType::LOCAL;
     }
 
     public function isUserFolder(): bool
     {
-        return $this->type === self::TYPE_USER;
+        return $this->type === MailFolderType::USER;
     }
 
     public function hasIncomingMails(): bool
