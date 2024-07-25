@@ -151,9 +151,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         ];
 
         if ($this->current_folder->hasOutgoingMails()) {
-            unset($columns['status']);
-            unset($columns['avatar']);
-            unset($columns['sender']);
+            unset($columns['status'], $columns['avatar'], $columns['sender']);
         } else {
             unset($columns['recipients']);
         }
