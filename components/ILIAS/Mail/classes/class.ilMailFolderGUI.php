@@ -195,7 +195,7 @@ class ilMailFolderGUI
         );
 
         // Magic value of data table in ui framework, no public constant found
-        $for_all_entries = 'ALL_OBJECTS' == implode(
+        $for_all_entries = 'ALL_OBJECTS' === implode(
             '',
             $this->http->wrapper()->query()->retrieve(
                 self::URL_BUILDER_PREFIX . URLBuilder::SEPARATOR . self::PARAM_MAIL_ID,
