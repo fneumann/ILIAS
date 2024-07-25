@@ -498,7 +498,7 @@ class ilMailFolderGUI
         );
 
         $request = $this->http->request();
-        if ($request->getMethod() == "POST") {
+        if ($request->getMethod() === "POST") {
             $form = $form->withRequest($request);
             $data = $form->getData();
             if (!empty($data['folder']['title'])) {
