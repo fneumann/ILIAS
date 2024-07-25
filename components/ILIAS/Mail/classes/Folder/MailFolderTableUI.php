@@ -347,7 +347,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getSender(MailRecordData $record): string
     {
-        if ($record->getSenderId() == ANONYMOUS_USER_ID) {
+        if ($record->getSenderId() === ANONYMOUS_USER_ID) {
             return ilMail::_getIliasMailerName();
         }
         if (!empty($user = ilMailUserCache::getUserObjectById($record->getSenderId()))) {
