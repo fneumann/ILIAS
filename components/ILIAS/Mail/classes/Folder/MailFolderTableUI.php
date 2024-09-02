@@ -214,7 +214,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         foreach ($this->user_folders as $target_folder) {
             // todo: probably check further moving restrictions (e.g. to/from drafts)
             if ($target_folder->getFolderId() !== $this->current_folder->getFolderId()) {
-                $actions[] = $this->ui_factory->table()->action()->multi(
+                $actions[self::ACTION_MOVE_TO . (string) $target_folder->getFolderId()] = $this->ui_factory->table()->action()->multi(
                     $this->lng->txt('mail_move_to') . ' ' . $target_folder->getTitle()
                      . ($target_folder->isTrash() ? ' (' . $this->lng->txt('delete') . ')' : ''),
                     $this->url_builder->withParameter($this->action_token, self::ACTION_MOVE_TO)
