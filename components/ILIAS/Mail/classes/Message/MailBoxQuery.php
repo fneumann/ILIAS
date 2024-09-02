@@ -27,6 +27,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use ilTimeZone;
 use ILIAS\Data\Order;
+use ilUserSearchOptions;
 
 /**
  * Database query for mails of a user
@@ -264,7 +265,7 @@ class MailBoxQuery
 
         if ($this->order_column === MailBoxOrderColumn::FROM) {
             $query .= ' ORDER BY '
-                    . ' fname ' . $this->order_direction . ', '
+                    . ' firstname ' . $this->order_direction . ', '
                     . ' lastname ' . $this->order_direction . ', '
                     . ' login ' . $this->order_direction . ', '
                     . ' import_name ' . $this->order_direction;
@@ -304,10 +305,9 @@ class MailBoxQuery
 
     private function getFrom()
     {
-        return ' FROM mail '
-            . 'LEFT JOIN usr_data ON usr_id = sender_id '
-            . 'AND ((sender_id > 0 AND sender_id IS NOT NULL '
-            . 'AND usr_id IS NOT NULL) OR (sender_id = 0 OR sender_id IS NULL)) ';
+        return " FROM mail 
+            LEFT JOIN usr_data u ON u.usr_id = sender_id
+            LEFT JOIN usr_pref p ON p.usr_id = sender_id AND p.keyword = 'public_profile'";
     }
 
     private function getWhere(): string
@@ -317,8 +317,29 @@ class MailBoxQuery
         // minimum condition: only mailbox of the given user
         $parts[] = 'user_id = ' . $this->db->quote($this->user_id, 'integer');
 
+        // sender conditions have to respect searchability and visibility of profile fields
+        $sender_conditions = [];
+        if (!empty($this->sender)) {
+            $sender_conditions[] = $this->db->like('login', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%');
+
+            if (ilUserSearchOptions::_isEnabled('firstname')) {
+                $sender_conditions[] = '(' .
+                    $this->db->like('firstname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
+                    . " AND p.value = 'y')";
+            }
+
+            if (ilUserSearchOptions::_isEnabled('lastname')) {
+                $sender_conditions[] = '(' .
+                    $this->db->like('lastname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
+                    . " AND p.value = 'y')";
+            }
+        }
+        if (!empty($sender_conditions)) {
+            $parts[] = '(' . implode(' OR ', $sender_conditions) . ')';
+        }
+
+        // other text conditions
         $text_conditions = [
-            [$this->sender, 'CONCAT(CONCAT(firstname, lastname), login)'],
             [$this->recipients, 'CONCAT(CONCAT(rcp_to, rcp_cc), rcp_bcc)'],
             [$this->subject, 'm_subject'],
             [$this->body, 'm_message'],
@@ -328,7 +349,7 @@ class MailBoxQuery
             if (!empty($cond[0])) {
                 $parts[] = $this->db->like(
                     $cond[1],
-                    'text',
+                    ilDBConstants::T_TEXT,
                     '%%' . $cond[0] . '%%',
                     false
                 );
