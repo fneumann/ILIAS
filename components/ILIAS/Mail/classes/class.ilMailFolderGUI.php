@@ -31,7 +31,7 @@ use ILIAS\Mail\Message\MailBoxQuery;
 use ILIAS\Mail\Folder\MailFolderData;
 
 /**
- * @ilCtrl_Calls ilMailFolderGUI: ilPublicUserProfileGUI
+ * @ilCtrl_Calls ilMailFolderGUI:
  */
 class ilMailFolderGUI
 {
@@ -43,6 +43,7 @@ class ilMailFolderGUI
     private const PARAM_ACTION = 'action';
     private const PARAM_FOLDER_ID = 'mobj_id';
     private const PARAM_MAIL_ID = 'mail_id';
+    private const PARAM_USER_ID = 'user_id';
     private const PARAM_TARGET_FOLDER = 'target_folder';
     private const PARAM_INTERRUPTIVE_ITEMS = 'interruptive_items';
 
@@ -139,25 +140,6 @@ class ilMailFolderGUI
         switch (strtolower($nextClass)) {
             case strtolower(ilContactGUI::class):
                 $this->ctrl->forwardCommand(new ilContactGUI());
-                break;
-
-            case strtolower(ilPublicUserProfileGUI::class):
-                $this->tpl->setTitle($this->lng->txt('mail'));
-                $userId = 0;
-                if ($this->http->wrapper()->query()->has('user')) {
-                    $userId = $this->http->wrapper()->query()->retrieve('user', $this->refinery->kindlyTo()->int());
-                }
-                $profileGui = new ilPublicUserProfileGUI($userId);
-
-                $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, $this->folder->getFolderId());
-                $profileGui->setBackUrl($this->ctrl->getLinkTarget($this, self::CMD_SHOW_MAIL));
-                $this->ctrl->clearParameters($this);
-
-                $ret = $this->ctrl->forwardCommand($profileGui);
-                if ($ret !== '') {
-                    $this->tpl->setContent($ret);
-                }
-                $this->tpl->printToStdout();
                 break;
 
             default:
@@ -268,6 +250,23 @@ class ilMailFolderGUI
                 $this->printMail();
                 return;
 
+            case MailFolderTableUI::ACTION_PROFILE:
+                $mail_data = $this->umail->getMail($mail_ids[0] ?? 0);
+                if (!empty($user = ilMailUserCache::getUserObjectById($mail_data['sender_id'] ?? 0))) {
+                    if ($user->hasPublicProfile()) {
+                        $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, (string) $this->folder->getFolderId());
+                        $this->ctrl->setParameter($this, self::PARAM_USER_ID, (string) $user->getId());
+                        $this->ctrl->redirect($this, self::CMD_SHOW_USER);
+                    }
+                } else {
+                    $this->tpl->setOnScreenMessage(
+                        ilGlobalTemplateInterface::MESSAGE_TYPE_FAILURE,
+                        $this->lng->txt('permission_denied')
+                    );
+                    break;
+                }
+
+                // no break
             case MailFolderTableUI::ACTION_MARK_READ:
                 $this->umail->markRead($mail_ids);
                 $this->tpl->setOnScreenMessage(
@@ -342,8 +341,8 @@ class ilMailFolderGUI
     protected function showUser(): void
     {
         $userId = 0;
-        if ($this->http->wrapper()->query()->has('user')) {
-            $userId = $this->http->wrapper()->query()->retrieve('user', $this->refinery->kindlyTo()->int());
+        if ($this->http->wrapper()->query()->has(self::PARAM_USER_ID)) {
+            $userId = $this->http->wrapper()->query()->retrieve(self::PARAM_USER_ID, $this->refinery->kindlyTo()->int());
         }
         $this->tpl->setVariable('TBL_TITLE', implode(' ', [
             $this->lng->txt('profile_of'),
@@ -359,13 +358,15 @@ class ilMailFolderGUI
             $mailId = $this->http->wrapper()->query()->retrieve(self::PARAM_MAIL_ID, $this->refinery->kindlyTo()->int());
         }
 
-        $this->ctrl->setParameter(
-            $this,
-            self::PARAM_MAIL_ID,
-            $mailId
-        );
-        $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, $this->folder->getFolderId());
-        $profile_gui->setBackUrl($this->ctrl->getLinkTarget($this, self::CMD_SHOW_MAIL));
+        if (!empty($mailId)) {
+            $this->ctrl->setParameter($this, self::PARAM_MAIL_ID, $mailId);
+            $this->tabs->clearTargets();
+            $this->tabs->setBackTarget($this->lng->txt('back'), $this->ctrl->getLinkTarget($this, self::CMD_SHOW_MAIL));
+        } else {
+            $this->tabs->clearTargets();
+            $this->tabs->setBackTarget($this->lng->txt('back_to_folder'), $this->ctrl->getLinkTarget($this, self::CMD_SHOW_FOLDER));
+        }
+
         $this->ctrl->clearParameters($this);
 
         $this->tpl->setTitle($this->lng->txt('mail'));
@@ -781,7 +782,7 @@ class ilMailFolderGUI
             if (in_array(ilObjUser::_lookupPref($sender->getId(), 'public_profile'), ['y', 'g'])) {
                 $this->ctrl->setParameter($this, self::PARAM_MAIL_ID, $mailId);
                 $this->ctrl->setParameter($this, self::PARAM_FOLDER_ID, $mailData['folder_id']);
-                $this->ctrl->setParameter($this, 'user', $sender->getId());
+                $this->ctrl->setParameter($this, self::PARAM_USER_ID, $sender->getId());
                 $linked_fullname = '<br /><a class="mailusername" href="' . $this->ctrl->getLinkTarget(
                     $this,
                     self::CMD_SHOW_USER

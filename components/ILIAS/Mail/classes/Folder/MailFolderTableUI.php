@@ -54,6 +54,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
     public const ACTION_FORWARD = 'forward';
     public const ACTION_DOWNLOAD_ATTACHMENT = 'download';
     public const ACTION_PRINT = 'print';
+    public const ACTION_PROFILE = 'profile';
     public const ACTION_MOVE_TO = 'moveTo';
     public const ACTION_DELETE = 'delete';
     public const ACTION_MARK_READ = 'markRead';
@@ -361,6 +362,15 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             return ilMail::_getIliasMailerName();
         }
         if (!empty($user = ilMailUserCache::getUserObjectById($record->getSenderId()))) {
+            if ($user->hasPublicProfile()) {
+                return $this->ui_renderer->render($this->ui_factory->link()->standard(
+                    $user->getPublicName(),
+                    (string) $this->url_builder
+                        ->withParameter($this->action_token, self::ACTION_PROFILE)
+                        ->withParameter($this->row_id_token, (string) $record->getMailId())
+                        ->buildURI()
+                ));
+            }
             return $user->getPublicName();
         }
         return trim(($record->getImportName() ?? '') . ' (' . $this->lng->txt('user_deleted') . ')');
