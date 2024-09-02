@@ -339,10 +339,9 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getStatus(MailRecordData $record): Icon
     {
-        // todo: use better icons when available
         return $record->isRead()
-            ? $this->ui_factory->symbol()->icon()->custom('assets/images/browser/blank.png', $this->lng->txt('read'))
-            : $this->ui_factory->symbol()->icon()->standard('mail', $this->lng->txt('unread'));
+            ? $this->ui_factory->symbol()->icon()->standard('mailr', $this->lng->txt('mailr'))
+            : $this->ui_factory->symbol()->icon()->standard('mailu', $this->lng->txt('mailu'));
     }
 
     private function getSender(MailRecordData $record): string
