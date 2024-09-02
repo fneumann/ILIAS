@@ -4276,7 +4276,6 @@ common#:#hist_webr_add#:#Added new Weblink with title: "%1"
 common#:#hist_webr_delete#:#Deleted Weblink with title: "%1"
 common#:#hist_webr_update#:#Modified Weblink with title: "%1"
 common#:#history#:#History
-common#:#hits_per_page#:#Hits/Page
 common#:#hobby#:#Interests/Hobbies
 common#:#home#:#Public Area
 common#:#host#:#Host
@@ -17222,8 +17221,8 @@ user#:#usr_public_profile_global#:#WWW / Accessible for all Users on the Interne
 user#:#usr_public_profile_logged_in#:#Visible for logged in Users
 usr#:#user_action#:#User Action
 usr#:#user_actions#:#User Actions
-usr#:#user_actions_activation_info#:#Actions will only be listet for users, if the corresponding services are activated and all preconditions are given (e.g. permissions requirements).
-validation#:#datetime_required#:#Time/Date required
+usr#:#user_actions_activation_info#:#Actions will only be listed for users if the corresponding services have been activated and all preconditions are met (e.g. permissions requirements).
+validation#:#datetime_required#:#Time/date required
 validation#:#no_array#:#Given value is not an array
 validation#:#not_a_null#:#Value of type '%s' is not a null.
 validation#:#not_a_string#:#Value of type '%s' is not a string.
