@@ -315,15 +315,25 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getTableTitle(): string
     {
-        return sprintf(
-            '%s: %s (%s %s)',
-            $this->current_folder->getTitle(),
-            $this->search->getCount() === 1
-                ? $this->lng->txt('mail_1')
-                : sprintf($this->lng->txt('mail_s'), $this->search->getCount()),
-            $this->search->getUnread(),
-            $this->lng->txt('unread')
-        );
+        if ($this->current_folder->hasIncomingMails()) {
+            return sprintf(
+                '%s: %s (%s %s)',
+                $this->current_folder->getTitle(),
+                $this->search->getCount() === 1
+                    ? $this->lng->txt('mail_1')
+                    : sprintf($this->lng->txt('mail_s'), $this->search->getCount()),
+                $this->search->getUnread(),
+                $this->lng->txt('unread')
+            );
+        } else {
+            return sprintf(
+                '%s: %s',
+                $this->current_folder->getTitle(),
+                $this->search->getCount() === 1
+                    ? $this->lng->txt('mail_1')
+                    : sprintf($this->lng->txt('mail_s'), $this->search->getCount()),
+            );
+        }
     }
 
     private function getAvatar(MailRecordData $record): string
