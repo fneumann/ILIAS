@@ -43,6 +43,7 @@ use ILIAS\UI\URLBuilderToken;
 use Psr\Http\Message\ServerRequestInterface;
 use DateTimeImmutable;
 use DateTimeZone;
+use ILIAS\UI\Component\Symbol\Symbol;
 
 class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 {
@@ -137,7 +138,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
             'attachments' => $this->ui_factory
                 ->table()
                 ->column()
-                ->text($this->lng->txt('attachments'))
+                ->statusIcon($this->ui_renderer->render($this->ui_factory->symbol()->glyph()->attachment()))
                 ->withIsSortable(true),
 
             'date' => $this->ui_factory
@@ -388,10 +389,10 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
         return empty($record->getSendTime()) ? null : $record->getSendTime()->setTimezone($this->user_time_zone);
     }
 
-    private function getAttachments(MailRecordData $record): string
+    private function getAttachments(MailRecordData $record): Icon
     {
         return $record->hasAttachments()
-            ? $this->ui_renderer->render($this->ui_factory->symbol()->glyph()->attachment())
-            : '';
+            ? $this->ui_factory->symbol()->icon()->standard('file', $this->lng->txt('attachment'))
+            : $this->ui_factory->symbol()->icon()->custom('browser/blank.php', '');
     }
 }
