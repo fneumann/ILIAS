@@ -315,7 +315,7 @@ class MailFolderTableUI implements \ILIAS\UI\Component\Table\DataRetrieval
 
     private function getTableTitle(): string
     {
-        if ($this->current_folder->hasIncomingMails()) {
+        if ($this->current_folder->hasIncomingMails() && $this->search->getUnread() > 0) {
             return sprintf(
                 '%s: %s (%s %s)',
                 $this->current_folder->getTitle(),
