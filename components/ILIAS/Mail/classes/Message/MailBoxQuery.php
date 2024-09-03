@@ -196,7 +196,7 @@ class MailBoxQuery
             return 0;
         }
 
-        $query = 'SELECT COUNT(mail_id) cnt '
+        $query = 'SELECT COUNT(m.mail_id) cnt '
             . $this->getFrom()
             . $this->getWhere();
 
@@ -217,7 +217,7 @@ class MailBoxQuery
             return [];
         }
 
-        $query = 'SELECT mail_id '
+        $query = 'SELECT m.mail_id '
             . $this->getFrom()
             . $this->getWhere();
 
@@ -241,34 +241,22 @@ class MailBoxQuery
         }
 
         if ($short) {
-            $fields = 'mail_id, user_id, folder_id, sender_id, send_time, m_status, m_subject, import_name, rcp_to, attachments';
-        } else {
-            $fields = 'mail.*';
-        }
-
-        $firstname_selection = '';
-        if ($this->order_column === MailBoxOrderColumn::FROM) {
-            // Because of the user id of automatically generated mails and ordering issues we have to do some magic
-            $firstname_selection = '
-				,(CASE
-					WHEN (usr_id = ' . ANONYMOUS_USER_ID . ') THEN firstname 
-					ELSE ' . $this->db->quote(ilMail::_getIliasMailerName(), 'text') . '
-				END) fname
-			';
-        }
-
-        $attachment_selection = '';
-
-        $query = 'SELECT ' . $fields . $firstname_selection
+            $query = 'SELECT m.mail_id, m.user_id, m.folder_id, m.sender_id, m.send_time, '
+                . 'm.m_status, m.m_subject, m.import_name, m.rcp_to, m.attachments'
                 . $this->getFrom()
                 . $this->getWhere();
+        } else {
+            $query = 'SELECT m.*'
+                . $this->getFrom()
+                . $this->getWhere();
+        }
 
         if ($this->order_column === MailBoxOrderColumn::FROM) {
             $query .= ' ORDER BY '
-                    . ' firstname ' . $this->order_direction . ', '
-                    . ' lastname ' . $this->order_direction . ', '
-                    . ' login ' . $this->order_direction . ', '
-                    . ' import_name ' . $this->order_direction;
+                    . ' u.firstname ' . $this->order_direction . ', '
+                    . ' u.lastname ' . $this->order_direction . ', '
+                    . ' u.login ' . $this->order_direction . ', '
+                    . ' m.import_name ' . $this->order_direction;
         } else {
             $query .= ' ORDER BY ' . $this->order_column->value . ' ' . $this->order_direction;
         }
@@ -305,9 +293,9 @@ class MailBoxQuery
 
     private function getFrom()
     {
-        return " FROM mail 
-            LEFT JOIN usr_data u ON u.usr_id = sender_id
-            LEFT JOIN usr_pref p ON p.usr_id = sender_id AND p.keyword = 'public_profile'";
+        return " FROM mail m
+            LEFT JOIN usr_data u ON u.usr_id = m.sender_id
+            LEFT JOIN usr_pref p ON p.usr_id = m.sender_id AND p.keyword = 'public_profile'";
     }
 
     private function getWhere(): string
@@ -315,22 +303,22 @@ class MailBoxQuery
         $parts = [];
 
         // minimum condition: only mailbox of the given user
-        $parts[] = 'user_id = ' . $this->db->quote($this->user_id, 'integer');
+        $parts[] = 'm.user_id = ' . $this->db->quote($this->user_id, ilDBConstants::T_INTEGER);
 
         // sender conditions have to respect searchability and visibility of profile fields
         $sender_conditions = [];
         if (!empty($this->sender)) {
-            $sender_conditions[] = $this->db->like('login', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%');
+            $sender_conditions[] = $this->db->like('u.login', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%');
 
             if (ilUserSearchOptions::_isEnabled('firstname')) {
                 $sender_conditions[] = '(' .
-                    $this->db->like('firstname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
+                    $this->db->like('u.firstname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
                     . " AND p.value = 'y')";
             }
 
             if (ilUserSearchOptions::_isEnabled('lastname')) {
                 $sender_conditions[] = '(' .
-                    $this->db->like('lastname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
+                    $this->db->like('u.lastname', ilDBConstants::T_TEXT, '%%' . $this->sender . '%%')
                     . " AND p.value = 'y')";
             }
         }
@@ -340,9 +328,9 @@ class MailBoxQuery
 
         // other text conditions
         $text_conditions = [
-            [$this->recipients, 'CONCAT(CONCAT(rcp_to, rcp_cc), rcp_bcc)'],
-            [$this->subject, 'm_subject'],
-            [$this->body, 'm_message'],
+            [$this->recipients, 'CONCAT(CONCAT(m.rcp_to, m.rcp_cc), m.rcp_bcc)'],
+            [$this->subject, 'm.m_subject'],
+            [$this->body, 'm.m_message'],
         ];
 
         foreach ($text_conditions as $cond) {
@@ -357,52 +345,52 @@ class MailBoxQuery
         }
 
         if (isset($this->folder_id)) {
-            $parts[] = 'folder_id = ' . $this->db->quote($this->folder_id, 'integer');
+            $parts[] = 'm.folder_id = ' . $this->db->quote($this->folder_id, ilDBConstants::T_INTEGER);
         }
 
         if ($this->is_unread === true) {
-            $parts[] = 'm_status = ' . $this->db->quote('unread', 'text');
+            $parts[] = 'm.m_status = ' . $this->db->quote('unread', 'text');
         } elseif ($this->is_unread === false) {
-            $parts[] = 'm_status != ' . $this->db->quote('unread', 'text');
+            $parts[] = 'm.m_status != ' . $this->db->quote('unread', 'text');
         }
 
         if ($this->is_system === true) {
-            $parts[] = 'sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+            $parts[] = 'm.sender_id = ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
         } elseif ($this->is_system === false) {
-            $parts[] = 'sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
+            $parts[] = 'm.sender_id != ' . $this->db->quote(ANONYMOUS_USER_ID, ilDBConstants::T_INTEGER);
         }
 
         if ($this->has_attachment === true) {
-            $parts[] = '(attachments != ' . $this->db->quote(serialize(null), 'text')
-                            . ' AND attachments != ' . $this->db->quote(serialize([]), 'text') . ')';
+            $parts[] = '(m.attachments != ' . $this->db->quote(serialize(null), ilDBConstants::T_TEXT)
+                            . ' AND m.attachments != ' . $this->db->quote(serialize([]), ilDBConstants::T_TEXT) . ')';
         } elseif ($this->has_attachment === false) {
-            $parts[] = '(attachments = ' . $this->db->quote(serialize(null), 'text')
-                            . '  OR attachments = ' . $this->db->quote(serialize([]), 'text') . ')';
+            $parts[] = '(m.attachments = ' . $this->db->quote(serialize(null), ilDBConstants::T_TEXT)
+                            . '  OR m.attachments = ' . $this->db->quote(serialize([]), ilDBConstants::T_TEXT) . ')';
         }
 
         if (!empty($this->period_start)) {
-            $parts[] = 'send_time >= ' . $this->db->quote(
+            $parts[] = 'm.send_time >= ' . $this->db->quote(
                 // convert to server time zone (set by ilias initialisation)
                 $this->period_start->setTimezone(new DateTimeZone(date_default_timezone_get()))
                                    ->format('Y-m-d H:i:s'),
-                'timestamp'
+                ilDBConstants::T_TIMESTAMP
             );
         }
         if (!empty($this->period_end)) {
-            $parts[] = 'send_time <= ' . $this->db->quote(
+            $parts[] = 'm.send_time <= ' . $this->db->quote(
                 // convert to server time zone (set by ilias initialisation)
                 $this->period_end->setTimezone(new DateTimeZone(date_default_timezone_get()))
                                  ->format('Y-m-d H:i:s'),
-                'timestamp'
+                ilDBConstants::T_TIMESTAMP
             );
         }
 
         if (!empty($this->filtered_ids)) {
             $parts[] = $this->db->in(
-                'mail_id',
+                'm.mail_id',
                 $this->filtered_ids,
                 false,
-                'integer'
+                ilDBConstants::T_INTEGER
             ) . ' ';
         }
 
