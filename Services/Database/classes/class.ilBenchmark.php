@@ -160,7 +160,10 @@ class ilBenchmark
                         $db->insert("benchmark", [
                             "id" => ["integer", $id],
                             "duration" => ["float", $this->microtimeDiff($b["start"], $b["stop"])],
-                            "sql_stmt" => ["clob", $b["sql"]]
+                            // databay-patch: begin benchmark_backtrace
+                            "sql_stmt" => ["clob", $b["sql"]],
+                            "backtrace" => ["clob", $b["backtrace"]],
+                            // databay-patch: end
                         ]);
                     }
                 }
@@ -248,7 +251,24 @@ class ilBenchmark
             && $this->isUserAvailable()
             && $this->db_bechmark_user_id === $this->user->getId()
         ) {
-            $this->collected_db_benchmarks[] = ["start" => $this->start, "stop" => (string) microtime(), "sql" => $this->temporary_sql_storage];
+            // databay-patch: begin benchmark_backtrace
+            $i = 0;
+            $backtrace = '';
+            foreach (debug_backtrace() as $step) {
+                if ($i > 0 && isset($step['file'])) {
+                    $backtrace .= '[' . $i . '] ' . $step['file'] . ' ' . $step['line'] . ': ' . $step['function'] . "()\n";
+                }
+                $i++;
+            }
+            $backtrace .= '[' . $i . '] ' . $_SERVER['REQUEST_URI'];
+
+            $this->collected_db_benchmarks[] = [
+                "start" => $this->start,
+                "stop" => (string) microtime(),
+                "sql" => $this->temporary_sql_storage,
+                "backtrace" => $backtrace
+            ];
+            // databay-patch: end
 
             return true;
         }
