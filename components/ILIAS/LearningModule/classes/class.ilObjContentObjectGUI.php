@@ -18,6 +18,8 @@
 
 use ILIAS\LearningModule\Editing\EditingGUIRequest;
 use ILIAS\LearningModule\Editing\EditSubObjectsGUI;
+use ILIAS\ILIASObject\Properties\Translations\CachedRepository as TranslationsRepository;
+use ILIAS\ILIASObject\Properties\Translations\TranslationGUI;
 
 /**
  * Class ilObjContentObjectGUI
@@ -27,7 +29,7 @@ use ILIAS\LearningModule\Editing\EditSubObjectsGUI;
  * @author Sascha Hofmann <saschahofmann@gmx.de>
  * @ilCtrl_Calls ilObjContentObjectGUI: ilLMPageObjectGUI, ilStructureObjectGUI, ilObjectContentStyleSettingsGUI, ilObjectMetaDataGUI
  * @ilCtrl_Calls ilObjContentObjectGUI: ilLearningProgressGUI, ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI
- * @ilCtrl_Calls ilObjContentObjectGUI: ilExportGUI, ilCommonActionDispatcherGUI, ilPageMultiLangGUI, ilObjectTranslationGUI
+ * @ilCtrl_Calls ilObjContentObjectGUI: ilExportGUI, ilCommonActionDispatcherGUI, ilPageMultiLangGUI, ILIAS\ILIASObject\Properties\Translations\TranslationGUI
  * @ilCtrl_Calls ilObjContentObjectGUI: ilMobMultiSrtUploadGUI, ilLMImportGUI, ilLMEditShortTitlesGUI, ilLTIProviderObjectSettingGUI
  * @ilCtrl_IsCalledBy ilObjContentObjectGUI: ilExportGUI
  */
@@ -319,6 +321,9 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
                 // infoscreen
             case 'ilinfoscreengui':
+                if (!$this->object->isInfoEnabled()) {
+                    return;
+                }
                 $this->addHeaderAction();
                 $this->addLocations(true);
                 $this->setTabs("info");
@@ -362,13 +367,25 @@ class ilObjContentObjectGUI extends ilObjectGUI
                 }
                 break;
 
-            case 'ilobjecttranslationgui':
+            case strtolower(TranslationGUI::class):
                 $this->addHeaderAction();
                 $this->addLocations(true);
                 $this->setTabs("settings");
                 $this->setSubTabs("obj_multilinguality");
-                $transgui = new ilObjectTranslationGUI($this);
-                $transgui->setTitleDescrOnlyMode(false);
+                $transgui = new TranslationGUI(
+                    $this->getObject(),
+                    $this->lng,
+                    $this->access,
+                    $this->user,
+                    $this->ctrl,
+                    $this->tpl,
+                    $this->ui_factory,
+                    $this->ui_renderer,
+                    $this->http,
+                    $this->refinery,
+                    $this->toolbar
+                );
+                $transgui->forceContentTranslation();
                 $this->ctrl->forwardCommand($transgui);
                 break;
 
@@ -472,9 +489,9 @@ class ilObjContentObjectGUI extends ilObjectGUI
     protected function buildExportOptionsFormHTML(): ILIAS\UI\Component\Input\Container\Form\Standard
     {
         $this->lng->loadLanguageModule('exp');
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
         $items = [];
-        if ($ot->getContentActivated()) {
+        if ($ot->getContentTranslationActivated()) {
             $this->lng->loadLanguageModule("meta");
             $langs = $ot->getLanguages();
             foreach ($langs as $l => $ldata) {
@@ -482,7 +499,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
             }
             $items["html_all"] = $this->lng->txt("cont_all_languages");
         }
-        if (!$ot->getContentActivated()) {
+        if (!$ot->getContentTranslationActivated()) {
             $items["exportHTML"] = "HTML";
         }
         $select = $this->ui->factory()->input()->field()->select($this->lng->txt("language"), $items)
@@ -500,9 +517,9 @@ class ilObjContentObjectGUI extends ilObjectGUI
     protected function buildExportOptionsFormXML(): ILIAS\UI\Component\Input\Container\Form\Standard
     {
         $this->lng->loadLanguageModule('exp');
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
         $items = [];
-        if ($ot->getContentActivated()) {
+        if ($ot->getContentTranslationActivated()) {
             $items["xml_master"] = $this->lng->txt("cont_master_language_only");
             $items["xml_masternomedia"] = $this->lng->txt("cont_master_language_only_no_media");
             $this->lng->loadLanguageModule("meta");
@@ -530,14 +547,14 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
     protected function showExportOptionsHTML(): void
     {
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
-        if ($ot->getContentActivated()) {
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
+        if ($ot->getContentTranslationActivated()) {
             $this->addHeaderAction();
             $this->addLocations(true);
             $this->setTabs("export");
             $this->ui->mainTemplate()->setContent($this->ui->renderer()->render($this->buildExportOptionsFormHTML()));
         }
-        if (!$ot->getContentActivated()) {
+        if (!$ot->getContentTranslationActivated()) {
             $this->doExportHTML();
         }
     }
@@ -564,14 +581,14 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
     protected function doExportHTML(): void
     {
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
         $form = $this->buildExportOptionsFormHTML()->withRequest($this->request);
         $lang = "";
-        if ($ot->getContentActivated() and !is_null($form->getData())) {
+        if ($ot->getContentTranslationActivated() and !is_null($form->getData())) {
             $format = explode("_", $form->getData()[0][0]);
             $lang = ilUtil::stripSlashes($format[1]);
         }
-        if ($ot->getContentActivated() and is_null($form->getData())) {
+        if ($ot->getContentTranslationActivated() and is_null($form->getData())) {
             $this->addHeaderAction();
             $this->addLocations(true);
             $this->setTabs("export");
@@ -744,8 +761,8 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
         $title = $this->lm->getTitle();
         $description = $this->lm->getLongDescription();
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
-        if ($ot->getContentActivated()) {
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
+        if ($ot->getContentTranslationActivated()) {
             $title = $ot->getDefaultTitle();
             $description = $ot->getDefaultDescription();
         }
@@ -801,11 +818,12 @@ class ilObjContentObjectGUI extends ilObjectGUI
         $this->initPropertiesForm();
         $form = $this->form;
         if ($form->checkInput()) {
-            $ot = ilObjectTranslation::getInstance($this->lm->getId());
-            if ($ot->getContentActivated()) {
-                $ot->setDefaultTitle($form->getInput('title'));
-                $ot->setDefaultDescription($form->getInput('description'));
-                $ot->save();
+            $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
+            if ($ot->getContentTranslationActivated()) {
+                $this->lm->getObjectProperties()->storePropertyTranslations(
+                    $ot->withDefaultTitle($form->getInput('title'))
+                        ->withDefaultDescription($form->getInput('description'))
+                );
             }
 
             $this->lm->setTitle($form->getInput('title'));
@@ -912,29 +930,6 @@ class ilObjContentObjectGUI extends ilObjectGUI
         $hhfp->setChecked($this->lm->getHideHeaderFooterPrint());
         $print->addSubItem($hhfp);
 
-        // downloads
-        $no_download_file_available =
-            " " . $lng->txt("cont_no_download_file_available") .
-            " <a href='" . $ilCtrl->getLinkTargetByClass("ilexportgui", "") . "'>" . $lng->txt("change") . "</a>";
-        $types = array("xml", "html");
-        foreach ($types as $type) {
-            if ($this->lm->getPublicExportFile($type) != "") {
-                if (is_file($this->lm->getExportDirectory($type) . "/" .
-                    $this->lm->getPublicExportFile($type))) {
-                    $no_download_file_available = "";
-                }
-            }
-        }
-        $dl = new ilCheckboxInputGUI($this->lng->txt("cont_downloads"), "cobj_act_downloads");
-        $dl->setInfo($this->lng->txt("cont_downloads_desc") . $no_download_file_available);
-        $dl->setChecked($this->lm->isActiveDownloads());
-        $form->addItem($dl);
-
-        // downloads in public area
-        $pdl = new ilCheckboxInputGUI($this->lng->txt("cont_downloads_public_desc"), "cobj_act_downloads_public");
-        $pdl->setChecked($this->lm->isActiveDownloadsPublic());
-        $dl->addSubItem($pdl);
-
         $form->addCommandButton("saveMenuProperties", $lng->txt("save"));
 
         $form->setTitle($lng->txt("cont_lm_menu"));
@@ -981,8 +976,6 @@ class ilObjContentObjectGUI extends ilObjectGUI
             $this->lm->setActivePrintView((int) $form->getInput("cobj_act_print"));
             $this->lm->setActivePreventGlossaryAppendix((int) $form->getInput("cobj_act_print_prev_glo"));
             $this->lm->setHideHeaderFooterPrint((int) $form->getInput("hide_head_foot_print"));
-            $this->lm->setActiveDownloads((int) $form->getInput("cobj_act_downloads"));
-            $this->lm->setActiveDownloadsPublic((int) $form->getInput("cobj_act_downloads_public"));
             $this->lm->updateProperties();
         }
 
@@ -1025,6 +1018,114 @@ class ilObjContentObjectGUI extends ilObjectGUI
     }
 
     /**
+     * confirm deletion screen for free pages (other usages do not apply anymore)
+     */
+    public function delete(int $a_parent_subobj_id = 0): void
+    {
+        $ids = $this->edit_request->getIds();
+
+        if (count($ids) == 0) {
+            $this->tpl->setOnScreenMessage('failure', $this->lng->txt("no_checkbox"), true);
+            $this->cancelDelete();
+        }
+
+        if (count($ids) == 1 && $ids[0] == ilTree::POS_FIRST_NODE) {
+            $this->tpl->setOnScreenMessage('failure', $this->lng->txt("cont_select_item"), true);
+            $this->cancelDelete();
+        }
+
+        if ($a_parent_subobj_id == 0) {
+            $this->setTabs("content");
+        }
+
+        if ($a_parent_subobj_id != 0) {
+            $this->ctrl->setParameterByClass("ilStructureObjectGUI", "backcmd", $this->requested_backcmd);
+            $this->ctrl->setParameterByClass("ilStructureObjectGUI", "obj_id", $a_parent_subobj_id);
+            $form_action = $this->ctrl->getFormActionByClass("ilStructureObjectGUI");
+        } else {
+            $this->ctrl->setParameter($this, "backcmd", $this->requested_backcmd);
+            $form_action = $this->ctrl->getFormAction($this);
+        }
+
+        // display confirmation message
+        $cgui = new ilConfirmationGUI();
+        $cgui->setFormAction($form_action);
+        $cgui->setHeaderText($this->lng->txt("info_delete_sure"));
+        $cgui->setCancel($this->lng->txt("cancel"), "cancelDelete");
+        $cgui->setConfirm($this->lng->txt("confirm"), "confirmedDelete");
+
+        foreach ($ids as $id) {
+            if ($id != ilTree::POS_FIRST_NODE) {
+                $obj = new ilLMObject($this->lm, $id);
+                $caption = $obj->getTitle();
+
+                $cgui->addItem("id[]", $id, $caption);
+            }
+        }
+
+        $this->tpl->setContent($cgui->getHTML());
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->ctrl->redirect($this, $this->requested_backcmd);
+    }
+
+    /**
+     * delete page object or structure objects
+     *
+     * @param	int		$a_parent_subobj_id		id of parent object (structure object)
+     *											of the objects, that should be deleted
+     *											(or no parent object id for top level)
+     */
+    public function confirmedDelete(int $a_parent_subobj_id = 0): void
+    {
+        $tree = new ilLMTree($this->lm->getId());
+
+        $ids = $this->edit_request->getIds();
+
+        // check number of objects
+        if (count($ids) == 0) {
+            $this->tpl->setOnScreenMessage('failure', $this->lng->txt("no_checkbox"));
+            $this->ctrl->redirect($this, "cancelDelete");
+        }
+
+        // delete all selected objects
+        foreach ($ids as $id) {
+            if ($id != ilTree::POS_FIRST_NODE) {
+                $obj = ilLMObjectFactory::getInstance($this->lm, $id, false);
+                $node_data = $tree->getNodeData($id);
+                if (is_object($obj)) {
+                    $obj->setLMId($this->lm->getId());
+
+                    ilHistory::_createEntry(
+                        $this->lm->getId(),
+                        "delete_" . $obj->getType(),
+                        array(ilLMObject::_lookupTitle($id), $id),
+                        $this->lm->getType()
+                    );
+
+                    $obj->delete();
+                }
+                if ($tree->isInTree($id)) {
+                    $tree->deleteTree($node_data);
+                }
+            }
+        }
+
+        // check the tree
+        $this->lm->checkTree();
+
+        // feedback
+        $this->tpl->setOnScreenMessage('success', $this->lng->txt("info_deleted"), true);
+
+        if ($a_parent_subobj_id == 0) {
+            $this->ctrl->redirect($this, $this->requested_backcmd);
+        }
+    }
+
+
+    /**
      * show chapters
      */
     public function chapters(): void
@@ -1042,6 +1143,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
         $lng = $DIC->language();
         $ilCtrl = $DIC->ctrl();
+        $ilDB = $DIC->database();
 
         $edit_request = $DIC
             ->learningModule()
@@ -1059,8 +1161,8 @@ class ilObjContentObjectGUI extends ilObjectGUI
         $ml_head = "";
 
         // multi language
-        $ot = ilObjectTranslation::getInstance($a_lm_id);
-        if ($ot->getContentActivated()) {
+        $ot = (new TranslationsRepository($ilDB))->getFor($a_lm_id);
+        if ($ot->getContentTranslationActivated()) {
             $ilCtrl->setParameter($a_gui_class, "lang_switch_mode", $a_mode);
             $lng->loadLanguageModule("meta");
 
@@ -1073,7 +1175,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
             // language switch
             $entries = false;
             if (!in_array($requested_transl, array("", "-"))) {
-                $l = $ot->getMasterLanguage();
+                $l = $ot->getBaseLanguage();
                 $actions[] = $ui_factory->link()->standard(
                     $lng->txt("cont_edit_language_version") . ": " .
                     $lng->txt("meta_l_" . $l),
@@ -1084,7 +1186,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
             foreach ($ot->getLanguages() as $al => $lang) {
                 if ($requested_transl != $al &&
-                    $al != $ot->getMasterLanguage()) {
+                    $al != $ot->getBaseLanguage()) {
                     $ilCtrl->setParameter($a_gui_class, "totransl", $al);
                     $actions[] = $ui_factory->link()->standard(
                         $lng->txt("cont_edit_language_version") . ": " .
@@ -1391,9 +1493,9 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
     public function export(): void
     {
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
         $opt = "";
-        if ($ot->getContentActivated()) {
+        if ($ot->getContentTranslationActivated()) {
             $format = explode("_", $this->edit_request->getFormat());
             $opt = ilUtil::stripSlashes($format[1]);
         }
@@ -1401,61 +1503,6 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
         $cont_exp = new ilContObjectExport($this->lm);
         $cont_exp->buildExportFile($opt);
-    }
-
-    /**
-     * Get public access value for export table
-     */
-    public function getPublicAccessColValue(
-        string $a_type,
-        string $a_file
-    ): string {
-        $lng = $this->lng;
-        $ilCtrl = $this->ctrl;
-        $add = "";
-
-        $changelink = "<a href='" . $ilCtrl->getLinkTarget($this, "editMenuProperties") . "'>" . $lng->txt("change") . "</a>";
-        if (!$this->lm->isActiveLMMenu()) {
-            $add = "<br />" . $lng->txt("cont_download_no_menu") . " " . $changelink;
-        } elseif (!$this->lm->isActiveDownloads()) {
-            $add = "<br />" . $lng->txt("cont_download_no_download") . " " . $changelink;
-        }
-
-        $basetype = explode("_", $a_type);
-        $basetype = $basetype[0];
-
-        if ($this->lm->getPublicExportFile($basetype) == $a_file) {
-            return $lng->txt("yes") . $add;
-        }
-
-        return " ";
-    }
-
-    public function publishExportFile(
-        ?array $a_files
-    ): void {
-        $ilCtrl = $this->ctrl;
-
-        if (!isset($a_files)) {
-            $this->tpl->setOnScreenMessage('failure', $this->lng->txt("no_checkbox"), true);
-        } else {
-            foreach ($a_files as $f) {
-                $file = explode(":", $f);
-                if (is_int(strpos($file[0], "_"))) {
-                    $file[0] = explode("_", $file[0])[0];
-                }
-                $export_dir = $this->lm->getExportDirectory($file[0]);
-
-                if ($this->lm->getPublicExportFile($file[0]) ==
-                    $file[1]) {
-                    $this->lm->setPublicExportFile($file[0], "");
-                } else {
-                    $this->lm->setPublicExportFile($file[0], $file[1]);
-                }
-            }
-            $this->lm->update();
-        }
-        $ilCtrl->redirectByClass("ilexportgui");
     }
 
     public function fixTreeConfirm(): void
@@ -1486,9 +1533,9 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
     public function exportHTML(): void
     {
-        $ot = ilObjectTranslation::getInstance($this->lm->getId());
+        $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
         $lang = "";
-        if ($ot->getContentActivated()) {
+        if ($ot->getContentTranslationActivated()) {
             $format = explode("_", $this->edit_request->getFormat());
             $lang = ilUtil::stripSlashes($format[1]);
         }
@@ -1896,7 +1943,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
             $ilTabs->addSubTabTarget(
                 "obj_multilinguality",
-                $this->ctrl->getLinkTargetByClass("ilobjecttranslationgui", "")
+                $this->ctrl->getLinkTargetByClass(TranslationGUI::class, "")
             );
 
             $lti_settings = new ilLTIProviderObjectSettingGUI($this->lm->getRefId());

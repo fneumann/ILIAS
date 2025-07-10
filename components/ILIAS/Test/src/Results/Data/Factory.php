@@ -117,8 +117,8 @@ class Factory
             $attempt_data->getMark(),
             $attempt_data->getAnsweredQuestionCount(),
             $attempt_data->getQuestionCount(),
-            $attempt_data->getRequestedHintsCount(),
             $attempt_data->getWorkingTime(),
+            $participant_data->getTimeOnTask(),
             $attempt_data->getStartTime(),
             $attempt_data->getLastAccessTime(),
             $participant_data->getPassCount(),
@@ -144,26 +144,21 @@ class Factory
                     return $v;
                 }
 
-                $last_attempt = $this->getAttemptOverviewFor(
+                $scored_attempt = $this->getAttemptOverviewFor(
                     $settings,
                     $test_obj,
                     $v->getActiveId(),
-                    $v->getLastStartedAttempt()
+                    null
                 );
 
-                if ($last_attempt !== null
-                    && $last_attempt->getStatusOfAttempt() === StatusOfAttempt::RUNNING
-                    && $last_attempt->getStartedDate() !== null) {
-                    $v = $v->withRunningAttemptStart($last_attempt->getStartedDate());
+                if ($scored_attempt !== null
+                    && $scored_attempt->getStatusOfAttempt() === StatusOfAttempt::RUNNING
+                    && $scored_attempt->getStartedDate() !== null) {
+                    $v = $v->withRunningAttemptStart($scored_attempt->getStartedDate());
                 }
 
                 return $v->withAttemptOverviewInformation(
-                    $this->getAttemptOverviewFor(
-                        $settings,
-                        $test_obj,
-                        $v->getActiveId(),
-                        null
-                    )
+                    $scored_attempt
                 );
             },
             $participants
@@ -225,8 +220,6 @@ class Factory
             $usr_score = $qresult['reached'];
             $workedthrough = (bool) $qresult['workedthrough'];
             $answered = (bool) $qresult['answered'];
-            $requested_hints = (int) $qresult['requested_hints'];
-
 
             $question_gui = $test_obj->createQuestionGUI('', $qid);
             $shuffle_trafo = $this->shuffler->getAnswerShuffleFor($qid, $active_id, $attempt_id);
@@ -307,7 +300,6 @@ class Factory
                 $feedback,
                 $workedthrough,
                 $answered,
-                $requested_hints,
                 $recapitulation
             );
         }

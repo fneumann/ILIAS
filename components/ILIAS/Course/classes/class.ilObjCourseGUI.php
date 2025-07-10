@@ -18,9 +18,9 @@
 
 declare(strict_types=0);
 
-use ILIAS\HTTP\GlobalHttpState;
 use ILIAS\Refinery\Factory;
 use ILIAS\News\Service as News;
+use ILIAS\ILIASObject\Properties\Translations\TranslationGUI;
 
 /**
  * Class ilObjCourseGUI
@@ -40,7 +40,7 @@ use ILIAS\News\Service as News;
  * @ilCtrl_Calls ilObjCourseGUI: ilLOPageGUI, ilObjectMetaDataGUI, ilNewsTimelineGUI, ilContainerNewsSettingsGUI
  * @ilCtrl_Calls ilObjCourseGUI: ilCourseMembershipGUI, ilPropertyFormGUI, ilContainerSkillGUI, ilCalendarPresentationGUI
  * @ilCtrl_Calls ilObjCourseGUI: ilMemberExportSettingsGUI
- * @ilCtrl_Calls ilObjCourseGUI: ilLTIProviderObjectSettingGUI, ilObjectTranslationGUI, ilBookingGatewayGUI, ilRepositoryTrashGUI
+ * @ilCtrl_Calls ilObjCourseGUI: ilLTIProviderObjectSettingGUI, ILIAS\ILIASObject\Properties\Translations\TranslationGUI, ilBookingGatewayGUI, ilRepositoryTrashGUI
  * @extends      ilContainerGUI
  */
 class ilObjCourseGUI extends ilContainerGUI
@@ -54,7 +54,6 @@ class ilObjCourseGUI extends ilContainerGUI
     private ?ilContainerStartObjects $start_obj = null;
 
     private ilLogger $logger;
-    protected GlobalHttpState $http;
     protected Factory $refinery;
     protected ilHelpGUI $help;
     protected ilNavigationHistory $navigation_history;
@@ -74,7 +73,6 @@ class ilObjCourseGUI extends ilContainerGUI
         $this->lng->loadLanguageModule('cert');
         $this->lng->loadLanguageModule('obj');
 
-        $this->http = $DIC->http();
         $this->refinery = $DIC->refinery();
         $this->news = $DIC->news();
     }
@@ -100,8 +98,6 @@ class ilObjCourseGUI extends ilContainerGUI
 
     public function renderObject(): void
     {
-        // @todo: removed deprecated ilCtrl methods, this needs inspection by a maintainer.
-        // $this->ctrl->setCmd("view");
         $this->viewObject();
     }
 
@@ -131,13 +127,7 @@ class ilObjCourseGUI extends ilContainerGUI
         }
 
         if (!$this->checkAgreement()) {
-            $this->tabs_gui->clearTargets();
-            $this->ctrl->setReturn($this, 'view_content');
-            $agreement = new ilMemberAgreementGUI($this->object->getRefId());
-            // @todo: removed deprecated ilCtrl methods, this needs inspection by a maintainer.
-            // $this->ctrl->setCmdClass(get_class($agreement));
-            $this->ctrl->forwardCommand($agreement);
-            return;
+            $this->ctrl->redirectByClass(ilMemberAgreementGUI::class);
         }
 
         if (!$this->__checkStartObjects()) {
@@ -157,11 +147,6 @@ class ilObjCourseGUI extends ilContainerGUI
             $this->object->getViewMode() == ilContainer::VIEW_OBJECTIVE
         ) {
             parent::renderObject();
-        } else {
-            $course_content_obj = new ilCourseContentGUI($this);
-            // @todo: removed deprecated ilCtrl methods, this needs inspection by a maintainer.
-            // $this->ctrl->setCmdClass(get_class($course_content_obj));
-            $this->ctrl->forwardCommand($course_content_obj);
         }
 
         if ($this->isActiveAdministrationPanel()) {
@@ -1584,9 +1569,9 @@ class ilObjCourseGUI extends ilContainerGUI
                 }
                 $this->tabs_gui->addSubTabTarget(
                     "obj_multilinguality",
-                    $this->ctrl->getLinkTargetByClass("ilobjecttranslationgui", ""),
+                    $this->ctrl->getLinkTargetByClass(TranslationGUI::class, ""),
                     "",
-                    "ilobjecttranslationgui"
+                    TranslationGUI::class
                 );
                 break;
         }
@@ -2434,12 +2419,24 @@ class ilObjCourseGUI extends ilContainerGUI
                 $this->ctrl->forwardCommand($gui);
                 break;
 
-            case 'ilobjecttranslationgui':
+            case strtolower(TranslationGUI::class):
                 $this->checkPermissionBool("write");
                 $this->setSubTabs("properties");
                 $this->tabs_gui->activateTab("settings");
                 $this->tabs_gui->activateSubTab("obj_multilinguality");
-                $transgui = new ilObjectTranslationGUI($this);
+                $transgui = new TranslationGUI(
+                    $this->getObject(),
+                    $this->lng,
+                    $this->access,
+                    $this->user,
+                    $this->ctrl,
+                    $this->tpl,
+                    $this->ui_factory,
+                    $this->ui_renderer,
+                    $this->http,
+                    $this->refinery,
+                    $this->toolbar
+                );
                 $this->ctrl->forwardCommand($transgui);
                 break;
 

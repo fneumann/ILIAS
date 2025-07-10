@@ -165,6 +165,8 @@ class UI implements Component\Component
             $internal[UI\Implementation\Component\Prompt\Factory::class];
         $provide[UI\Implementation\Component\Prompt\State\Factory::class] = static fn() =>
             $internal[UI\Implementation\Component\Prompt\State\Factory::class];
+        $provide[UI\Implementation\Component\Input\UploadLimitResolver::class] = static fn() =>
+            $internal[UI\Implementation\Component\Input\UploadLimitResolver::class];
         // =================================================================================
 
         $internal[UI\Implementation\Factory::class] = static fn() =>
@@ -591,7 +593,7 @@ class UI implements Component\Component
         $contribute[Component\Resource\PublicAsset::class] = fn() =>
             new Component\Resource\OfComponent($this, "ui-examples", "assets");
         $contribute[Component\Resource\PublicAsset::class] = static fn() =>
-            new Component\Resource\NodeModule("@yaireo/tagify/dist/tagify.min.js");
+            new Component\Resource\NodeModule("@yaireo/tagify/dist/tagify.js");
         $contribute[Component\Resource\PublicAsset::class] = static fn() =>
             new Component\Resource\NodeModule("@yaireo/tagify/dist/tagify.css");
         $contribute[Component\Resource\PublicAsset::class] = static fn() =>
@@ -602,6 +604,8 @@ class UI implements Component\Component
             new Component\Resource\ComponentJS($this, "js/MainControls/dist/footer.min.js");
         $contribute[Component\Resource\PublicAsset::class] = fn() =>
             new Component\Resource\ComponentJS($this, "js/Input/ViewControl/dist/input.viewcontrols.min.js");
+        $contribute[Component\Resource\PublicAsset::class] = fn() =>
+            new Component\Resource\ComponentJS($this, "js/MathJax/mathjax_config.js");
 
         /*
         those are contributed by MediaObjects
@@ -619,6 +623,26 @@ class UI implements Component\Component
             new Component\Resource\NodeModule("webui-popover/dist/jquery.webui-popover.min.js");
         */
 
+        // This is included via anonymous classes
+        // because MathJax resources are taken from node_modules and they may be directories
+        foreach (['tex-chtml-full.js', 'a11y', 'adaptors', 'input', 'output', 'sre', 'ui'] as $asset) {
+            $contribute[Component\Resource\PublicAsset::class] = static fn(
+            ) => new readonly class ($asset) implements Component\Resource\PublicAsset {
+                public function __construct(private string $asset)
+                {
+                }
+
+                public function getSource(): string
+                {
+                    return 'node_modules/mathjax/es5/' . $this->asset;
+                }
+
+                public function getTarget(): string
+                {
+                    return 'node_modules/mathjax/es5/' . $this->asset;
+                }
+            };
+        };
 
         // This is included via anonymous classes as a testament to the fact, that
         // the templates-folder should probably be moved to some component.

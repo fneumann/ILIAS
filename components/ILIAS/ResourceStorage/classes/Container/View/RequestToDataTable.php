@@ -165,23 +165,23 @@ class RequestToDataTable implements RequestToComponents, DataRetrieval
     protected function buildTable(): Data
     {
         return $this->ui_factory->table()->data(
+            $this,
             $this->request->getTitle(), // we already have the title in the panel
             [
                 self::F_TITLE => $this->ui_factory->table()->column()->text(
                     $this->language->txt(self::F_TITLE)
-                )->withIsSortable(false),
+                )->withIsSortable(true),
                 self::F_SIZE => $this->ui_factory->table()->column()->text(
                     $this->language->txt(self::F_SIZE)
-                )->withIsSortable(false),
+                )->withIsSortable(true),
                 self::F_MODIFICATION_DATE => $this->ui_factory->table()->column()->date(
                     $this->language->txt(self::F_MODIFICATION_DATE),
                     $this->data_factory->dateFormat()->germanLong()
-                )->withIsSortable(false),
+                )->withIsSortable(true),
                 self::F_TYPE => $this->ui_factory->table()->column()->text(
                     $this->language->txt(self::F_TYPE)
-                )->withIsSortable(false),
+                )->withIsSortable(true),
             ],
-            $this
         )->withRequest(
             $this->http->request()
         )->withActions(
@@ -203,7 +203,15 @@ class RequestToDataTable implements RequestToComponents, DataRetrieval
 
         $regex_storage = [];
 
-        foreach ($this->data_provider->getEntries() as $entry) {
+        $entries = $this->data_provider->getEntries();
+        // cut entries
+        $entries = array_slice(
+            $entries,
+            $range->getStart(),
+            $range->getLength()
+        );
+
+        foreach ($entries as $entry) {
             $is_dir = $entry instanceof Dir;
             $path_inside_zip = $entry->getPathInsideZIP();
 
@@ -294,6 +302,12 @@ class RequestToDataTable implements RequestToComponents, DataRetrieval
                 break;
             case self::F_MODIFICATION_DATE . '_' . Order::DESC:
                 $this->data_provider->getViewRequest()->setSortation(Request::BY_CREATION_DATE_DESC);
+                break;
+            case self::F_TYPE . '_' . Order::ASC:
+                $this->data_provider->getViewRequest()->setSortation(Request::BY_TYPE_ASC);
+                break;
+            case self::F_TYPE . '_' . Order::DESC:
+                $this->data_provider->getViewRequest()->setSortation(Request::BY_TYPE_DESC);
                 break;
         }
     }

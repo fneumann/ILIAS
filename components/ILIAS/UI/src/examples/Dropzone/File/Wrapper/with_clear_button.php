@@ -27,7 +27,7 @@ namespace ILIAS\UI\examples\Dropzone\File\Wrapper;
  *
  * expected output: >
  *   ILIAS shows a base file wrapper. If you drag a file into the box a small window opens
- *   including three buttons named "Save","Close" and "Clear files!". Clicking the clear button will remove the file.
+ *   including three buttons named "Clear files!", "Save" and "Cancel". Clicking the clear button will remove the file.
  *   The upload process works as in the base file wrapper example.
  * ---
  */

@@ -154,14 +154,14 @@ class assTextQuestion extends assQuestion implements ilObjQuestionScoringAdjusta
         }
 
         $result = $this->db->queryF(
-            "SELECT * FROM qpl_a_essay WHERE question_fi = %s",
+            'SELECT * FROM qpl_a_essay WHERE question_fi = %s',
             ['integer'],
             [$this->getId()]
         );
 
         $this->flushAnswers();
         while ($row = $this->db->fetchAssoc($result)) {
-            $this->addAnswer($row['answertext'], $row['points']);
+            $this->addAnswer($row['answertext'] ?? '', $row['points'] ?? 0.0);
         }
 
         parent::loadFromDb($question_id);
@@ -518,7 +518,7 @@ class assTextQuestion extends assQuestion implements ilObjQuestionScoringAdjusta
         $result = [];
         $result['id'] = $this->getId();
         $result['type'] = (string) $this->getQuestionType();
-        $result['title'] = $this->getTitle();
+        $result['title'] = $this->getTitleForHTMLOutput();
         $result['question'] = $this->formatSAQuestion($this->getQuestion());
         $result['nr_of_tries'] = $this->getNrOfTries();
         $result['shuffle'] = $this->getShuffle();
@@ -782,7 +782,7 @@ class assTextQuestion extends assQuestion implements ilObjQuestionScoringAdjusta
     {
         return [
             AdditionalInformationGenerator::KEY_QUESTION_TYPE => (string) $this->getQuestionType(),
-            AdditionalInformationGenerator::KEY_QUESTION_TITLE => $this->getTitle(),
+            AdditionalInformationGenerator::KEY_QUESTION_TITLE => $this->getTitleForHTMLOutput(),
             AdditionalInformationGenerator::KEY_QUESTION_TEXT => $this->formatSAQuestion($this->getQuestion()),
             AdditionalInformationGenerator::KEY_QUESTION_REACHABLE_POINTS => $this->getMaximumPoints(),
             AdditionalInformationGenerator::KEY_QUESTION_TEXT_WORDCOUNT_ENABLED => $additional_info

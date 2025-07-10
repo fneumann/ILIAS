@@ -120,6 +120,8 @@ class Init implements Component\Component
                 $pull[\ILIAS\UI\Implementation\Component\Progress\Factory::class],
                 $pull[\ILIAS\UI\Implementation\Component\Progress\State\Factory::class],
                 $pull[\ILIAS\UI\Implementation\Component\Progress\State\Bar\Factory::class],
+                $pull[\ILIAS\UI\Implementation\Component\Input\UploadLimitResolver::class],
+                $use[\ILIAS\Setup\AgentFinder::class],
             );
     }
 }

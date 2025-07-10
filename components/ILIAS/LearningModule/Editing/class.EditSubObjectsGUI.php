@@ -24,11 +24,13 @@ use ILIAS\LearningModule\InternalDomainService;
 use ILIAS\LearningModule\InternalGUIService;
 use ILIAS\Repository\Form\FormAdapterGUI;
 use ilLMObject;
-use ILIAS\LearningModule\Table\TableAdapterGUI;
 use ILIAS\UI\Component\Input\Container\Form\Standard;
+use ILIAS\ILIASObject\Properties\Translations\CachedRepository as TranslationsRepository;
+use ILIAS\Repository\Table\TableAdapterGUI;
 
 class EditSubObjectsGUI
 {
+    protected string $lang;
     protected array $page_layouts;
     protected EditingGUIRequest $request;
     protected int $lm_id;
@@ -50,6 +52,8 @@ class EditSubObjectsGUI
         $this->page_layouts = \ilPageLayout::activeLayouts(
             \ilPageLayout::MODULE_LM
         );
+        $this->lang = $this->request->getTranslation();
+        $this->gui->initFetch();
     }
 
     public function executeCommand(): void
@@ -69,7 +73,8 @@ class EditSubObjectsGUI
                     "insertPageClip", "insertPageClipBefore", "insertPageClipAfter",
                     "insertChapterClip", "insertChapterClipBefore", "insertChapterClipAfter",
                     "activatePages",
-                    "insertLayoutBefore", "insertLayoutAfter", "insertPageFromLayout"
+                    "insertLayoutBefore", "insertLayoutAfter", "insertPageFromLayout",
+                    "switchToLanguage", "editMasterLanguage"
                 ])) {
                     $this->$cmd();
                 }
@@ -84,18 +89,29 @@ class EditSubObjectsGUI
 
     protected function getTable(): TableAdapterGUI
     {
-        return $this->gui->editing()->subObjectTableGUI(
+        return $this->gui->editing()->subObjectTableBuilder(
             $this->table_title,
             $this->lm_id,
             $this->sub_type,
-            $this
-        );
+            $this,
+            "list"
+        )->getTable();
     }
 
-    public function tableCommand(): void
+    public function switchToLanguage(): void
     {
-        $this->getTable()->handleCommand();
+        $ctrl = $this->gui->ctrl();
+        $ctrl->setParameter($this, "transl", $this->request->getToTranslation());
+        $ctrl->redirect($this, "list");
     }
+
+    public function editMasterLanguage(): void
+    {
+        $ctrl = $this->gui->ctrl();
+        $ctrl->setParameter($this, "transl", "-");
+        $ctrl->redirect($this, "list");
+    }
+
 
     protected function list(): void
     {
@@ -104,10 +120,15 @@ class EditSubObjectsGUI
         $main_tpl = $this->gui->mainTemplate();
         $user = $this->domain->user();
 
+        if ($this->getTable()->handleCommand()) {
+            return;
+        }
+
         $retrieval = $this->domain->subObjectRetrieval(
             $this->lm_id,
             $this->sub_type,
-            $this->sub_obj_id
+            $this->sub_obj_id,
+            $this->lang
         );
 
         $ml_head = \ilObjLearningModuleGUI::getMultiLangHeader($this->lm_id, $this);
@@ -335,6 +356,9 @@ class EditSubObjectsGUI
     public function insertChapterBefore(): void
     {
         $parent = $this->sub_obj_id;
+        if ($parent === 0) {
+            $parent = $this->lm_tree->getRootId();
+        }
         $target_id = $this->request->getTargetId();
         $before_target = \ilTree::POS_FIRST_NODE;
         foreach ($this->lm_tree->getChilds($parent) as $node) {
@@ -356,7 +380,6 @@ class EditSubObjectsGUI
     ): void {
         $lng = $this->domain->lng();
         $ctrl = $this->gui->ctrl();
-
         $chap = new \ilStructureObject($this->lm);
         $chap->setType("st");
         $chap->setTitle($lng->txt("cont_new_chap"));
@@ -378,14 +401,38 @@ class EditSubObjectsGUI
     {
         $lng = $this->domain->lng();
         $this->gui->ctrl()->setParameterByClass(self::class, "edit_id", $id);
-        return $this
+        $ot = (new TranslationsRepository($this->domain->database()))->getFor($this->lm->getId());
+        $ml = "";
+        if ($ot->getContentTranslationActivated()) {
+            $ml = " (" . $lng->txt("meta_l_" . $ot->getBaseLanguage()) . ")";
+        }
+
+        $form = $this
             ->gui
             ->form(self::class, "saveTitle")
-            ->text("title", $lng->txt('title'), "", ilLMObject::_lookupTitle($id));
+            ->text("title", $lng->txt('title') . $ml, "", ilLMObject::_lookupTitle($id));
+        if ($ot->getContentTranslationActivated()) {
+            foreach ($ot->getLanguages() as $lang) {
+                $code = $lang->getLanguageCode();
+                if ($code === $ot->getBaseLanguage()) {
+                    continue;
+                }
+                $lmobjtrans = new \ilLMObjTranslation($id, $code);
+                $title = $lmobjtrans->getTitle();
+                $form = $form->text(
+                    "title_" . $code,
+                    $lng->txt('title') . " (" . $lng->txt("meta_l_" . $code) . ")",
+                    "",
+                    $title
+                );
+            }
+        }
+        return $form;
     }
 
     public function editTitle(int $id): void
     {
+        $this->gui->clearAsnyOnloadCode();
         $modal = $this->gui->modal()->form($this->getEditTitleForm($id));
         $modal->send();
     }
@@ -396,7 +443,18 @@ class EditSubObjectsGUI
         $lng = $this->domain->lng();
         $form = $this->getEditTitleForm($this->request->getEditId());
         if ($form->isValid()) {
-            \ilLMObject::_writeTitle($this->request->getEditId(), $form->getData("title"));
+            \ilLMObject::saveTitle($this->request->getEditId(), $form->getData("title"));
+
+            $ot = $this->lm->getObjectProperties()->getPropertyTranslations();
+            if ($ot->getContentTranslationActivated()) {
+                foreach ($ot->getLanguages() as $lang) {
+                    $code = $lang->getLanguageCode();
+                    if ($code === $ot->getBaseLanguage()) {
+                        continue;
+                    }
+                    \ilLMObject::saveTitle($this->request->getEditId(), $form->getData("title_" . $code), $code);
+                }
+            }
         }
         $mt->setContent("success", $lng->txt("msg_obj_modified"), true);
         $this->gui->ctrl()->redirect($this, "list");
@@ -409,25 +467,27 @@ class EditSubObjectsGUI
         $tree = $this->domain->lmTree($this->lm_id);
         $table = $this->getTable();
         $data = $table->getData();
-        if (is_array($data)) {
-            foreach ($data as $id) {
-                $curnode = $tree->getNodeData($id);
-                if ($tree->isInTree($id)) {
-                    //$tree->deleteTree($curnode);
+        $parent = ($this->sub_obj_id > 0)
+            ? $this->sub_obj_id
+            : $tree->readRootId();
+        if (!is_array($data)) {
+            return;
+        }
+
+        // note: moveTree has a bug and does not use the last parameter
+        // target will always be "last node"
+        // since all chapters must follow all pages
+        // we can simple call moveTree in the correct order for the chapters
+        // but if we order the pages, we must append all chapters to the data first
+        if ($this->sub_type === "pg") {
+            foreach ($tree->getChilds($parent) as $child) {
+                if ($child["type"] == "st") {
+                    $data[] = $child["child"];
                 }
             }
-            $after = \ilTree::POS_FIRST_NODE;
-            foreach ($data as $id) {
-                $parent = ($this->sub_obj_id > 0)
-                    ? $this->sub_obj_id
-                    : $tree->readRootId();
-                if ($this->sub_type === "st") {
-                    $tree->moveTree((int) $id, $parent);
-                } else {
-                    $tree->moveTree((int) $id, $parent, $after);
-                    $after = $id;
-                }
-            }
+        }
+        foreach ($data as $id) {
+            $tree->moveTree((int) $id, $parent);
         }
         $mt->setContent("success", $lng->txt("msg_obj_modified"), true);
         $this->gui->ctrl()->redirect($this, "list");

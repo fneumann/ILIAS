@@ -18,20 +18,36 @@
 
 declare(strict_types=1);
 
-namespace ILIAS\LearningModule\Table;
+namespace ILIAS\LearningModule\Editing;
 
 use ILIAS\Data\Range;
 use ILIAS\Data\Order;
+use ILIAS\Repository\RetrievalInterface;
 
 class SubObjectRetrieval implements RetrievalInterface
 {
+    protected \ilLanguage $lng;
+    protected \ILIAS\UI\Factory $f;
     protected ?array $childs = null;
 
     public function __construct(
         protected \ilLMTree $lm_tree,
         protected $type = "",
-        protected $current_node = 0
+        protected $current_node = 0,
+        protected $transl = ""
     ) {
+        global $DIC;
+        $this->f = $DIC->ui()->factory();
+        $this->lng = $DIC->language();
+    }
+
+    public function getChildTitle(array $child): string
+    {
+        if (!in_array($this->transl, ["-", ""])) {
+            $lmobjtrans = new \ilLMObjTranslation($child["child"], $this->transl);
+            return $lmobjtrans->getTitle();
+        }
+        return $child["title"];
     }
 
     protected function getChilds(): array
@@ -53,9 +69,40 @@ class SubObjectRetrieval implements RetrievalInterface
         array $parameters = []
     ): \Generator {
         foreach ($this->getChilds() as $child) {
+            $active = true;
+            $scheduled = false;
+            $deactivated_elements = false;
+            if ($child["type"] === "pg") {
+                // check activation
+                $lm_set = new \ilSetting("lm");
+                $active = \ilLMPage::_lookupActive(
+                    $child["obj_id"],
+                    "lm",
+                    (bool) $lm_set->get("time_scheduled_page_activation")
+                );
+
+                // is page scheduled?
+                $scheduled = ((bool) $lm_set->get("time_scheduled_page_activation") &&
+                    \ilLMPage::_isScheduledActivation($child["obj_id"], "lm"));
+                if ($active) {
+                    $deactivated_elements = (\ilLMPage::_lookupContainsDeactivatedElements(
+                        $child["obj_id"],
+                        "lm"
+                    ));
+                }
+            }
+            $trans_title = "";
+            if (!in_array($this->transl, ["-", ""])) {
+                $trans_title = $this->getChildTitle($child);
+            }
             yield [
                 "id" => $child["child"],
-                "title" => $child["title"]
+                "deactivated_elements" => $deactivated_elements,
+                "active" => $active,
+                "scheduled" => $scheduled,
+                "type" => $child["type"],
+                "title" => $child["title"],
+                "trans_title" => $trans_title
             ];
         }
     }
@@ -65,5 +112,10 @@ class SubObjectRetrieval implements RetrievalInterface
         array $parameters = []
     ): int {
         return count($this->getChilds());
+    }
+
+    public function isFieldNumeric(string $field): bool
+    {
+        return $field === "id";
     }
 }

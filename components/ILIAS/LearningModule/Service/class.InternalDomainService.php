@@ -22,8 +22,6 @@ namespace ILIAS\LearningModule;
 
 use ILIAS\DI\Container;
 use ILIAS\Repository\GlobalDICDomainServices;
-use ilLMTree;
-use ILIAS\LearningModule\Table\SubObjectRetrieval;
 
 class InternalDomainService
 {
@@ -47,13 +45,15 @@ class InternalDomainService
     public function subObjectRetrieval(
         int $lm_id,
         string $type,
-        int $current_node
-    ): SubObjectRetrieval {
+        int $current_node,
+        string $lang
+    ): Editing\SubObjectRetrieval {
         return self::$instance["sub_obj_retrieval"][$lm_id][$type][$current_node] ??=
-            new SubObjectRetrieval(
+            new Editing\SubObjectRetrieval(
                 $this->lmTree($lm_id),
                 $type,
-                $current_node
+                $current_node,
+                $lang
             );
     }
 
