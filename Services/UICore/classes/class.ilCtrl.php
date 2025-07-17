@@ -454,6 +454,13 @@ class ilCtrl implements ilCtrlInterface
      */
     public function redirectToURL(string $target_url): void
     {
+        // databay-patch: begin benchmark_backtrace
+        global $DIC;
+        if ($DIC->offsetExists('ilBench')) {
+            $DIC['ilBench']->save();
+        }
+        // databay-patch: end benchmark_backtrace
+
         // prepend the ILIAS HTTP path if it wasn't already.
         if (defined("ILIAS_HTTP_PATH") &&
             strpos($target_url, "://") === false &&

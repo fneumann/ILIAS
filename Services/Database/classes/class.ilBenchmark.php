@@ -1,23 +1,4 @@
 <?php
-// databay-patch: begin benchmark_backtrace
-// This patch logs the php backtrace with every recorded query
-//
-// Apply the following change to your database:
-// ALTER TABLE `benchmark` ADD COLUMN `backtrace` LONGTEXT NULL DEFAULT NULL AFTER `sql_stmt`;
-//
-// Strategy for performance analysis:
-// - Record a request
-// - Find query types by total time consumption or often execution
-//      SELECT
-//      SUBSTR(sql_stmt, 1, LOCATE('WHERE', sql_stmt)-2) as query_type,
-//      SUM(duration) AS total_duration,
-//      COUNT(id) AS queries
-//      FROM benchmark
-//      GROUP BY query_type
-//      ORDER BY total_duration DESC
-// - look for examples of such a query type
-// - Check their backtrace
-// databay-patch: end
 
 /**
  * This file is part of ILIAS, a powerful learning management system
