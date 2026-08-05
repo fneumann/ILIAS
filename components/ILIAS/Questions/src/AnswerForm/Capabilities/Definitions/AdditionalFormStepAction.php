@@ -154,7 +154,6 @@ class AdditionalFormStepAction
         DefaultEnvironment $environment,
         InputsBuilderSession $inputs_builder
     ): EditForm {
-        $properties = $environment->getAnswerFormProperties();
         return $environment->getPresentationFactory()->getEditForm(
             $inputs_builder,
             $environment->withSubActionParameter(
@@ -165,15 +164,7 @@ class AdditionalFormStepAction
                 : $environment->withSubActionParameter(
                     self::SUB_ACTION_BACK
                 )->getUrlBuilder()
-        )->withIsFinalStep(true)
-        ->withContentBeforeForm(
-            $properties->getClozeText()->buildPanelForEditing(
-                $environment->getUIFactory(),
-                $environment->getLanguage(),
-                $properties->getGaps(),
-                $properties->getLegacyClozeText()
-            )
-        );
+        )->withIsFinalStep(true);
     }
 
     private function forwardToNextForm(

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace ILIAS\Questions\Setup;
 
+use DATABAY\SingleChoice\Setup\SingleChoiceTables;
 use ILIAS\Questions\AnswerForm\Persistence\AnswerFormGenericTableDefinitions;
 use ILIAS\Questions\AnswerFormTypes\Cloze\TableDefinitions as ClozeTableDefinitions;
 use ILIAS\Questions\Question\Persistence\TableDefinitions as QuestionTableDefinitions;
@@ -91,6 +92,16 @@ class Agent implements SetupAgent
                 )
             ),
             new \ilDatabaseUpdateStepsExecutedObjective(
+                new SingleChoiceTables(
+                    new SetupTableNameBuilder(
+                        new TableSubNameSpace(
+                            'dbay',
+                            'schoice'
+                        )
+                    )
+                )
+            ),
+            new \ilDatabaseUpdateStepsExecutedObjective(
                 new TempTables()
             ),
             new \ilTreeAdminNodeAddedObjective(
@@ -118,6 +129,17 @@ class Agent implements SetupAgent
                 new ClozeQuestionTables(
                     new SetupTableNameBuilder(
                         new TableSubNameSpaceCore('cloze')
+                    )
+                )
+            ),
+            new \ilDatabaseUpdateStepsMetricsCollectedObjective(
+                $storage,
+                new SingleChoiceTables(
+                    new SetupTableNameBuilder(
+                        new TableSubNameSpace(
+                            'dbay',
+                            'schoice'
+                        )
                     )
                 )
             )

@@ -24,6 +24,7 @@ use ILIAS\Questions\Administration\ConfigurationRepository;
 use ILIAS\Questions\AnswerForm\Factory as AnswerFormFactory;
 use ILIAS\Questions\AnswerForm\Capabilities;
 use ILIAS\Questions\AnswerForm\Persistence\AnswerFormGenericTableDefinitions;
+use DATABAY\SingleChoice as DatabaySingleChoice;
 use ILIAS\Questions\AnswerFormTypes\Cloze;
 use ILIAS\Questions\Attempt\Repository as AttemptRepository;
 use ILIAS\Questions\Attempt\TableDefinitions as AttemptTableDefinitions;
@@ -165,7 +166,8 @@ class LocalDIC extends PimpleContainer
             => new AnswerFormFactory(
                 $c[UuidFactory::class],
                 [
-                    $c[Cloze\Definition::class]
+                    $c[Cloze\Definition::class],
+                    $c[DatabaySingleChoice\Definition::class]
                 ]
             );
         $dic[QuestionsRepository::class] = static fn($c): QuestionsRepository
@@ -287,6 +289,48 @@ class LocalDIC extends PimpleContainer
                 $c[UuidFactory::class],
                 $c[PersistenceFactory::class],
                 $c[Cloze\TableDefinitions::class]
+            );
+
+        $dic[DatabaySingleChoice\TableDefinitions::class] = static fn($c): DatabaySingleChoice\TableDefinitions
+            => new DatabaySingleChoice\TableDefinitions(
+                $c[PersistenceFactory::class],
+                new TableSubNameSpace(
+                    'dbay',
+                    'schoice'
+                )
+            );
+        $dic[DatabaySingleChoice\Properties\Factory::class] = static fn($c): DatabaySingleChoice\Properties\Factory
+            => new DatabaySingleChoice\Properties\Factory(
+                $c[UuidFactory::class],
+                $c[PersistenceFactory::class]
+            );
+        $dic[DatabaySingleChoice\Response\Factory::class] = static fn($c): DatabaySingleChoice\Response\Factory
+            => new DatabaySingleChoice\Response\Factory(
+                $c[UuidFactory::class],
+                $c[PersistenceFactory::class],
+                $DIC['refinery']
+            );
+        $dic[DatabaySingleChoice\Views\Edit::class] = static fn($c): DatabaySingleChoice\Views\Edit
+            => new DatabaySingleChoice\Views\Edit(
+                $c[DatabaySingleChoice\Properties\Factory::class]
+            );
+        $dic[DatabaySingleChoice\Definition::class] = static fn($c): DatabaySingleChoice\Definition
+            => new DatabaySingleChoice\Definition(
+                $c[DatabaySingleChoice\TableDefinitions::class],
+                [
+                    new DatabaySingleChoice\Capabilities\TextFeedback(),
+                    new DatabaySingleChoice\Capabilities\MarkingAllowingPartialPoints(
+                        $c[DatabaySingleChoice\Properties\Factory::class],
+                        $c[DatabaySingleChoice\Response\Factory::class]
+                    ),
+                    new DatabaySingleChoice\Capabilities\DefaultView(
+                        $c[DatabaySingleChoice\Response\Factory::class],
+                        $DIC['refinery']
+                    )
+                ],
+                $c[DatabaySingleChoice\Properties\Factory::class],
+                $c[DatabaySingleChoice\Response\Factory::class],
+                $c[DatabaySingleChoice\Views\Edit::class]
             );
 
         return $dic;
